@@ -7,6 +7,10 @@ you choose.
 
 ## Install and launch
 
+If you have a packaged Windows release, extract the VoidSmith folder somewhere
+writable and launch the included GUI executable. It is portable: no installer,
+administrator rights, or registry setup is required.
+
 For a source checkout, use Python 3.11+ and `uv`:
 
 ```powershell
@@ -14,8 +18,9 @@ uv sync --extra gui
 uv run voidsmith-gui
 ```
 
-The console command is `voidsmith` (aliases: `svg`, `voidsmith-gui`, and
-`svg-gui`). A Windows build can be made from a checkout with
+The primary console command is `voidsmith`; the GUI entry point is
+`voidsmith-gui`. Legacy `svg` / `svg-gui` aliases remain for local workflow
+compatibility. A Windows build can be made from a checkout with
 `dist/build_voidsmith.bat`. If a previous `dist/VoidSmith.exe` is still open,
 use the newly created versioned `dist/VoidSmith-<version>.exe`; the build does
 not need to close the running copy.
@@ -53,6 +58,10 @@ generated compatibility mod only when it has a legal candidate.
 
 ## Reading a result
 
+VoidSmith separates **legality**, **quality**, and **confidence**. A build can be
+legal without being the best choice, and a high-scoring build can still carry
+limited confidence when a mod uses mechanics that cannot be proven statically.
+
 - `LEGAL` means the documented validation checks passed. It does not mean the
   build is optimal.
 - `ILLEGAL` means a hard parsed constraint failed, such as mount compatibility,
@@ -67,13 +76,15 @@ generated compatibility mod only when it has a legal candidate.
 
 **Supported:** scanning, normal hull fitting, conservative generation,
 validation, variant analysis, minimal-change refit, faction capability/gap
-recommendations, Why-Not, and generated compatibility-mod export.
+recommendations, Why-Not, locked-fleet support recommendations, static scenario
+alignment, and generated compatibility-mod export.
 
 **Partial:** mod scripts/static Java effects, complex/module ships, fighter-like
 entities, doctrine, and AI/player suitability.
 
 **Experimental:** six-axis warfare posture, combat-entity/deployment labels,
-manual overrides, knowledge-pack guidance, and calibration evidence.
+manual overrides, knowledge-pack guidance, and calibration evidence. These are
+advisory and do not silently override legality.
 
 **Not supported:** combat simulation, save-game/inventory planning, market
 availability, whole-fleet optimization, executing/decompiling mod code, and

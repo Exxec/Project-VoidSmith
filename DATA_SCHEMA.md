@@ -72,10 +72,9 @@ Player and AI claims remain separate in `ControlSuitabilityEvidence` and are
 unresolved until a unique locally scanned hull identity and version context are
 available.
 
-ROADMAP.md Phase 29 (Evidence/Provenance Unification) confirmed the vocabulary
-above already matches its charter's 9 named classes exactly and required no
-extension, then migrated additional producers onto it (additive fields only,
-no existing return type or behavior changed): `analysis/doctrine.py`'s
+The vocabulary above matches the project's nine named evidence classes. It was
+adopted by additional producers using additive fields only, with no existing
+return type or behavior changed: `analysis/doctrine.py`'s
 `DoctrineEvidence` (`INFERRED_MECHANICS` when variants were examined,
 `UNKNOWN` with zero); `analysis/equipment_affinity.py`'s
 `EquipmentAffinityClassification` (`CURATED_GUIDANCE` for a knowledge-pack
@@ -269,8 +268,8 @@ Complex hulls are represented as an auditable structural relationship, not a
 merged combat state. These records are produced only from declared variant
 module mappings and unambiguous locally scanned references.
 
-ROADMAP.md Phase 27 (Multipart/Composite Hull Formalization) formalized what
-was previously a set of ad hoc, inconsistently-shaped representations (hull
+The multipart/composite model formalized what was previously a set of ad hoc,
+inconsistently-shaped representations (hull
 role classification repeated as inline `hull_hints` string matching across
 call sites; raw `(slot, target)` string pairs; one flat record mixing a
 hull's *declared* structural role with one specific ship's *resolved*

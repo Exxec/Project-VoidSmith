@@ -1,10 +1,8 @@
 # GAP_RECOMMENDATION_ENGINE.md
 # Gap Recommendation Engine: Algorithm and Data Model
-Project-authored, Version 1.0 -- extends Planning Pack v0.5
+Project-authored, Version 1.0
 
-This document is not part of the synced planning pack (it is not
-overwritten by `Starsector-Variant-Generator-Planning-Pack/` refreshes).
-It specifies the *algorithm* behind `FACTION_KNOWLEDGE_PACKS.md` sections
+This document specifies the *algorithm* behind `FACTION_KNOWLEDGE_PACKS.md` sections
 4-8 ("Recommendation Classes" / "I Recommend These" / "Diversity" / "Why
 Not?"), which name the shape of the feature but not its mechanics. Small
 cross-references to this document were added to `DATA_SCHEMA.md`,
@@ -19,8 +17,8 @@ cross-references to this document were added to `DATA_SCHEMA.md`,
   `EXACT`/`STARSECTOR_STYLE`/`ADAPTIVE` substitution model that section 4
   ("Then ask whether native ships can be retrofitted") and section 5
   ("Only then search acquisitions") below depend on.
-- Root `ROADMAP.md` Phase 10 (Gap Recommendation Engine): tracks
-  implementation status against this spec.
+- Root `ROADMAP.md`: records the current recommendation-system scope and
+  priorities.
 
 ## 2. Implementation status (read this before the rest)
 
@@ -33,7 +31,7 @@ just unstarted work:
 | 3 (Capability vs role) | Partial -- a normalized 18-dimension `CapabilityVector` now aggregates mechanical, existing-variant weapon, carrier, and civilian evidence, while recommendation mappings remain limited to unambiguous current role counterparts. |
 | 4 (Define the gap) | **Implemented** -- `analysis/gap_recommendation.py::detect_capability_gaps`; `baseline_0.5+` may augment matching role coverage with available vector evidence and retains vector confidence/evidence on the gap. |
 | 6 (Native search) | **Implemented** -- `analysis/gap_recommendation.py::recommend_native_solutions` |
-| 5 (Adaptive retrofit search) | **Implemented, narrower than the full design** -- `analysis/gap_recommendation.py::recommend_retrofit_solutions`. Reuses the native leg's own top-ranked structurally-capable hulls and `generation/refit.py::improve_quality`'s `IMPROVE_ROLE_MATCH` mode to find real, under-realized existing variants. Inherits `IMPROVE_ROLE_MATCH`'s own limitation: its greedy single-step search can't fix `role_match`'s all-or-nothing formula once more than one mounted weapon already violates it, so real multi-weapon combat variants rarely retrofit today (confirmed live against real Pirates data) -- single/near-single-weapon variants work reliably. |
+| 5 (Adaptive retrofit search) | **Implemented, narrower than the full design** -- `analysis/gap_recommendation.py::recommend_retrofit_solutions`. Reuses the native leg's own top-ranked structurally-capable hulls and `generation/refit.py::improve_quality`'s `IMPROVE_ROLE_MATCH` mode to find under-realized existing variants. Its greedy single-step search is limited when several mounted weapons violate role-match requirements. |
 | 7 (Acquisition search) | **Implemented** -- `analysis/gap_recommendation.py::recommend_acquisition_solutions`, using `analysis/equipment_affinity.py::classify_equipment_affinity` (now extended to `entity_kind="hulls"`) and the existing `affinity_preference_<tier>` heuristic table. |
 | 8 (Retrofit cost) | Partially implemented -- `baseline_0.6` records a normalized real change-cost disruption and applies a bounded quality-only penalty to build-aware retrofit score. |
 | 9 (Role distortion) | Partially implemented -- build compatibility supplies an explicit structural role-distortion metric for build-aware retrofit paths. Doctrine-distance distortion remains unavailable without supported pack evidence. |
@@ -41,7 +39,7 @@ just unstarted work:
 | 11 (Confidence) | Partial: known-hull coverage, available vector evidence, build inference confidence, and access-pack confidence propagate conservatively into build-aware recommendations. Unknown scripted effects remain unavailable rather than numerically invented. |
 | 12 (Knowledge-pack doctrine bias) | Not implemented -- requires Phase 7 (Faction Knowledge Pack Framework), which doesn't exist yet |
 | 13 (Why Not) | Implemented across current legs; diversity decisions must additionally preserve and report the mechanical-profile evidence and score tradeoff that led to selection or exclusion. |
-| 14 (GUI) | Not implemented -- no GUI exists yet at all (`GUI.md` section 50's Readiness Gate) |
+| 14 (GUI) | **Implemented for the supported recommendation workflows** -- the Faction workspace exposes faction capability, gaps, recommendations, Why-Not, Fleet Support, and Scenario Advisor controls. It remains presentation-only and relies on the API/backend service layer. |
 | 15 (No Recommendation) | **Implemented, now to full-maturity's own definition** -- `unaddressed_gaps` (no native solution, unchanged) plus a new `fully_unaddressed_gaps` (no solution across native, retrofit, AND acquisition, exactly this section's own "full maturity" framing). |
 | 18 (Scenario-Aware Recommendations, Phase 31) | **Implemented as a separate, additive `INFERRED_SCENARIO_OPTION` category** -- `recommend_scenario_solutions`/`explain_scenario_candidate` layer a heuristic scenario-fit score on top of the already-ranked Native/Retrofit/Acquisition legs; never wired into `recommend_gap_solutions` itself, never affects those legs' own ranking or confidence. |
 
@@ -65,10 +63,8 @@ This project currently computes only 5 of those, as non-exclusive
 `LINE_BRAWLER`. The Gap Recommendation Engine v1 treats these 5 as the
 capability set. Extending toward the full 15-dimension taxonomy needs new
 classifiers with the same real-evidence discipline `classify_hull`
-already follows (see `docs/ROADMAP.md`'s civilian-classification section
-for an example of a taxonomy dimension -- cargo/fuel-ratio thresholds --
-that was tried and rejected for lacking real support), not added here on
-weak grounds.
+already follows. Do not add taxonomy dimensions on weak grounds; retain an
+unavailable dimension when the available data cannot support it.
 
 ## 4. Define the gap
 

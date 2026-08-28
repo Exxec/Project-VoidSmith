@@ -7,6 +7,19 @@ explainable ship fits, refit suggestions, and faction capability reports. It is
 an offline, deterministic assistant, not a combat simulator. It reads source
 data only; generated output is written below your selected output folder.
 
+### How to think about a VoidSmith result
+
+VoidSmith intentionally keeps three questions separate:
+
+1. **Is the fit legal?** This is answered only by supported hard validation.
+2. **How well does the fit match the requested role or scenario?** This is the
+   recommendation score.
+3. **How complete is the evidence behind that judgment?** This is confidence.
+
+That separation matters most with modded content. A ship can receive a useful,
+legal recommendation even when one scripted hullmod remains unknown; the
+unknown is reported instead of being treated as a favorable zero.
+
 ### Support status
 
 | Area | Status | What that means now |
@@ -20,6 +33,21 @@ data only; generated output is written below your selected output folder.
 | Modules, stations, fighter-like hulls | Partial | Structure is recognized; aggregate combat behavior is not modeled. |
 | AI/player behavior | Partial | Static suitability signals/evidence can be shown; runtime AI is never guessed. |
 | Warfare posture and entity labels | Experimental | Advisory scored profiles; they do not yet change recommendation ranking. |
+
+### What happens with an unfamiliar mod
+
+VoidSmith does not require a mod-specific guide or adapter before it can attempt
+analysis. Conventional hulls are handled from parsed mechanics and structure.
+When a mod introduces unusual entities or scripts, the program degrades
+conservatively: ordinary supported mechanics remain usable, known portions of
+partially understood scripts are preserved, and opaque or compiled-only behavior
+remains unknown. Fighter-like, module, composite, or otherwise structurally
+unsupported entities can be excluded from ordinary recommendation pools without
+being declared illegal. Custom combat AI can be detected as evidence without
+inventing its runtime behavior.
+
+"Partial support" is therefore usually a documented confidence boundary, not a
+parser failure.
 
 ## Scanning your installation
 
@@ -149,6 +177,17 @@ diversity, or not considered for a supported reason.
 Knowledge packs are optional advisory files (`--knowledge-pack`). They may
 affect guidance, access affinity, and confidence, never hard legality.
 
+### Fleet Support and Scenario Advisor
+
+Fleet Support holds the ships you select fixed and ranks individual additions
+that complement their visible mechanical gaps. It does not choose fleet size,
+replace ships, inspect inventory, or simulate battles.
+
+The Scenario Advisor can assess a generic objective template or a user-declared
+capability target against that locked selection. Its alignment is static and
+evidence-bound: it can identify useful complementary needs and hand them to
+Fleet Support, but it does not predict a battle outcome.
+
 ## Entity type, composite ships, and warfare posture
 
 The Data/Analysis surfaces distinguish ordinary ships from composite parents,
@@ -161,9 +200,10 @@ Ordinary recommendation pools exclude fighter-like and module/composite
 entities because their independent or aggregate fitting semantics are not fully
 modeled. This is an eligibility boundary, not a legality verdict.
 
-The experimental six-axis warfare profile reports scored battlefield function,
-engagement position, tactical style, tempo, commitment, and fleet dependence.
-It only uses parsed defenses, flux, mobility, mounts/arcs, bays, and observed
+The experimental six-axis warfare profile reports six independent scored axes:
+battlefield function, engagement position, tactical style, tempo, commitment,
+and fleet dependence. The profile is multi-valued rather than a single hard
+class. It only uses parsed defenses, flux, mobility, mounts/arcs, bays, and observed
 variant weapon mix. It does **not** infer ramming, reserve/sweeper use, custom
 AI behavior, ammo/rearm cycles, or fleet doctrine from flavor text.
 

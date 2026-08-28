@@ -1,5 +1,5 @@
 # VoidSmith
-Read-only Starsector variant analysis and generation. Version 0.5 Planning Pack.
+Read-only Starsector variant analysis and generation.
 
 ## Major Systems
 

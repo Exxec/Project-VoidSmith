@@ -6,9 +6,9 @@ Read `AGENTS.md` first, then the formal/schema/engine documents named there.
 The core is offline, deterministic, explainable, and source-read-only. Do not
 commit Starsector/mod data, extracted reports, entity lists, or real benchmarks.
 
-Implementation and tests are authoritative when older planning/status prose
-disagrees. `ROADMAP.md` and older historical status entries contain planned or
-superseded material and need periodic cleanup.
+Implementation and tests are authoritative for implemented behavior. The root
+`ROADMAP.md` is authoritative for the current plan; remove or update older
+historical status notes when they no longer add useful context.
 
 ## Architecture and data flow
 
@@ -87,9 +87,16 @@ systems, durability, or legality into a parent without a dedicated evidence
 contract.
 
 `analysis/combat_entity.py` separates structural entity kind from deployment;
-`analysis/combat_doctrine.py` is an experimental, advisory six-axis profile.
-Neither changes legality. Do not promote custom AI, fighter geometry, names, or
-flavor text into runtime behavior.
+`analysis/combat_doctrine.py` is an experimental, advisory six-axis profile:
+battlefield function, engagement position, tactical style, tempo, commitment,
+and fleet dependence. The axes are multi-valued and evidence-bound rather than
+a replacement for one large role enum.
+
+Neither classification system changes legality. Hull size describes geometry;
+entity kind describes what an entity is; deployment records what is actually
+known about how it enters combat; doctrine describes supported warfare posture.
+Do not promote custom AI, fighter geometry, names, flavor text, or unsupported
+script behavior into runtime behavior.
 
 ## Recommendations, confidence, and calibration
 
@@ -101,6 +108,13 @@ prevent drift. Structural eligibility is separate from legality.
 Calibration modules consume local hash-bound fixtures/observations and compare
 registered heuristics. They do not automatically modify heuristic values. Real
 mod/local benchmark manifests remain ignored user data.
+
+For unfamiliar mods, begin with generic qualification before proposing an
+adapter. Record what is understood, partial, compiled-only, structurally
+unsupported, or runtime-dependent. Fix recurring generic weaknesses in the core
+when evidence supports it; add a mod-specific adapter only for genuinely
+mod-specific semantics. A lower interpretation percentage is acceptable when
+unknown behavior is preserved honestly.
 
 ## API, CLI, GUI, and tests
 
@@ -157,8 +171,8 @@ Items requiring follow-up rather than a claim of support:
 
 - GUI availability depends on the optional PySide6 dependency and local display
   environment; this guide does not assert a packaged binary is present.
-- Some historical `README.md`, `ROADMAP.md`, `WORK_LOG.md`, and
-  `IMPLEMENTATION_STATUS.md` entries retain older test counts/planned language.
+- Historical notes that retain older test counts or planned language should be
+  treated as non-authoritative and removed when no longer useful.
 - Exact report filenames vary by command/entity and are intentionally not all
   enumerated here; CLI output reports the actual path.
 - Runtime mod load-order override semantics, system-spawn deployment, and

@@ -18,4 +18,4 @@ Hullmod selection (`generation/hullmods.py`) never fabricates "hullmod X suits r
 
 The baseline quality thresholds `artillery_min_range` and `brawler_max_range` are versioned in `baseline_0.1`/`baseline_0.2`; they are scoring heuristics, not legality rules.
 
-As of `baseline_0.2`, scoring also includes a `flux_sustainability` component (its target set by `--flux-mode SAFE|BALANCED|AGGRESSIVE`, defaulted per user mode) and a `faction_doctrine_match` component (only when `--faction-id` resolves to an indexed faction). Both are omitted from the final score -- not zeroed -- when the underlying data is unavailable; see `docs/ROADMAP.md` Tier 2/3.1.
+As of `baseline_0.2`, scoring also includes a `flux_sustainability` component (its target set by `--flux-mode SAFE|BALANCED|AGGRESSIVE`, defaulted per user mode) and a `faction_doctrine_match` component (only when `--faction-id` resolves to an indexed faction). Both are omitted from the final score -- not zeroed -- when the underlying data is unavailable.
