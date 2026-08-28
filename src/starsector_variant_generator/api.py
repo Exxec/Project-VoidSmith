@@ -631,6 +631,49 @@ def run_scenario_fleet_advisor(
     return assess_scenario_fleet(selections, registry, scenario, faction, heuristic_set, constraints)
 
 
+@dataclass(frozen=True)
+class ScenarioSupportFitOutcome:
+    """A concrete-fit handoff from a freshly revalidated scenario advisory.
+
+    The scenario assessment remains a static alignment view.  Only the
+    generated variants in ``generation`` carry normal fit legality results.
+    """
+    assessment: ScenarioFleetAssessment
+    recommendation: FleetSupportRecommendation
+    support_purpose: str
+    generator_profile: str
+    generation: GenerateOutcome
+
+
+def run_generate_scenario_support_fit(
+    registry: Registry, selections: tuple[FleetSelection, ...], scenario: ScenarioObjectiveProfile,
+    hull_id: str, faction_id: str | None = None, source_mod: str | None = None,
+    heuristic_set: str = "baseline_0.14", constraints: FleetSupportConstraints = FleetSupportConstraints(),
+    mode: str = "guided", max_candidates: int = 5, search_depth: int = 1,
+) -> ScenarioSupportFitOutcome:
+    """Generate only a currently shortlisted scenario-fit recommendation.
+
+    Re-running the Scenario Advisor preserves its declared targets and locked
+    selections; a hull from an old or unrelated Fleet Support run cannot be
+    silently treated as scenario-qualified.
+    """
+    faction = resolve_faction(registry, faction_id, source_mod) if faction_id else None
+    assessment = assess_scenario_fleet(selections, registry, scenario, faction, heuristic_set, constraints)
+    recommendation = next((item for item in assessment.recommendations if item.hull_id == hull_id), None)
+    if recommendation is None:
+        raise ValueError("Scenario-fit generation requires a currently shortlisted Scenario Advisor recommendation")
+    selection = support_fit_profile(recommendation)
+    if selection is None:
+        raise ValueError("This scenario recommendation has no modeled combat support-fit purpose; logistics-specific fitting is not implemented")
+    purpose, profile = selection
+    generated = run_generate(
+        registry, heuristic_set, hull_id, mode, profile=profile, faction_id=faction_id,
+        faction_mode="STRICT_FACTION" if constraints.access_mode == "STRICT_FACTION" else "FACTION_PLUS",
+        max_candidates=max_candidates, search_depth=search_depth,
+    )
+    return ScenarioSupportFitOutcome(assessment, recommendation, purpose, profile, generated)
+
+
 def load_or_populate_retrofits(
     registry: Registry, hull_id: str, output_root: Path, heuristic_set: str = "baseline_0.2",
 ) -> object:

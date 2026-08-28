@@ -43,7 +43,7 @@ from PySide6.QtWidgets import (
 
 from starsector_variant_generator import api
 from starsector_variant_generator.analysis.fleet_support import FleetSelection, FleetSupportConstraints, SupportFocus, fleet_support_request_from_payload, fleet_support_request_to_payload, parse_fleet_selections
-from starsector_variant_generator.analysis.scenario_advisor import ScenarioCapabilityTarget, generic_scenario_profiles, user_defined_scenario
+from starsector_variant_generator.analysis.scenario_advisor import ScenarioCapabilityTarget, generic_scenario_profiles, scenario_advisor_request_from_payload, scenario_advisor_request_to_payload, user_defined_scenario
 from starsector_variant_generator.core.config import DEFAULT_HEURISTIC_SET, AppConfig
 from starsector_variant_generator.core.mod_import import ModImportResult, resolve_dropped_mod
 from starsector_variant_generator.core.models import Hull, Variant
@@ -118,6 +118,7 @@ class MainWindow(QMainWindow):
         self._scan_watchdog = QTimer(self); self._scan_watchdog.setInterval(5000); self._scan_watchdog.timeout.connect(self._check_scan_stall)
         self._data_tables_pending = False
         self._operation_tokens: dict[QPushButton, int] = {}
+        self._operation_progress: dict[QThread, QProgressDialog] = {}
         self._extra_mods: list[ModImportResult] = []
         self.setAcceptDrops(True)
         self._preferences = QSettings("VoidSmith", "Desktop")
@@ -368,7 +369,11 @@ class MainWindow(QMainWindow):
         self.scenario_profile.addItem("Custom declared targets", "CUSTOM")
         self.scenario_targets = QLineEdit(); self.scenario_targets.setPlaceholderText("Custom only: CAPABILITY=0.70, CAPABILITY=0.55")
         self.scenario_evaluate_button = QPushButton("Evaluate Scenario"); self.scenario_evaluate_button.setEnabled(False); self.scenario_evaluate_button.clicked.connect(self._evaluate_scenario)
-        scenario_form.addRow("Scenario", self.scenario_profile); scenario_form.addRow("Targets", self.scenario_targets); scenario_form.addRow(self.scenario_evaluate_button)
+        self.generate_scenario_fit_button = QPushButton("Generate Scenario Fit"); self.generate_scenario_fit_button.setEnabled(False); self.generate_scenario_fit_button.setToolTip("Revalidates a current scenario recommendation against the declared targets, then runs the normal bounded generator."); self.generate_scenario_fit_button.clicked.connect(self._generate_scenario_fit)
+        self.save_scenario_button = QPushButton("Save Request…"); self.save_scenario_button.clicked.connect(self._save_scenario_request)
+        self.load_scenario_button = QPushButton("Load Request…"); self.load_scenario_button.clicked.connect(self._load_scenario_request)
+        scenario_buttons = QWidget(); scenario_buttons_layout = QHBoxLayout(scenario_buttons); scenario_buttons_layout.setContentsMargins(0, 0, 0, 0); scenario_buttons_layout.addWidget(self.scenario_evaluate_button); scenario_buttons_layout.addWidget(self.generate_scenario_fit_button); scenario_buttons_layout.addWidget(self.save_scenario_button); scenario_buttons_layout.addWidget(self.load_scenario_button)
+        scenario_form.addRow("Scenario", self.scenario_profile); scenario_form.addRow("Targets", self.scenario_targets); scenario_form.addRow(scenario_buttons)
         layout.addWidget(support_group); layout.addWidget(scenario_group); self.fleet_support_cards = QListWidget(); self.fleet_support_cards.setSelectionMode(QAbstractItemView.ExtendedSelection); self.fleet_support_cards.addItem("Run Fleet Support Advisor to populate recommendation cards."); self.fleet_support_cards.currentRowChanged.connect(self._fleet_support_card_selected); layout.addWidget(self.fleet_support_cards, 1); self.faction_detail = QPlainTextEdit(); self.faction_detail.setReadOnly(True); self.faction_detail.setPlainText("Select a faction after scanning, or enter locked hull IDs for support advice."); layout.addWidget(self.faction_detail, 2); return page
 
     def _data(self) -> QWidget:
@@ -540,7 +545,7 @@ class MainWindow(QMainWindow):
         # (including raising), rather than the thread's own termination
         # depending on an application handler completing cleanly first.
         worker.completed.connect(thread.quit); worker.completed.connect(self._scan_complete)
-        worker.failed.connect(thread.quit); worker.failed.connect(self._operation_failed)
+        worker.failed.connect(thread.quit); worker.failed.connect(lambda error: self._fail_operation(control, token, error))
         worker.cancelled.connect(thread.quit)
         thread.finished.connect(worker.deleteLater); thread.finished.connect(self._scan_finished)
         self._scan_thread = thread; self._scan_worker = worker; self.scan_button.setEnabled(False); self.statusBar().showMessage("Scanning read-only source data…")
@@ -877,7 +882,7 @@ class MainWindow(QMainWindow):
         fit = Variant(f"gui_{self._current_hull.id}", "GUI Fit", "GENERATED", self._current_hull.source_path, hull_id=self._current_hull.id, weapons_by_mount=dict(self._fit_weapons)); assessment = api.run_validate_fit(self._registry, fit); details = "; ".join(x.message for x in (*assessment.failures, *assessment.uncertainties))
         self.statusBar().showMessage(f"{assessment.result}: {details or 'No legality findings.'}"); self._update_fit_metrics(); self.canvas.show_hull(self._current_hull, self._fit_weapons, self._registry.weapons.by_id); self.inspect_detail.appendPlainText(f"\nManual fit legality: {assessment.result}\n{details}")
 
-    def _run(self, message: str, operation: Callable[[], Any], completed: Callable[[Any], None], control: QPushButton) -> None:
+    def _run(self, message: str, operation: Callable[[], Any], completed: Callable[[Any], None], control: QPushButton, *, cancellable: bool = False) -> None:
         # Backend tasks are immutable snapshots. Token-gating prevents a stale
         # result from replacing a newer UI request without unsafe cancellation.
         token = self._operation_tokens.get(control, 0) + 1; self._operation_tokens[control] = token
@@ -887,13 +892,42 @@ class MainWindow(QMainWindow):
         worker.completed.connect(thread.quit); worker.completed.connect(lambda result: self._complete_operation(control, token, completed, result))
         worker.failed.connect(thread.quit); worker.failed.connect(self._operation_failed)
         thread.finished.connect(worker.deleteLater); thread.finished.connect(lambda: self._finish_thread(thread, control))
-        self._threads.add(thread); self._active_workers[thread] = worker; control.setEnabled(False); self.statusBar().showMessage(message); thread.start()
+        self._threads.add(thread); self._active_workers[thread] = worker; control.setEnabled(False); self.statusBar().showMessage(message)
+        if cancellable:
+            # Analysis services do not expose a safe checkpoint/cancel API.
+            # Cancel therefore means "stop waiting for this result": the
+            # in-flight read completes without adoption, and its thread is
+            # still retained until Qt confirms it has stopped.
+            progress = QProgressDialog(message, "Stop Waiting", 0, 0, self)
+            progress.setWindowModality(Qt.WindowModal)
+            progress.canceled.connect(lambda: self._discard_operation_result(thread, control, token))
+            self._operation_progress[thread] = progress
+            progress.show()
+        thread.start()
+
+    def _discard_operation_result(self, thread: QThread, control: QPushButton, token: int) -> None:
+        if self._operation_tokens.get(control) == token:
+            self._operation_tokens[control] = token + 1
+            self.statusBar().showMessage("Stopped waiting for the scenario analysis; the read-only calculation will finish safely in the background.")
+        dialog = self._operation_progress.get(thread)
+        if dialog is not None:
+            dialog.setLabelText("Stopping result delivery safely…")
+            dialog.setCancelButton(None)
 
     def _complete_operation(self, control: QPushButton, token: int, completed: Callable[[Any], None], result: Any) -> None:
         if self._operation_tokens.get(control) == token:
             completed(result)
 
+    def _fail_operation(self, control: QPushButton, token: int, message: str) -> None:
+        # A user who stopped waiting for an operation also opted out of its
+        # eventual error dialog. The traceback remains in the worker log.
+        if self._operation_tokens.get(control) == token:
+            self._operation_failed(message)
+
     def _finish_thread(self, thread: QThread, control: QPushButton) -> None:
+        dialog = self._operation_progress.pop(thread, None)
+        if dialog is not None:
+            dialog.close(); dialog.deleteLater()
         self._threads.discard(thread); self._active_workers.pop(thread, None); control.setEnabled(self._registry is not None); thread.deleteLater()
         self._maybe_close_after_background_work()
     def _operation_failed(self, message: str) -> None: self.statusBar().showMessage(f"Operation failed: {message}"); QMessageBox.critical(self, "Operation failed", message)
@@ -1274,7 +1308,82 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "Faction required", "Select a faction before using Strict Faction access."); return
         faction_id, source_mod = selected if selected is not None else (None, None)
         heuristic_set = str(self.fleet_support_heuristic.currentData())
-        self._run("Comparing locked fleet mechanics with declared scenario targets…", lambda: api.run_scenario_fleet_advisor(self._registry, selections, scenario, faction_id, source_mod, heuristic_set, constraints), lambda result: self.faction_detail.setPlainText(format_scenario_fleet_assessment(result)), self.scenario_evaluate_button)
+        def complete(result: Any) -> None:
+            self._scenario_last_result = result
+            self.faction_detail.setPlainText(format_scenario_fleet_assessment(result))
+            self.fleet_support_cards.clear()
+            for item in result.recommendations:
+                purposes = ", ".join(item.support_purposes) or "scenario support addition"
+                card = QListWidgetItem(f"{item.hull_id} - {purposes} - scenario score {item.recommendation_score:.3f}")
+                card.setData(Qt.UserRole, item.hull_id)
+                card.setToolTip("Scenario-targeted addition. Revalidate before generating a concrete fit.\nSupports: " + ", ".join(item.supports))
+                self.fleet_support_cards.addItem(card)
+            if not result.recommendations:
+                self.fleet_support_cards.addItem("No material scenario-targeted additions.")
+        self._run("Comparing locked fleet mechanics with declared scenario targets", lambda: api.run_scenario_fleet_advisor(self._registry, selections, scenario, faction_id, source_mod, heuristic_set, constraints), complete, self.scenario_evaluate_button, cancellable=True)
+
+    def _generate_scenario_fit(self) -> None:
+        if self._registry is None:
+            self.faction_detail.setPlainText("Scan an installation before generating a scenario fit."); return
+        candidate = self.fleet_support_candidate.text().strip()
+        tokens = tuple(item.strip() for item in self.fleet_support_hulls.text().split(",") if item.strip())
+        if not candidate or not tokens:
+            self.faction_detail.setPlainText("Select a current scenario recommendation and keep at least one locked hull ID."); return
+        try:
+            selections = parse_fleet_selections(tokens); scenario = self._scenario_profile_from_controls()
+        except ValueError as exc:
+            self.faction_detail.setPlainText(str(exc)); return
+        selected = self._faction_id(); constraints = self._fleet_support_constraints_from_controls()
+        if constraints.access_mode == "STRICT_FACTION" and selected is None:
+            QMessageBox.information(self, "Faction required", "Select a faction before using Strict Faction access."); return
+        faction_id, source_mod = selected if selected is not None else (None, None)
+        heuristic_set = str(self.fleet_support_heuristic.currentData())
+        def complete(outcome: Any) -> None:
+            self.faction_detail.setPlainText(
+                f"SCENARIO SUPPORT FIT - {outcome.recommendation.hull_id}\n"
+                f"Scenario: {outcome.assessment.scenario.display_name}\nPurpose: {outcome.support_purpose}\n"
+                f"Generator profile: {outcome.generator_profile}\n\n"
+                + format_generation_results(outcome.generation.assessed_candidates, outcome.generation.selected_profile, outcome.generation.flux_mode)
+            )
+        self._run("Revalidating scenario recommendation and generating a concrete fit", lambda: api.run_generate_scenario_support_fit(self._registry, selections, scenario, candidate, faction_id, source_mod, heuristic_set, constraints), complete, self.generate_scenario_fit_button, cancellable=True)
+
+    def _save_scenario_request(self) -> None:
+        tokens = tuple(item.strip() for item in self.fleet_support_hulls.text().split(",") if item.strip())
+        try:
+            selections = parse_fleet_selections(tokens); scenario = self._scenario_profile_from_controls()
+        except ValueError as exc:
+            self.faction_detail.setPlainText(str(exc)); return
+        path, _ = QFileDialog.getSaveFileName(self, "Save Scenario Advisor Request", "scenario-advisor-request.json", "JSON files (*.json)")
+        if not path:
+            return
+        try:
+            Path(path).write_text(json.dumps(scenario_advisor_request_to_payload(selections, scenario, self._fleet_support_constraints_from_controls()), indent=2), encoding="utf-8")
+        except OSError as exc:
+            QMessageBox.warning(self, "Request not saved", str(exc)); return
+        self.statusBar().showMessage("Scenario Advisor request saved; it contains only declared selections, targets, and constraints.")
+
+    def _load_scenario_request(self) -> None:
+        path, _ = QFileDialog.getOpenFileName(self, "Load Scenario Advisor Request", "", "JSON files (*.json)")
+        if not path:
+            return
+        try:
+            payload = json.loads(Path(path).read_text(encoding="utf-8"))
+            selections, scenario, constraints = scenario_advisor_request_from_payload(payload)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            QMessageBox.warning(self, "Request not loaded", str(exc)); return
+        entries = [(f"variant:{item.variant_id}" if item.variant_id else str(item.hull_id)) + (f"*{item.count}" if item.count != 1 else "") for item in selections]
+        self.fleet_support_hulls.setText(", ".join(entries))
+        profile_index = self.scenario_profile.findData(scenario.scenario_id)
+        if profile_index >= 0:
+            self.scenario_profile.setCurrentIndex(profile_index); self.scenario_targets.clear()
+        else:
+            self.scenario_profile.setCurrentIndex(self.scenario_profile.findData("CUSTOM"))
+            self.scenario_targets.setText(", ".join(f"{item.capability}={item.target:.2f}" for item in scenario.capability_targets))
+        self.fleet_support_focus.setCurrentIndex(max(0, self.fleet_support_focus.findData(constraints.focus.value)))
+        self.fleet_support_access.setCurrentIndex(max(0, self.fleet_support_access.findData(constraints.access_mode)))
+        self.fleet_support_allow_foreign.setChecked(constraints.allow_foreign_hulls)
+        self.fleet_support_include_hidden.setChecked(constraints.include_hidden_hulls)
+        self.statusBar().showMessage("Scenario Advisor request loaded; scan local data before evaluating it.")
 
     def _compare_fleet_support_cards(self) -> None:
         result = getattr(self, "_fleet_support_last_result", None)

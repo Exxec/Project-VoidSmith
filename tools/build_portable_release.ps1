@@ -47,7 +47,11 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
     }
     $Version = $Matches[1]
 }
-if ($Version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+([-.][A-Za-z0-9.]+)?$') {
+# PEP 440 pre-releases use forms such as ``0.1.25rc1`` (without a separator
+# before ``rc``). Keep accepting the existing ``-preview`` naming convention
+# as well, while rejecting whitespace/path characters before they reach an
+# output path.
+if ($Version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+([-.]?[A-Za-z0-9.]+)?$') {
     throw "Unsafe release version: $Version"
 }
 if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {

@@ -5,7 +5,7 @@ from pathlib import Path
 
 from starsector_variant_generator import api
 from starsector_variant_generator.analysis.fleet_support import FleetSelection, FleetSupportConstraints
-from starsector_variant_generator.analysis.scenario_advisor import ScenarioCapabilityTarget, ScenarioPressure, assess_scenario_fleet, generic_scenario_profiles, user_defined_scenario
+from starsector_variant_generator.analysis.scenario_advisor import ScenarioCapabilityTarget, ScenarioPressure, assess_scenario_fleet, generic_scenario_profiles, scenario_advisor_request_from_payload, scenario_advisor_request_to_payload, user_defined_scenario
 from starsector_variant_generator.core.models import Hull, ScanResult
 from starsector_variant_generator.core.registry import Registry
 
@@ -51,6 +51,25 @@ class ScenarioAdvisorTests(unittest.TestCase):
         scenario = user_defined_scenario("hold", "Hold the Line", (ScenarioCapabilityTarget("ARMOR_TANKING", .80),))
         result = api.run_scenario_fleet_advisor(registry, (FleetSelection("selected"),), scenario, constraints=FleetSupportConstraints(recommendation_count=1))
         self.assertNotIn("selected", {item.hull_id for item in result.recommendations})
+
+    def test_portable_request_round_trip_contains_only_declared_input(self) -> None:
+        scenario = user_defined_scenario("hold", "Hold the Line", (ScenarioCapabilityTarget("ARMOR_TANKING", .80),), (ScenarioPressure.LOW_LOSS_TOLERANCE,))
+        payload = scenario_advisor_request_to_payload((FleetSelection("selected", count=2),), scenario, FleetSupportConstraints())
+        self.assertNotIn("registry", payload)
+        selections, restored, constraints = scenario_advisor_request_from_payload(payload)
+        self.assertEqual((FleetSelection("selected", 2),), selections)
+        self.assertEqual(scenario.capability_targets, restored.capability_targets)
+        self.assertEqual("FACTION_PLUS", constraints.access_mode)
+
+    def test_scenario_fit_handoff_rejects_a_hull_not_in_current_scenario_shortlist(self) -> None:
+        selected = hull("selected", armor=100, flux=100, speed=60, mounts=1)
+        registry = Registry.from_scan(ScanResult(hulls=[selected]))
+        scenario = user_defined_scenario("hold", "Hold the Line", (ScenarioCapabilityTarget("ARMOR_TANKING", .80),))
+        with self.assertRaisesRegex(ValueError, "currently shortlisted Scenario Advisor"):
+            api.run_generate_scenario_support_fit(
+                registry, (FleetSelection("selected"),), scenario, "selected",
+                constraints=FleetSupportConstraints(recommendation_count=1),
+            )
 
 
 if __name__ == "__main__":

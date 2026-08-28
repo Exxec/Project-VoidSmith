@@ -29,24 +29,43 @@ files, or make campaign-inventory or market-availability decisions.
 | Desktop workspaces and export | Complete with limits | GUI calls backend services without duplicating rules; exports write only compatibility-mod output. |
 | Fleet Support | Complete with limits | Selected ships stay locked; complementary individual additions are ranked with composition synergy. |
 | Scenario / Mission Advisor | Complete with limits | Generic templates and custom capability targets report static alignment and can feed deficient needs to Fleet Support. |
+| Scenario workflow handoff | Complete with limits | Portable snapshots, visible scenario-targeted cards, and a revalidated Scenario Fit handoff to the bounded generator; “Stop Waiting” safely discards a pending GUI result. |
 
 ## Next priorities
 
-1. Finish the scenario workflow with clear diagnostics, cancellation/progress
-   feedback, and an explicit scenario-fit handoff. Portable Scenario Advisor
-   request snapshots now preserve only user-declared locked selections,
-   capability targets, pressures, and advisor constraints; they never embed
-   scanned game/mod data.
-2. Define a safe, read-only campaign-save discovery boundary. Do not add
+1. Define a safe, read-only campaign-save discovery boundary. Do not add
    campaign mutation, inventory planning, or undocumented save semantics.
-3. Evaluate bounded officer and deployment-point advisory views only where
+2. Evaluate bounded officer and deployment-point advisory views only where
    parseable evidence supports them; keep them separate from legality and
    combat-outcome claims.
-4. Continue calibration and generic mod qualification using local,
+3. Continue calibration and generic mod qualification using local,
    hash-bound, ignored fixtures. Add adapters only for supported, genuinely
    mod-specific static semantics.
-5. Improve release clarity, portable-build verification, and GUI explanation
+4. Improve release clarity, portable-build verification, and GUI explanation
    paths without broadening into whole-fleet optimization.
+
+## Latest implementation note
+
+The Scenario Advisor now saves and restores only user-declared locked
+selections, capability targets, pressures, and advisor constraints. Scenario
+recommendation cards feed a separate **Generate Scenario Fit** action, which
+re-runs the same scenario assessment and accepts only a currently shortlisted
+candidate before invoking the ordinary bounded generator. Generated variants,
+not the scenario card, retain normal validation results. The GUI shows an
+indeterminate progress dialog for scenario evaluation and fit generation. Its
+**Stop Waiting** action safely suppresses result delivery but does not claim
+to interrupt the backend: no safe cooperative checkpoints currently exist in
+those deterministic analysis calls, so the read-only work finishes before its
+thread is released.
+
+## RC1 limits carried forward
+
+Campaign-save discovery remains intentionally unimplemented until a documented,
+read-only save format and user-selected save location can be supported without
+guessing. The normalized hull schema currently has no deployment-point field,
+and the application has no parseable campaign officer/skill state. Existing
+knowledge-pack officer notes remain presentational guidance only. These gaps
+cannot be converted into recommendation or combat-outcome claims for RC1.
 
 ## Engineering constraints
 
