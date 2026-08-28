@@ -13,6 +13,7 @@ from starsector_variant_generator.output.change_impact_report import compact_cha
 from starsector_variant_generator.output.diagnostic_summary import summarize_scan_issues
 from starsector_variant_generator.analysis.gap_recommendation import RecommendationConstraints
 from starsector_variant_generator.analysis.fleet_support import FleetSupportConstraints, SupportFocus, fleet_support_request_from_payload, fleet_support_request_to_payload, parse_fleet_selections
+from starsector_variant_generator.analysis.scenario_advisor import generic_scenario_profiles, scenario_advisor_request_from_payload, scenario_advisor_request_to_payload
 from starsector_variant_generator.core.result_cache import AnalysisResultCache
 from starsector_variant_generator.profiles.modes import UserMode
 from starsector_variant_generator.profiles.catalog import available_profiles, get_profile
@@ -99,6 +100,15 @@ def main() -> int:
     fleet_support.add_argument("--save-request-snapshot", type=Path, help="Write this user-owned request JSON")
     fleet_support.add_argument("--starsector-path", type=Path, required=True)
     fleet_support.add_argument("--output-dir", type=Path, default=Path("generated"))
+    scenario_advisor = subparsers.add_parser("scenario-advisor", help="Assess locked ships against a declared scenario; never predicts battle outcomes")
+    scenario_advisor.add_argument("hull_id", nargs="*", help="Locked selected hull id(s), optionally hull_id*count")
+    scenario_advisor.add_argument("--scenario", choices=[item.scenario_id for item in generic_scenario_profiles()], help="Generic scenario template")
+    scenario_advisor.add_argument("--request-snapshot", type=Path, help="Load a portable user-owned Scenario Advisor request JSON")
+    scenario_advisor.add_argument("--save-request-snapshot", type=Path, help="Write a portable user-owned Scenario Advisor request JSON")
+    scenario_advisor.add_argument("--faction-id"); scenario_advisor.add_argument("--source-mod")
+    scenario_advisor.add_argument("--access-mode", choices=["STRICT_FACTION", "FACTION_PLUS", "UNRESTRICTED"], default="FACTION_PLUS")
+    scenario_advisor.add_argument("--focus", choices=[item.value for item in SupportFocus], default=SupportFocus.BALANCED.value)
+    scenario_advisor.add_argument("--count", type=int); scenario_advisor.add_argument("--starsector-path", type=Path, required=True); scenario_advisor.add_argument("--output-dir", type=Path, default=Path("generated"))
     fleet_support_why_not = subparsers.add_parser("fleet-support-why-not", help="Explain why one hull was or was not selected as an addition for locked ships")
     fleet_support_why_not.add_argument("candidate_hull_id")
     fleet_support_why_not.add_argument("locked_hull_id", nargs="+", help="Locked selected hull id(s), optionally hull_id*count")
@@ -331,6 +341,27 @@ def main() -> int:
         report_path = report_dir / f"fleet_support_why_not_{args.candidate_hull_id}.json"
         report_path.write_text(json.dumps(asdict(result), indent=2, default=str), encoding="utf-8")
         print(f"{result.reason}: {report_path}")
+        return 0
+    if args.command == "scenario-advisor":
+        config = AppConfig(args.starsector_path, args.output_dir, args.output_dir / "logs")
+        registry = api.build_registry(config, configure_logging(config.log_dir))
+        try:
+            if args.request_snapshot:
+                selections, scenario, constraints = scenario_advisor_request_from_payload(json.loads(args.request_snapshot.read_text(encoding="utf-8")))
+            else:
+                if not args.hull_id or not args.scenario:
+                    parser.error("scenario-advisor requires locked hull IDs and --scenario, or --request-snapshot")
+                selections = parse_fleet_selections(tuple(args.hull_id)); scenario = next(item for item in generic_scenario_profiles() if item.scenario_id == args.scenario)
+                constraints = FleetSupportConstraints(args.access_mode, True, False, SupportFocus(args.focus), args.count)
+            if args.save_request_snapshot:
+                args.save_request_snapshot.parent.mkdir(parents=True, exist_ok=True)
+                args.save_request_snapshot.write_text(json.dumps(scenario_advisor_request_to_payload(selections, scenario, constraints), indent=2), encoding="utf-8")
+            result = api.run_scenario_fleet_advisor(registry, selections, scenario, args.faction_id, args.source_mod, config.heuristic_set, constraints)
+        except ValueError as exc:
+            parser.error(str(exc))
+        report_dir = config.output_dir / "reports"; report_dir.mkdir(parents=True, exist_ok=True)
+        report_path = report_dir / "scenario_advisor.json"; report_path.write_text(json.dumps(asdict(result), indent=2, default=str), encoding="utf-8")
+        print(f"{result.readiness} mechanical alignment, {len(result.recommendations)} individual addition(s): {report_path}")
         return 0
     if args.command == "why-not":
         config = AppConfig(args.starsector_path, args.output_dir, args.output_dir / "logs")
