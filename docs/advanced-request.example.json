@@ -1,0 +1,9 @@
+{
+  "profile": "LINE_ARTILLERY",
+  "faction_mode": "FACTION_PLUS",
+  "allowed_weapon_ids": ["example_weapon"],
+  "denied_weapon_ids": [],
+  "locked_weapons_by_mount": {"WS 001": "example_weapon"},
+  "empty_mount_ids": [],
+  "scoring_weight_overrides": {"weight_flux_sustainability": 0.40, "weight_role_match": 0.35}
+}

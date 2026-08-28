@@ -1,0 +1,7 @@
+{
+  "variantId": "modded_destroyer_Test",
+  "hullId": "modded_destroyer",
+  "weaponGroups": [{"weapons": {"WS 1": "modded_lance"}}],
+  "unparsedScriptData": {"effect": "unknown"}
+}
+

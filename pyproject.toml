@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "voidsmith"
+version = "0.1.24"
+description = "VoidSmith: read-only Starsector variant analysis and generation"
+requires-python = ">=3.11"
+
+[project.scripts]
+voidsmith = "starsector_variant_generator.cli.main:main"
+voidsmith-gui = "starsector_variant_generator.gui.app:main"
+# Compatibility aliases retained for existing local workflows.
+svg = "starsector_variant_generator.cli.main:main"
+svg-gui = "starsector_variant_generator.gui.app:main"
+
+[project.optional-dependencies]
+gui = ["PySide6>=6.6"]
+
+[dependency-groups]
+# Release tooling is locked with the project rather than supplied through an
+# ad-hoc ``uv run --with`` resolution.  Portable release builds therefore use
+# only the committed lockfile and materialized local artifacts by default.
+release = ["pyinstaller==6.22.2"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "starsector_variant_generator.gui.*"
+# PySide6's shipped stubs do not expose several runtime-valid enum aliases
+# (for example Qt.UserRole and QPainter.Antialiasing). Keep checking our own
+# ordinary type errors while suppressing only those binding-stub categories.
+disable_error_code = ["attr-defined"]

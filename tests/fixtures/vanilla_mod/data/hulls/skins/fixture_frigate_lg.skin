@@ -1,0 +1,8 @@
+{
+  "baseHullId": "fixture_frigate",
+  "skinHullId": "fixture_frigate_lg",
+  "hullName": "Fixture Frigate (LG)",
+  "ordnancePoints": 50,
+  "removeWeaponSlots": ["BAY 001"],
+  "weaponSlotChanges": {"WS 001": {"type": "ENERGY"}}
+}

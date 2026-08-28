@@ -1,0 +1,21 @@
+{
+  "hull": {
+    "id": "benchmark_carrier",
+    "name": "Benchmark Carrier (Strike Support)",
+    "hull_size": "CRUISER",
+    "ordnance_points": 120,
+    "fighter_bays": 3,
+    "launch_bay_slots": ["BAY 001", "BAY 002", "BAY 003"],
+    "weapon_mounts": [
+      {"id": "BAY 001", "type": "LAUNCH_BAY", "size": "SMALL"},
+      {"id": "BAY 002", "type": "LAUNCH_BAY", "size": "SMALL"},
+      {"id": "BAY 003", "type": "LAUNCH_BAY", "size": "SMALL"},
+      {"id": "WS 001", "type": "BALLISTIC", "size": "SMALL"},
+      {"id": "WS 002", "type": "ENERGY", "size": "SMALL"}
+    ]
+  },
+  "weapons": [
+    {"id": "benchmark_small_ballistic_gun", "name": "Benchmark Small Ballistic Gun", "size": "SMALL", "mount_type": "BALLISTIC", "ordnance_points": 4, "range": 500, "damage_type": "KINETIC", "flux_per_shot": 15},
+    {"id": "benchmark_small_energy_gun", "name": "Benchmark Small Energy Gun", "size": "SMALL", "mount_type": "ENERGY", "ordnance_points": 5, "range": 500, "damage_type": "KINETIC", "flux_per_shot": 18}
+  ]
+}

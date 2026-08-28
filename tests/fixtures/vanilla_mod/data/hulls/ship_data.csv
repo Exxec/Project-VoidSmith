@@ -1,0 +1,3 @@
+id,name,hullSize,ordnancePoints,max flux,flux dissipation,shield upkeep,fighter bays,cargo,fuel,min crew,max crew,supplies/mo,max burn,hints,customField
+fixture_frigate,Fixture Frigate,FRIGATE,45,4000,120,0.5,1,40,25,25,50,4,10,"CIVILIAN, FREIGHTER",preserve-me
+

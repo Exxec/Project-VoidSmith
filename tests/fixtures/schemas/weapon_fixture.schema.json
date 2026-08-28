@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "weapon_fixture.schema.json",
+  "title": "Synthetic benchmark weapon fixture",
+  "description": "Documents the shape of tests/fixtures/synthetic/*.json's \"weapons\" array. Not enforced by a runtime JSON-Schema validator, kept as a human/tooling-readable contract. Field names and meaning mirror core/models.py's Weapon dataclass exactly.",
+  "type": "object",
+  "required": ["id", "name", "size", "mount_type"],
+  "properties": {
+    "id": {"type": "string"},
+    "name": {"type": "string"},
+    "size": {"type": "string", "enum": ["SMALL", "MEDIUM", "LARGE"]},
+    "mount_type": {"type": "string"},
+    "ordnance_points": {"type": ["integer", "null"]},
+    "range": {"type": ["number", "null"]},
+    "damage_type": {"type": ["string", "null"]},
+    "flux_per_shot": {"type": ["number", "null"]},
+    "flux_per_second": {"type": ["number", "null"]}
+  }
+}

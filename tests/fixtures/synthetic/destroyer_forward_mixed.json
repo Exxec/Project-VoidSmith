@@ -1,0 +1,22 @@
+{
+  "hull": {
+    "id": "benchmark_destroyer_mixed",
+    "name": "Benchmark Destroyer (Mixed)",
+    "hull_size": "DESTROYER",
+    "ordnance_points": 75,
+    "fighter_bays": 0,
+    "weapon_mounts": [
+      {"id": "WS 001", "type": "BALLISTIC", "size": "MEDIUM"},
+      {"id": "WS 002", "type": "BALLISTIC", "size": "MEDIUM"},
+      {"id": "WS 003", "type": "ENERGY", "size": "MEDIUM"},
+      {"id": "WS 004", "type": "ENERGY", "size": "SMALL"},
+      {"id": "WS 005", "type": "MISSILE", "size": "SMALL"}
+    ]
+  },
+  "weapons": [
+    {"id": "benchmark_medium_ballistic_gun", "name": "Benchmark Medium Ballistic Gun", "size": "MEDIUM", "mount_type": "BALLISTIC", "ordnance_points": 10, "range": 700, "damage_type": "KINETIC", "flux_per_shot": 40},
+    {"id": "benchmark_medium_energy_gun", "name": "Benchmark Medium Energy Gun", "size": "MEDIUM", "mount_type": "ENERGY", "ordnance_points": 11, "range": 650, "damage_type": "HIGH_EXPLOSIVE", "flux_per_shot": 55},
+    {"id": "benchmark_small_energy_gun", "name": "Benchmark Small Energy Gun", "size": "SMALL", "mount_type": "ENERGY", "ordnance_points": 5, "range": 500, "damage_type": "KINETIC", "flux_per_shot": 18},
+    {"id": "benchmark_small_missile_rack", "name": "Benchmark Small Missile Rack", "size": "SMALL", "mount_type": "MISSILE", "ordnance_points": 6, "range": 700, "damage_type": "HIGH_EXPLOSIVE"}
+  ]
+}

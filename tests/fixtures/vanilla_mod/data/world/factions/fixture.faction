@@ -1,0 +1,8 @@
+{
+  "id": "fixture",
+  "displayName": "Fixture Faction",
+  "knownShips": {"hulls": ["fixture_frigate"]},
+  "knownWeapons": {"weapons": ["fixture_gun"]},
+  "knownFighters": {"fighters": ["fixture_wing"]},
+  "knownHullMods": {"hullMods": ["fixture_mod"]}
+}

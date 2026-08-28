@@ -1,0 +1,47 @@
+# Python build and interpreter artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Local dependency/cache state
+.venv/
+.uv-cache/
+
+# Application output and local benchmark data
+generated/
+tests/local_fixtures/
+tests/local_results/
+tests/local_fixtures/benchmark_manifest.json
+knowledge_packs/user/
+
+# Ad hoc local scan/benchmark output when an --output-dir/--log-dir points at
+# the repository root instead of generated/ (e.g. manual CLI runs, local
+# benchmark tooling). Real installs land per-mod cache snapshots, logs, and
+# derived analysis DBs here; never distribution-safe, so these are ignored
+# wherever they land, not just under generated/.
+/cache/
+/logs/
+/scratch_out/
+*.sqlite
+*.sqlite3
+*.db
+
+# Editor and operating-system state
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+.DS_Store
+
+# Local configuration may contain machine-specific Starsector paths
+config/*.toml
+!config.example.toml
+.pyinstaller/
+build/
+dist/

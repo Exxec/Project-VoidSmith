@@ -1,0 +1,47 @@
+{
+  "schema_version": "calibration-labels-0.1",
+  "fixture_id": "synthetic-capital-activation-demo",
+  "labels": [
+    {
+      "entity_key": "hull:benchmark:benchmark_capital_multimount",
+      "entity_hash": "synthetic-hash-capital-1",
+      "label": "EXPECTED_LINE_ANCHOR",
+      "expected": "LINE_ANCHOR",
+      "strength": "HARD_EXPECTATION",
+      "note": "Synthetic fixture (invented hull, not copied Starsector/mod data): the benchmark_capital_multimount archetype under tests/fixtures/synthetic/capital_heavy_broadside.json independently generates LINE_ANCHOR as its best legal baseline_0.7 build; this label demonstrates a real MATCH."
+    },
+    {
+      "entity_key": "hull:benchmark:benchmark_capital_multimount",
+      "entity_hash": "synthetic-hash-capital-1",
+      "label": "EXPECTED_NOT_MISSILE_SUPPORT",
+      "expected": "MISSILE_SUPPORT",
+      "expectation_kind": "NEGATIVE_EXPECTATION",
+      "strength": "SOFT_EXPECTATION",
+      "note": "Synthetic: a negative expectation that the actual LINE_ANCHOR build is not MISSILE_SUPPORT; demonstrates NEGATIVE_EXPECTATION matching when the forbidden value does not occur."
+    },
+    {
+      "entity_key": "hull:benchmark:benchmark_capital_multimount",
+      "entity_hash": "synthetic-hash-capital-1",
+      "label": "DELIBERATE_MISMATCH_DEMO",
+      "expected": "MISSILE_SUPPORT",
+      "strength": "SOFT_EXPECTATION",
+      "note": "Synthetic: deliberately wrong expectation (real actual is LINE_ANCHOR) to prove the machinery reports MISMATCH rather than concealing divergence."
+    },
+    {
+      "entity_key": "hull:benchmark:benchmark_capital_multimount",
+      "entity_hash": "a-hash-that-no-longer-matches-the-scanned-hull",
+      "label": "STALE_HASH_DEMO",
+      "expected": "LINE_ANCHOR",
+      "strength": "SOFT_EXPECTATION",
+      "note": "Synthetic: entity_hash intentionally does not match the real scanned hull's source_hash, to prove a changed/stale source is reported as STALE rather than silently compared."
+    },
+    {
+      "entity_key": "hull:duplicate_source:ambiguous_test_hull",
+      "entity_hash": "also-synthetic",
+      "label": "AMBIGUOUS_GLOBAL_ID_DEMO",
+      "expected": "TANK",
+      "strength": "SOFT_EXPECTATION",
+      "note": "Synthetic: two synthetic hulls share the same global id across different source_mod values, so the registry refuses to resolve it; proves the pipeline fails closed (UNSUPPORTED) rather than guessing which one a reviewer meant."
+    }
+  ]
+}

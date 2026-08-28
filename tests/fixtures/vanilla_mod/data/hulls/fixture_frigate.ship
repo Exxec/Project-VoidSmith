@@ -1,0 +1,9 @@
+{
+  "weaponSlots": [
+    {"id": "WS 001", "type": "BALLISTIC", "size": "MEDIUM", "mount": "TURRET", "arc": 180, "angle": 0, "locations": [5, 2]},
+    {"id": "BAY 001", "type": "LAUNCH_BAY", "size": "SMALL", "mount": "HIDDEN"},
+    {"id": "WS 002", "type": "BUILT_IN", "size": "SMALL", "mount": "TURRET", "arc": 210, "angle": 80, "locations": [3, 1]}
+  ],
+  "builtInWings": ["fixture_wing"],
+  "builtInWeapons": {"WS 002": "fixture_flak"}
+}

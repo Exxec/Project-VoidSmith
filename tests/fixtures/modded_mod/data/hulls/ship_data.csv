@@ -1,0 +1,4 @@
+# A modded fixture with unknown fields that must remain raw.
+hullId,hullName,hull_size,ordnance_points,customMechanic
+modded_destroyer,Modded Destroyer,DESTROYER,70,unknown_scripted_effect
+

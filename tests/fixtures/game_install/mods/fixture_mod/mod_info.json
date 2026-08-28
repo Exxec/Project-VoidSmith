@@ -1,0 +1,7 @@
+{
+  "id": "fixture_mod",
+  "name": "Fixture Mod",
+  "version": "1.2.3",
+  "dependencies": ["base_game"]
+}
+

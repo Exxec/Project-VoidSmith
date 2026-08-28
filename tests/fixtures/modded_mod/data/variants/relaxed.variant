@@ -1,0 +1,12 @@
+{
+  # Mod files commonly include explanatory comments.
+  variantId: "relaxed_variant",
+  "numericSuffix": 1f,
+  "capitalBoolean": True,
+  "bareValue": fixture_token,
+  "singleValue": 'quoted',
+  "semicolonDelimited": true;
+  "hullId": "modded_destroyer",
+  "hullMods": ["fixture_mod",],
+  "weaponGroups": [],
+},

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hull_fixture.schema.json",
+  "title": "Synthetic benchmark hull fixture",
+  "description": "Documents the shape of tests/fixtures/synthetic/*.json's \"hull\" object and tests/local_fixtures/*.generated.json (see tools/build_local_benchmarks.py). Not enforced by a runtime JSON-Schema validator -- this project has no such dependency -- kept as a human/tooling-readable contract so the two fixture sources (hand-authored synthetic, locally-extracted real) stay structurally compatible. Field names and meaning mirror core/models.py's Hull dataclass exactly; add a field here only when you add it there.",
+  "type": "object",
+  "required": ["id", "name", "hull_size"],
+  "properties": {
+    "id": {"type": "string"},
+    "name": {"type": "string"},
+    "hull_size": {"type": "string", "enum": ["FRIGATE", "DESTROYER", "CRUISER", "CAPITAL_SHIP"]},
+    "ordnance_points": {"type": ["integer", "null"]},
+    "fighter_bays": {"type": ["integer", "null"]},
+    "launch_bay_slots": {"type": "array", "items": {"type": "string"}},
+    "built_in_hullmods": {"type": "array", "items": {"type": "string"}},
+    "built_in_fighter_wings": {"type": "array", "items": {"type": "string"}},
+    "built_in_weapons": {"type": "object", "additionalProperties": {"type": "string"}},
+    "flux_capacity": {"type": ["number", "null"]},
+    "flux_dissipation": {"type": ["number", "null"]},
+    "shield_upkeep": {"type": ["number", "null"]},
+    "cargo_capacity": {"type": ["number", "null"]},
+    "fuel_capacity": {"type": ["number", "null"]},
+    "crew_min": {"type": ["integer", "null"]},
+    "crew_max": {"type": ["integer", "null"]},
+    "supplies_per_month": {"type": ["number", "null"]},
+    "max_burn": {"type": ["number", "null"]},
+    "hull_hints": {"type": "array", "items": {"type": "string"}},
+    "weapon_mounts": {
+      "type": "array",
+      "description": "Each entry mirrors a real weaponSlots entry: at minimum id/type/size. type is one of BALLISTIC/ENERGY/MISSILE/HYBRID/COMPOSITE/SYNERGY/UNIVERSAL/LAUNCH_BAY (see core/mount_compatibility.py for the weapon-compatibility matrix these feed).",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "size"],
+        "properties": {
+          "id": {"type": "string"},
+          "type": {"type": "string"},
+          "size": {"type": "string", "enum": ["SMALL", "MEDIUM", "LARGE"]}
+        }
+      }
+    }
+  }
+}

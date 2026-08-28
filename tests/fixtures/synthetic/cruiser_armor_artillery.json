@@ -1,0 +1,20 @@
+{
+  "hull": {
+    "id": "benchmark_cruiser_armor",
+    "name": "Benchmark Cruiser (Armor/Artillery)",
+    "hull_size": "CRUISER",
+    "ordnance_points": 140,
+    "fighter_bays": 0,
+    "weapon_mounts": [
+      {"id": "WS 001", "type": "BALLISTIC", "size": "LARGE"},
+      {"id": "WS 002", "type": "BALLISTIC", "size": "LARGE"},
+      {"id": "WS 003", "type": "BALLISTIC", "size": "MEDIUM"},
+      {"id": "WS 004", "type": "MISSILE", "size": "SMALL"}
+    ]
+  },
+  "weapons": [
+    {"id": "benchmark_large_ballistic_gun", "name": "Benchmark Large Ballistic Gun", "size": "LARGE", "mount_type": "BALLISTIC", "ordnance_points": 25, "range": 900, "damage_type": "HIGH_EXPLOSIVE", "flux_per_shot": 120},
+    {"id": "benchmark_medium_ballistic_gun", "name": "Benchmark Medium Ballistic Gun", "size": "MEDIUM", "mount_type": "BALLISTIC", "ordnance_points": 10, "range": 700, "damage_type": "KINETIC", "flux_per_shot": 40},
+    {"id": "benchmark_small_missile_rack", "name": "Benchmark Small Missile Rack", "size": "SMALL", "mount_type": "MISSILE", "ordnance_points": 6, "range": 700, "damage_type": "HIGH_EXPLOSIVE"}
+  ]
+}

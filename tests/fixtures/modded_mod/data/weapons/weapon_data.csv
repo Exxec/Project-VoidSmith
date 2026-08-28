@@ -1,0 +1,3 @@
+weaponId,weaponName,size,mountType,op,range,damageType,customTag
+modded_lance,Modded Lance,LARGE,ENERGY,20,1000,ENERGY,scripted
+

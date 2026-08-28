@@ -1,0 +1,9 @@
+{
+  "variantId": "fixture_frigate_Standard",
+  "displayName": "Fixture Standard",
+  "hullId": "fixture_frigate",
+  "hullMods": ["fixture_mod"],
+  "wings": [],
+  "weaponGroups": [{"weapons": {"WS 001": "fixture_gun"}}]
+}
+

@@ -1,0 +1,4 @@
+starsector_path = "C:/Games/Starsector"
+output_dir = "generated"
+log_dir = "generated/logs"
+heuristic_set = "baseline_0.7"

@@ -1,0 +1,30 @@
+{
+  "heuristic_set": "baseline_0.3",
+  "range": {
+    "no_penalty_spread": 100,
+    "small_penalty_spread": 250,
+    "moderate_penalty_spread": 400
+  },
+  "flux": {
+    "safe_target_ratio": 0.9,
+    "balanced_target_ratio": 0.75,
+    "aggressive_target_ratio": 0.55
+  },
+  "generation": {
+    "top_n_per_mount_group": 8,
+    "default_candidate_limit": 25,
+    "allow_empty_mounts": true
+  },
+  "refit": {
+    "change_cost": {
+      "weapon": 1.0,
+      "hullmod": 1.5,
+      "fighter": 1.0,
+      "vent": 0.25,
+      "capacitor": 0.25,
+      "weapon_group": 0.25
+    },
+    "beginner_max_total_changes": 4,
+    "guided_max_total_changes": 8
+  }
+}

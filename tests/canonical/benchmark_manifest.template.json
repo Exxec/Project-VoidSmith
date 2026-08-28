@@ -1,0 +1,4 @@
+{
+  "_readme": "Neutral template only. Copy this file to tests/local_fixtures/benchmark_manifest.json, which is ignored. Fill local_source_hull_id values from the user's installed game/mod data; do not commit the completed manifest or generated fixtures.",
+  "benchmarks": []
+}

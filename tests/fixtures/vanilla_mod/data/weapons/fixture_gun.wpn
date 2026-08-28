@@ -1,0 +1,8 @@
+{
+  "id": "fixture_gun",
+  "type": "BALLISTIC",
+  "size": "MEDIUM",
+  "turretSprite": "graphics/weapons/fixture_turret.png",
+  "hardpointSprite": "graphics/weapons/fixture_hardpoint.png",
+  "renderHints": [RENDER_BARREL_BELOW]
+}

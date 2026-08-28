@@ -1,0 +1,18 @@
+{
+  "hull": {
+    "id": "benchmark_frigate_ballistic",
+    "name": "Benchmark Frigate (Ballistic)",
+    "hull_size": "FRIGATE",
+    "ordnance_points": 40,
+    "fighter_bays": 0,
+    "weapon_mounts": [
+      {"id": "WS 001", "type": "BALLISTIC", "size": "SMALL"},
+      {"id": "WS 002", "type": "BALLISTIC", "size": "SMALL"},
+      {"id": "WS 003", "type": "MISSILE", "size": "SMALL"}
+    ]
+  },
+  "weapons": [
+    {"id": "benchmark_small_ballistic_gun", "name": "Benchmark Small Ballistic Gun", "size": "SMALL", "mount_type": "BALLISTIC", "ordnance_points": 4, "range": 500, "damage_type": "KINETIC", "flux_per_shot": 15},
+    {"id": "benchmark_small_missile_rack", "name": "Benchmark Small Missile Rack", "size": "SMALL", "mount_type": "MISSILE", "ordnance_points": 6, "range": 700, "damage_type": "HIGH_EXPLOSIVE"}
+  ]
+}
