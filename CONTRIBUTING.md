@@ -4,9 +4,8 @@
 
 - `src/starsector_variant_generator/`: application code.
 - `tests/`: deterministic tests and small synthetic fixtures.
-- `knowledge_packs/`: optional, data-driven faction guidance.
 - `tools/`: local developer utilities.
-- `docs/`: work logs and supporting documentation.
+- `docs/`: user, developer, packaging, and bounded-feature documentation.
 - Root specification files are canonical project contracts and remain at the
   repository root because `AGENTS.md` requires that reading order.
 

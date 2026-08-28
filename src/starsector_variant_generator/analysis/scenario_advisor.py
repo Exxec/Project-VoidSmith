@@ -15,6 +15,8 @@ from starsector_variant_generator.analysis.fleet_support import FleetSelection, 
 from starsector_variant_generator.core.models import Faction
 from starsector_variant_generator.core.registry import Registry
 
+SCENARIO_ADVISOR_REQUEST_SCHEMA = "scenario_advisor_request_1"
+
 
 class ScenarioPressure(StrEnum):
     BURST_REQUIRED = "BURST_REQUIRED"; SUSTAINED_ENDURANCE = "SUSTAINED_ENDURANCE"; PRIORITY_TARGET_REMOVAL = "PRIORITY_TARGET_REMOVAL"; SWARM_CONTROL = "SWARM_CONTROL"; FIGHTER_SUPPRESSION = "FIGHTER_SUPPRESSION"; MISSILE_DEFENSE = "MISSILE_DEFENSE"; CAPITAL_BREAKING = "CAPITAL_BREAKING"; ARMOR_BREAKING = "ARMOR_BREAKING"; SHIELD_BREAKING = "SHIELD_BREAKING"; PURSUIT = "PURSUIT"; OBJECTIVE_CAPTURE = "OBJECTIVE_CAPTURE"; AREA_CONTROL = "AREA_CONTROL"; ALLY_PROTECTION = "ALLY_PROTECTION"; FLAGSHIP_SURVIVAL = "FLAGSHIP_SURVIVAL"; LOW_LOSS_TOLERANCE = "LOW_LOSS_TOLERANCE"; TIME_PRESSURE = "TIME_PRESSURE"; RANGE_CONTROL = "RANGE_CONTROL"; MOBILITY_CHECK = "MOBILITY_CHECK"
@@ -80,6 +82,31 @@ def generic_scenario_profiles() -> tuple[ScenarioObjectiveProfile, ...]:
         ScenarioObjectiveProfile("swarm_defense", "Swarm Defense", (ScenarioCapabilityTarget("PD_SCREENING", .75), ScenarioCapabilityTarget("FIGHTER_INTERCEPTION", .60), ScenarioCapabilityTarget("SUSTAINED_PRESSURE", .50)), (ScenarioPressure.SWARM_CONTROL, ScenarioPressure.FIGHTER_SUPPRESSION, ScenarioPressure.MISSILE_DEFENSE), "GENERIC_TEMPLATE", .50, ("Generic declared scenario template; it is not a prediction of any named encounter.",)),
         ScenarioObjectiveProfile("line_breaker", "Capital / Line Breaker", (ScenarioCapabilityTarget("ARMOR_BREAKING", .70), ScenarioCapabilityTarget("KINETIC_PRESSURE", .65), ScenarioCapabilityTarget("FINISHING_POWER", .55), ScenarioCapabilityTarget("ARMOR_TANKING", .45)), (ScenarioPressure.CAPITAL_BREAKING, ScenarioPressure.ARMOR_BREAKING, ScenarioPressure.SHIELD_BREAKING), "GENERIC_TEMPLATE", .50, ("Generic declared scenario template; it is not a prediction of any named encounter.",)),
     )
+
+
+def scenario_advisor_request_to_payload(selections: tuple[FleetSelection, ...], scenario: ScenarioObjectiveProfile, constraints: FleetSupportConstraints) -> dict[str, object]:
+    """Serialize a portable user-owned request, never scan results."""
+    return {"schema_version": SCENARIO_ADVISOR_REQUEST_SCHEMA, "selections": [{"hull_id": item.hull_id, "variant_id": item.variant_id, "count": item.count} for item in selections], "scenario": {"scenario_id": scenario.scenario_id, "display_name": scenario.display_name, "targets": [{"capability": item.capability, "target": item.target, "evidence": list(item.evidence)} for item in scenario.capability_targets], "pressures": [item.value for item in scenario.pressures]}, "constraints": {"access_mode": constraints.access_mode, "allow_foreign_hulls": constraints.allow_foreign_hulls, "include_hidden_hulls": constraints.include_hidden_hulls, "focus": constraints.focus.value, "recommendation_count": constraints.recommendation_count}}
+
+
+def scenario_advisor_request_from_payload(payload: dict[str, object]) -> tuple[tuple[FleetSelection, ...], ScenarioObjectiveProfile, FleetSupportConstraints]:
+    """Restore and validate a portable request without resolving game content."""
+    if payload.get("schema_version") != SCENARIO_ADVISOR_REQUEST_SCHEMA:
+        raise ValueError("Unsupported Scenario Advisor request snapshot schema")
+    rows = payload.get("selections")
+    if not isinstance(rows, list):
+        raise ValueError("Scenario Advisor request snapshot lacks selections")
+    selections = tuple(FleetSelection(row.get("hull_id") if isinstance(row.get("hull_id"), str) else None, int(row.get("count", 1)), row.get("variant_id") if isinstance(row.get("variant_id"), str) else None) for row in rows if isinstance(row, dict))
+    raw = payload.get("scenario")
+    if not selections or not isinstance(raw, dict) or not isinstance(raw.get("targets"), list):
+        raise ValueError("Scenario Advisor request snapshot is incomplete")
+    targets = tuple(ScenarioCapabilityTarget(str(row.get("capability", "")), float(row.get("target", -1)), tuple(value for value in row.get("evidence", []) if isinstance(value, str))) for row in raw["targets"] if isinstance(row, dict))
+    scenario = user_defined_scenario(str(raw.get("scenario_id", "")), str(raw.get("display_name", "")), targets, tuple(ScenarioPressure(value) for value in raw.get("pressures", []) if isinstance(value, str)))
+    data = payload.get("constraints")
+    if not isinstance(data, dict):
+        raise ValueError("Scenario Advisor request snapshot lacks constraints")
+    from starsector_variant_generator.analysis.fleet_support import SupportFocus
+    return selections, scenario, FleetSupportConstraints(str(data.get("access_mode", "FACTION_PLUS")), bool(data.get("allow_foreign_hulls", True)), bool(data.get("include_hidden_hulls", False)), SupportFocus(str(data.get("focus", "BALANCED"))), data.get("recommendation_count") if isinstance(data.get("recommendation_count"), int) else None)
 
 
 def assess_scenario_fleet(selections: tuple[FleetSelection, ...], registry: Registry, scenario: ScenarioObjectiveProfile, faction: Faction | None = None, heuristic_set: str = "baseline_0.14", constraints: FleetSupportConstraints = FleetSupportConstraints()) -> ScenarioFleetAssessment:

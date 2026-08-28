@@ -102,6 +102,11 @@ Scenario / Mission Advisor's portable scenario request and explicit
 scenario-fit handoff; neither permits whole-fleet quantity/replacement
 selection. Read the root [`ROADMAP.md`](../ROADMAP.md) for the current ordered
 plan and its read-only campaign-save/DP/officer boundaries.
+
+Scenario Advisor requests use a separate portable JSON schema containing only
+user-declared locked selections, capability targets, pressures, and access
+constraints. It never serializes a scan, registry, game/mod source facts, or a
+battle prediction.
 The recommendation retains its mechanical-archetype evidence, shortlist order,
 and diversity reason; Why-Not uses that same selection result.
 

@@ -5,6 +5,7 @@ from pathlib import Path
 
 from starsector_variant_generator.analysis.fleet_support import FleetSelection, FleetSupportConstraints, SupportFocus, _rank_fleet_support, analyze_player_fleet, explain_fleet_support_candidate, fleet_support_request_from_payload, fleet_support_request_to_payload, parse_fleet_selections, recommend_fleet_support
 from starsector_variant_generator import api
+from starsector_variant_generator.analysis.scenario_advisor import ScenarioCapabilityTarget, scenario_advisor_request_from_payload, scenario_advisor_request_to_payload, user_defined_scenario
 from starsector_variant_generator.core.models import Faction, Hull, ScanResult, Variant, Weapon
 from starsector_variant_generator.core.registry import Registry
 
@@ -22,6 +23,15 @@ def hull(hull_id: str, *, speed: int = 100, armor: int = 300, flux: int = 300, h
 
 
 class FleetSupportAdvisorTests(unittest.TestCase):
+    def test_scenario_request_snapshot_round_trips_without_registry_data(self) -> None:
+        selections = (FleetSelection("frigate", 2),)
+        scenario = user_defined_scenario("declared", "Declared", (ScenarioCapabilityTarget("ARMOR_TANKING", .7),))
+        constraints = FleetSupportConstraints(focus=SupportFocus.SURVIVABILITY)
+        restored = scenario_advisor_request_from_payload(scenario_advisor_request_to_payload(selections, scenario, constraints))
+        self.assertEqual(selections, restored[0])
+        self.assertEqual(scenario.capability_targets, restored[1].capability_targets)
+        self.assertEqual(constraints, restored[2])
+
     def test_user_owned_request_snapshot_round_trips_without_registry_data(self) -> None:
         selections = (FleetSelection("frigate", 2), FleetSelection(variant_id="cruiser_loadout"))
         constraints = FleetSupportConstraints(focus=SupportFocus.LOGISTICS, recommendation_count=4)

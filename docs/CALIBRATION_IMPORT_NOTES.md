@@ -1,6 +1,7 @@
 # Calibration Import Notes
 
-This package converts the five supplied Starsector milestone/build guides into a **provisional calibration seed**.
+This package describes how a locally supplied build guide can become a
+**provisional calibration seed**.
 
 ## Important contract
 
@@ -16,42 +17,14 @@ This package converts the five supplied Starsector milestone/build guides into a
 
 ## Contents
 
-The generated seed/review files and their raw source guides carry real,
-copied Starsector/mod content (ship names, faction names, loadout text) and
-therefore live under the gitignored `generated/` tree, not `docs/` -- see
-CLAUDE.md's distribution boundary. This file (rules/summary/aggregate
-counts only, no per-record raw content) is the only piece safe to keep
-committed.
+Generated seed/review files and raw source guides can carry third-party game or
+mod content. They must remain under the gitignored `generated/` tree, not in
+this repository. This file records only the generic import contract.
 
 - `generated/calibration/starsector_calibration_seed.provisional.json`: machine-readable calibration seed.
 - `generated/calibration/starsector_calibration_review.csv`: flat review sheet for quick human approval/editing.
 - `generated/calibration/sources/`: the raw source guide `.txt` files the seed was built from.
-- This file: import rules and summary.
-
-## Record counts
-
-Total calibration records: **385**
-
-By faction/context:
-- Arma Armatura: 34
-- Dassault-Mikoyan Engineering: 30
-- Diable Avionics: 32
-- HMI: 51
-- Hegemony: 55
-- Luddic Path: 31
-- Pirates: 31
-- ScalarTech Solutions: 30
-- Sephira Conclave: 28
-- Tri-Tachyon Corporation: 32
-- United Aurora Federation: 31
-
-By origin classification:
-- AUXILIARY_VARIANT: 2
-- CAPTURED_OR_SALVAGED_FOREIGN: 11
-- FACTION_VARIANT: 35
-- NATIVE_DECLARED: 40
-- UNSPECIFIED_WITHIN_GUIDE: 288
-- VANILLA_AUXILIARY: 9
+- This file: generic import rules only.
 
 ## Suggested activation workflow
 

@@ -32,9 +32,11 @@ files, or make campaign-inventory or market-availability decisions.
 
 ## Next priorities
 
-1. Finish the scenario workflow with persisted scan-profile snapshots, clear
-   diagnostics, cancellation/progress feedback, and an explicit scenario-fit
-   handoff.
+1. Finish the scenario workflow with clear diagnostics, cancellation/progress
+   feedback, and an explicit scenario-fit handoff. Portable Scenario Advisor
+   request snapshots now preserve only user-declared locked selections,
+   capability targets, pressures, and advisor constraints; they never embed
+   scanned game/mod data.
 2. Define a safe, read-only campaign-save discovery boundary. Do not add
    campaign mutation, inventory planning, or undocumented save semantics.
 3. Evaluate bounded officer and deployment-point advisory views only where
