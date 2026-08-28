@@ -186,6 +186,36 @@ source mod identity.
 | 81 | Fleet Support Fit Handoff | COMPLETE_WITH_LIMITATIONS | Added an explicit Faction-workspace **Generate Support Fit** action and API. It revalidates that the selected hull is still on the current advisor shortlist, maps a modeled support purpose to an existing bounded generator profile, and returns normally validated concrete candidates without writing output. A regression confirms the handoff uses the ordinary generator. | Logistics-only purposes intentionally have no combat-profile substitution until a dedicated logistics fit contract exists. The original hull advisory still carries `NOT_EVALUATED_NO_CONCRETE_FIT`. |
 | 82 | Scenario / Mission Advisor | COMPLETE_WITH_LIMITATIONS | Added a separate locked-fleet Scenario / Mission Advisor with generic pressure vocabulary, generic templates, explicit user-defined capability targets, mechanical-alignment readiness, and individual scenario-need additions via the established Fleet Support ranking path. The Faction workspace renders backend `GOOD`/`MIXED`/`POOR`/`UNKNOWN` assessments and custom target entry without a second rules engine. Synthetic regressions cover validation, generic/no-name profiles, locked selections, candidate additions, API, and presentation. | No named-mission behavior, runtime encounter parsing, scenario-pack loader, save/campaign state, combat simulation, victory prediction, quantity/replacement optimization, or scenario-specific fitting profile is implemented. |
 
+## Current Plan
+
+VoidSmith's remaining work is deliberately bounded. It will deepen the
+evidence and workflow around the existing per-ship, locked-fleet, and scenario
+systems rather than become a general fleet optimizer.
+
+1. **Scenario workflow completion.** Add portable user-owned scenario request
+   snapshots, then an explicit scenario-fit handoff that generates a concrete
+   legal candidate only after revalidating a scenario recommendation. A
+   scenario-pack loader is deferred until it has an isolated, freshness-tagged
+   data contract; generic code must never contain named-mission logic.
+2. **Read-only campaign-save discovery.** Establish a parser/provenance
+   contract that can report what is present without editing saves or assuming
+   undocumented save semantics. This is a prerequisite, not authorization for
+   automatic campaign changes.
+3. **Officer and DP assistance.** After the save contract is stable, add
+   bounded advisory views for parsed officer/ship evidence and deployment-point
+   tradeoffs. They may explain individual options but must not choose a whole
+   fleet, quantities, replacements, or campaign actions.
+4. **Accuracy and qualification.** Expand calibration fixtures, hostile-mod
+   parsing qualification, adapter coverage, and Why-Not evidence before any
+   further broad product system.
+5. **UX and release maintenance.** Keep the GUI a presentation layer, improve
+   scenario/fleet comparison clarity, and rebuild releases only after full
+   regression and packaging verification.
+
+The current implementation ends at Phase 82. All future work preserves source
+read-only behavior, deterministic/offline operation, explicit uncertainty,
+and the strict separation between legality and quality.
+
 ## Continuous Work Rule
 
 Phase completion is a checkpoint, not a request for permission to continue.

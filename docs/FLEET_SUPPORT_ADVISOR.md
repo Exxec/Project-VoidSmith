@@ -94,6 +94,14 @@ returned variants, rather than the original advisory card, carry ordinary
 validation results. The action writes nothing. Logistics-only purposes remain
 explicitly unavailable because the generator does not yet model a dedicated
 logistics fit profile; VoidSmith will not substitute an unrelated combat role.
+
+## Roadmap relationship
+
+Fleet Support remains a per-addition advisor. Its next dependency is the
+Scenario / Mission Advisor's portable scenario request and explicit
+scenario-fit handoff; neither permits whole-fleet quantity/replacement
+selection. Read the root [`ROADMAP.md`](../ROADMAP.md) for the current ordered
+plan and its read-only campaign-save/DP/officer boundaries.
 The recommendation retains its mechanical-archetype evidence, shortlist order,
 and diversity reason; Why-Not uses that same selection result.
 

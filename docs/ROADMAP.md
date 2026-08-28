@@ -1,5 +1,10 @@
 # Roadmap: status, decisions, and what's next
 
+> Current status and future plan are maintained in the root
+> [`ROADMAP.md`](../ROADMAP.md). This document is retained as a historical
+> implementation record; its older “open” items do not override the root
+> roadmap's Phase 82 completion state or current bounded plan.
+
 This is the authoritative, in-repo record of the five-tier gap-closing plan
 first drafted 2026-08-22 and partially implemented the same day. It exists so
 that a future contributor -- human or AI -- can pick up this work without

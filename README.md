@@ -17,6 +17,8 @@ Read-only Starsector variant analysis and generation. Version 0.5 Planning Pack.
 - recommendation confidence and Why-Not explanations
 - full variant generator
 - PySide6 desktop workspaces
+- locked-fleet Fleet Support Advisor with composition synergy
+- Scenario / Mission Advisor for generic templates and user-declared targets
 
 ## GUI Workspaces
 
@@ -28,9 +30,20 @@ Read-only Starsector variant analysis and generation. Version 0.5 Planning Pack.
 
 ## Current Scope
 
-Per-ship and faction-capability analysis, plus a locked-selection Fleet Support
-Advisor that ranks individual complementary additions. Whole-fleet optimization,
-player inventory, market acquisition, and save-state planning remain deferred.
+Per-ship and faction-capability analysis, a locked-selection Fleet Support
+Advisor that ranks individual complementary additions, and a Scenario / Mission
+Advisor that reports static mechanical alignment with generic or user-declared
+objectives. Whole-fleet optimization, player inventory, market acquisition,
+and save-state planning remain deferred.
+
+## Current Plan
+
+The next work is evidence-first: finish portable scenario workflows and the
+scenario-fit handoff; define read-only campaign-save discovery; then consider
+bounded officer and deployment-point advisory views. Calibration, mod
+qualification, explainability, and GUI clarity take priority over new broad
+optimization systems. See [ROADMAP.md](ROADMAP.md) for the authoritative plan
+and constraints.
 
 ## Development verification
 
