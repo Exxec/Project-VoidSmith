@@ -31,18 +31,15 @@ files, or make campaign-inventory or market-availability decisions.
 | Scenario / Mission Advisor | Complete with limits | Generic templates and custom capability targets report static alignment and can feed deficient needs to Fleet Support. |
 | Scenario workflow handoff | Complete with limits | Portable snapshots, visible scenario-targeted cards, and a revalidated Scenario Fit handoff to the bounded generator; “Stop Waiting” safely discards a pending GUI result. |
 
-## Next priorities
+## Post-RC phases
 
-1. Define a safe, read-only campaign-save discovery boundary. Do not add
-   campaign mutation, inventory planning, or undocumented save semantics.
-2. Evaluate bounded officer and deployment-point advisory views only where
-   parseable evidence supports them; keep them separate from legality and
-   combat-outcome claims.
-3. Continue calibration and generic mod qualification using local,
-   hash-bound, ignored fixtures. Add adapters only for supported, genuinely
-   mod-specific static semantics.
-4. Improve release clarity, portable-build verification, and GUI explanation
-   paths without broadening into whole-fleet optimization.
+| Phase | Status | Scope and completion boundary |
+| --- | --- | --- |
+| 43 — Linux portable qualification | Complete with limitations | Native Linux x64 archive, checksum, headless smoke test, and manually dispatched/tagged Ubuntu workflow are implemented. One successful hosted workflow run remains external verification; it never auto-publishes a release. |
+| 44 — Campaign-save discovery boundary | Complete with limitations | `run_campaign_save_discovery()` inventories only direct metadata in an explicit user-selected directory. It has no location guessing, content parsing, mutation, inventory interpretation, or undocumented save semantics. |
+| 45 — Officer and deployment-point advisory boundary | Complete with limitations | `run_fleet_advisory_boundaries()` exposes optional freshness-adjusted knowledge-pack officer guidance as presentation-only, while deployment points stay `NOT_DETERMINABLE` because the normalized hull schema has no field for them. Neither affects legality, ranking, or outcome claims. |
+| 46 — Calibration and generic-mod qualification | Complete with limitations | Existing hash-bound fixture evaluation, before/after reporting, and static adapter qualification paths were re-audited; a new real-install/mod qualification run remains user-local input and cannot be fabricated from this checkout. Heuristics are never auto-tuned. |
+| 47 — Release and explanation polish | Complete with limitations | Scenario cards now have origin-aware comparison and an explicit guard against using the ordinary Fleet Support generator; the separate Scenario Fit action revalidates declared targets. Release docs cover both Windows and Linux artifacts. |
 
 ## Latest implementation note
 
@@ -61,9 +58,10 @@ thread is released.
 ## RC1 limits carried forward
 
 Campaign-save discovery remains intentionally unimplemented until a documented,
-read-only save format and user-selected save location can be supported without
-guessing. The normalized hull schema currently has no deployment-point field,
-and the application has no parseable campaign officer/skill state. Existing
+read-only save format can be supported without guessing. RC1 now accepts a
+user-selected directory for metadata-only discovery, but does not parse any
+entry. The normalized hull schema currently has no deployment-point field, and
+the application has no parseable campaign officer/skill state. Existing
 knowledge-pack officer notes remain presentational guidance only. These gaps
 cannot be converted into recommendation or combat-outcome claims for RC1.
 

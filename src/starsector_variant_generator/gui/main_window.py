@@ -119,6 +119,7 @@ class MainWindow(QMainWindow):
         self._data_tables_pending = False
         self._operation_tokens: dict[QPushButton, int] = {}
         self._operation_progress: dict[QThread, QProgressDialog] = {}
+        self._advisor_card_origin: str | None = None
         self._extra_mods: list[ModImportResult] = []
         self.setAcceptDrops(True)
         self._preferences = QSettings("VoidSmith", "Desktop")
@@ -1266,6 +1267,7 @@ class MainWindow(QMainWindow):
 
     def _show_fleet_support_result(self, result: Any) -> None:
         self._fleet_support_last_result = result
+        self._advisor_card_origin = "FLEET_SUPPORT"
         self.faction_detail.setPlainText(format_fleet_support_result(result))
         self.fleet_support_cards.clear()
         for item in result.recommendations:
@@ -1310,6 +1312,7 @@ class MainWindow(QMainWindow):
         heuristic_set = str(self.fleet_support_heuristic.currentData())
         def complete(result: Any) -> None:
             self._scenario_last_result = result
+            self._advisor_card_origin = "SCENARIO"
             self.faction_detail.setPlainText(format_scenario_fleet_assessment(result))
             self.fleet_support_cards.clear()
             for item in result.recommendations:
@@ -1386,7 +1389,7 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage("Scenario Advisor request loaded; scan local data before evaluating it.")
 
     def _compare_fleet_support_cards(self) -> None:
-        result = getattr(self, "_fleet_support_last_result", None)
+        result = getattr(self, "_scenario_last_result", None) if self._advisor_card_origin == "SCENARIO" else getattr(self, "_fleet_support_last_result", None)
         by_id = {item.hull_id: item for item in getattr(result, "recommendations", ())}
         selected = tuple(by_id[item.data(Qt.UserRole)] for item in self.fleet_support_cards.selectedItems() if isinstance(item.data(Qt.UserRole), str) and item.data(Qt.UserRole) in by_id)
         if len(selected) < 2:
@@ -1402,6 +1405,8 @@ class MainWindow(QMainWindow):
     def _generate_support_fit(self) -> None:
         if self._registry is None:
             self.faction_detail.setPlainText("Scan an installation before generating a support fit."); return
+        if self._advisor_card_origin == "SCENARIO":
+            self.faction_detail.setPlainText("These cards came from Scenario Advisor. Use Generate Scenario Fit so the declared scenario targets are revalidated."); return
         candidate = self.fleet_support_candidate.text().strip()
         tokens = tuple(item.strip() for item in self.fleet_support_hulls.text().split(",") if item.strip())
         if not candidate or not tokens:

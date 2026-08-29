@@ -35,11 +35,13 @@ from typing import Callable
 from starsector_variant_generator.analysis.classification import classify_civilian_role, classify_fighter, classify_hullmod, classify_weapon
 from starsector_variant_generator.analysis.combat_entity import classify_fighter_wing_entity, recommendation_eligibility
 from starsector_variant_generator.analysis.combat_doctrine import infer_combat_doctrine
+from starsector_variant_generator.analysis.campaign_save_discovery import CampaignSaveDiscovery, discover_campaign_directory
 from starsector_variant_generator.analysis.change_impact import ChangeImpactReport, analyze_change_impact
 from starsector_variant_generator.analysis.doctrine import DoctrineEvidence, analyze_faction_doctrine
 from starsector_variant_generator.analysis.equipment_affinity import classify_equipment_affinity, classify_equipment_availability
 from starsector_variant_generator.core.knowledge_packs import ResolvedKnowledgePack, approved_equipment_ids, load_knowledge_pack, resolve_knowledge_pack
 from starsector_variant_generator.analysis.faction_capability import FactionCapabilityProfile, analyze_faction_capability
+from starsector_variant_generator.analysis.fleet_advisory_boundaries import FleetAdvisoryBoundaries, fleet_advisory_boundaries
 from starsector_variant_generator.analysis.fleet_support import FleetSelection, FleetSupportConstraints, FleetSupportRecommendation, FleetSupportResult, FleetSupportWhyNotExplanation, explain_fleet_support_candidate, recommend_fleet_support, support_fit_profile
 from starsector_variant_generator.analysis.scenario_advisor import ScenarioFleetAssessment, ScenarioObjectiveProfile, assess_scenario_fleet
 from starsector_variant_generator.analysis.gap_recommendation import (
@@ -629,6 +631,23 @@ def run_scenario_fleet_advisor(
     """
     faction = resolve_faction(registry, faction_id, source_mod) if faction_id else None
     return assess_scenario_fleet(selections, registry, scenario, faction, heuristic_set, constraints)
+
+
+def run_campaign_save_discovery(directory: Path) -> CampaignSaveDiscovery:
+    """Expose the user-selected, read-only campaign-directory boundary.
+
+    This is deliberately independent of scanning and registry state: no game
+    source and no campaign entry is parsed by discovery alone.
+    """
+    return discover_campaign_directory(directory)
+
+
+def run_fleet_advisory_boundaries(
+    registry: Registry, selections: tuple[FleetSelection, ...], faction_id: str | None = None,
+    knowledge_pack: ResolvedKnowledgePack | None = None,
+) -> FleetAdvisoryBoundaries:
+    """Expose evidence-limited DP/officer advisory views without ranking."""
+    return fleet_advisory_boundaries(selections, registry, faction_id, knowledge_pack)
 
 
 @dataclass(frozen=True)

@@ -1163,3 +1163,16 @@ class GuiCanvasTests(unittest.TestCase):
             self.assertIn("rescan to include", window.statusBar().currentMessage())
             window._threads.discard(in_flight_thread)
             window.close()
+
+    def test_fleet_support_generator_rejects_a_scenario_card_with_actionable_guidance(self) -> None:
+        from unittest.mock import patch
+
+        registry, _hull = self._mirror_test_registry_and_hull()
+        window = MainWindow()
+        window._registry = registry
+        window._advisor_card_origin = "SCENARIO"
+        with patch.object(window, "_run") as run_mock:
+            window._generate_support_fit()
+        run_mock.assert_not_called()
+        self.assertIn("Generate Scenario Fit", window.faction_detail.toPlainText())
+        window.close()
