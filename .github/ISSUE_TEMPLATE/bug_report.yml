@@ -20,7 +20,7 @@ body:
     id: version
     attributes:
       label: VoidSmith version
-      placeholder: v0.1.25rc1
+      placeholder: v0.1.25rc2
     validations:
       required: true
   - type: textarea
