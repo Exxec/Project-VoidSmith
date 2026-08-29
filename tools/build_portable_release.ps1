@@ -164,6 +164,10 @@ if (-not (Test-Path -LiteralPath (Join-Path $BuiltApplication 'VoidSmith.exe') -
     throw 'PyInstaller did not produce the expected portable VoidSmith.exe.'
 }
 Copy-Item -LiteralPath $BuiltApplication -Destination $ReleaseRoot -Recurse
+# GPLv3 distributions must carry their license terms. Keep the root notices
+# beside the executable so an extracted portable archive remains self-contained.
+Copy-Item -LiteralPath (Join-Path $ProjectRoot 'LICENSE') -Destination (Join-Path $ReleaseRoot 'LICENSE')
+Copy-Item -LiteralPath (Join-Path $ProjectRoot 'NOTICE') -Destination (Join-Path $ReleaseRoot 'NOTICE')
 
 # The GUI only imports PySide6.QtCore/QtGui/QtWidgets and never sets an
 # explicit widget style, so the native Windows11 style plugin
@@ -236,7 +240,8 @@ game/mod assets are included. Select your locally installed Starsector path in
 Settings when the application starts; source files are read-only.
 
 The release-manifest.json inventories this package. The adjacent ZIP .sha256
-file verifies the archive. Delete this extracted directory to remove VoidSmith.
+file verifies the archive. See LICENSE and NOTICE for distribution terms.
+Delete this extracted directory to remove VoidSmith.
 "@
 Set-Content -LiteralPath (Join-Path $ReleaseRoot 'PORTABLE_README.txt') -Value $PortableReadme -Encoding UTF8
 
@@ -264,7 +269,7 @@ $Manifest = [ordered]@{
     installer = $false
     admin_required = $false
     registry_changes = $false
-    bundled_content = @('VoidSmith application code', 'Python runtime', 'Qt runtime', 'required Python dependencies')
+    bundled_content = @('VoidSmith application code', 'Python runtime', 'Qt runtime', 'required Python dependencies', 'GPLv3 license', 'NOTICE')
     excluded_content = @('Starsector core data', 'Starsector installation', 'third-party mod assets', 'scans', 'analysis reports', 'sprites', 'mod-specific knowledge packs', 'benchmarks')
     hash_algorithm = 'SHA-256'
     manifest_hash_exclusion = 'release-manifest.json'
