@@ -65,6 +65,10 @@ if [[ ! -x "$pyinstaller_dist/VoidSmith/VoidSmith" ]]; then
     exit 1
 fi
 cp -a "$pyinstaller_dist/VoidSmith" "$release_root"
+# GPLv3 distributions must carry their license terms. Keep the notices beside
+# the executable so an extracted portable archive remains self-contained.
+cp "$project_root/LICENSE" "$release_root/LICENSE"
+cp "$project_root/NOTICE" "$release_root/NOTICE"
 
 cat > "$release_root/PORTABLE_README.txt" <<EOF
 VoidSmith $version - Portable Linux x64
@@ -74,7 +78,8 @@ Python, Qt, and required dependencies. It does not contain Starsector, mods,
 scans, reports, sprites, knowledge packs, or any third-party game data.
 
 The release-manifest.json inventories this package. The adjacent .sha256 file
-verifies the archive. Delete this extracted directory to remove VoidSmith.
+verifies the archive. See LICENSE and NOTICE for distribution terms. Delete
+this extracted directory to remove VoidSmith.
 EOF
 
 QT_QPA_PLATFORM=offscreen "$release_root/VoidSmith" --smoke-test
@@ -101,7 +106,7 @@ for path in sorted(root.rglob("*")):
     "platform": "linux-x64",
     "packaging": "portable-tar-gz",
     "installer": False,
-    "bundled_content": ["VoidSmith application code", "Python runtime", "Qt runtime", "required Python dependencies"],
+    "bundled_content": ["VoidSmith application code", "Python runtime", "Qt runtime", "required Python dependencies", "GPLv3 license", "NOTICE"],
     "excluded_content": ["Starsector core data", "Starsector installation", "third-party mod assets", "scans", "analysis reports", "sprites", "mod-specific knowledge packs", "benchmarks"],
     "hash_algorithm": "SHA-256",
     "manifest_hash_exclusion": "release-manifest.json",

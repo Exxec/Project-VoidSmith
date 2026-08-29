@@ -35,12 +35,13 @@ files, or make campaign-inventory or market-availability decisions.
 
 | Phase | Status | Scope and completion boundary |
 | --- | --- | --- |
-| 43 — Linux portable qualification | Complete with limitations | Native Linux x64 archive, checksum, headless smoke test, and manually dispatched/tagged Ubuntu workflow are implemented. One successful hosted workflow run remains external verification; it never auto-publishes a release. |
+| 43 — Linux portable qualification | Complete with limitations | Native Linux x64 archive, checksum, license/NOTICE inclusion, and headless smoke test are implemented. The tag workflow publishes only after both native platform builds complete; successful hosted Linux build and cross-distribution runtime verification remain external evidence. |
 | 44 — Campaign-save discovery boundary | Complete with limitations | `run_campaign_save_discovery()` inventories only direct metadata in an explicit user-selected directory. It has no location guessing, content parsing, mutation, inventory interpretation, or undocumented save semantics. |
 | 45 — Officer and deployment-point advisory boundary | Complete with limitations | `run_fleet_advisory_boundaries()` exposes optional freshness-adjusted knowledge-pack officer guidance as presentation-only, while deployment points stay `NOT_DETERMINABLE` because the normalized hull schema has no field for them. Neither affects legality, ranking, or outcome claims. |
 | 46 — Calibration and generic-mod qualification | Complete with limitations | Existing hash-bound fixture evaluation, before/after reporting, and static adapter qualification paths were re-audited; a new real-install/mod qualification run remains user-local input and cannot be fabricated from this checkout. Heuristics are never auto-tuned. |
 | 47 — Release and explanation polish | Complete with limitations | Scenario cards now have origin-aware comparison and an explicit guard against using the ordinary Fleet Support generator; the separate Scenario Fit action revalidates declared targets. Release docs cover both Windows and Linux artifacts. |
 | 48 — Public repository hygiene | Complete with limitations | Public README, GPL-3.0-only license/NOTICE, documentation index, issue forms, and scoped Windows/static-analysis CI have been added. Full-repository Ruff and mypy are intentionally deferred: the inherited baseline has 215 Ruff findings and broad mypy errors, so CI gates critical syntax errors plus the newly typed public advisory boundaries without masking that debt. |
+| 49 — Cross-platform release publication | Complete with limitations | Tag-driven CI builds and smoke-tests Windows and Linux artifacts, then attaches both archives and checksums to one prerelease using the repository token. Manual dispatch keeps artifacts for inspection but does not publish. Hosted tag-run success and broader Linux runtime testing remain external verification. |
 
 ## Latest implementation note
 
@@ -56,15 +57,18 @@ to interrupt the backend: no safe cooperative checkpoints currently exist in
 those deterministic analysis calls, so the read-only work finishes before its
 thread is released.
 
-## RC1 limits carried forward
+## Campaign-save boundary
 
-Campaign-save discovery remains intentionally unimplemented until a documented,
-read-only save format can be supported without guessing. RC1 now accepts a
-user-selected directory for metadata-only discovery, but does not parse any
-entry. The normalized hull schema currently has no deployment-point field, and
-the application has no parseable campaign officer/skill state. Existing
-knowledge-pack officer notes remain presentational guidance only. These gaps
-cannot be converted into recommendation or combat-outcome claims for RC1.
+**Implemented:** user-selected campaign-save directory metadata enumeration
+only. It does not guess locations, recurse, follow links, mutate entries, or
+interpret inventory.
+
+**Not implemented:** campaign-save content parsing. Until a documented,
+read-only save format can be supported without guessing, no save contents are
+interpreted. The normalized hull schema currently has no deployment-point
+field, and the application has no parseable campaign officer/skill state.
+Existing knowledge-pack officer notes remain presentational guidance only.
+These gaps cannot be converted into recommendation or combat-outcome claims.
 
 ## Engineering constraints
 
