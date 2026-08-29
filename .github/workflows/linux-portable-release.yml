@@ -1,0 +1,33 @@
+name: Linux portable release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-linux-x64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install uv and Qt headless runtime dependency
+        run: |
+          python -m pip install uv
+          sudo apt-get update
+          sudo apt-get install -y libegl1
+      - name: Build and smoke-test portable Linux x64 archive
+        run: bash tools/build_portable_release_linux.sh --bootstrap-dependencies --clean
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VoidSmith-linux-x64
+          path: |
+            dist/VoidSmith-*-linux-x64.tar.gz
+            dist/VoidSmith-*-linux-x64.tar.gz.sha256
+          if-no-files-found: error

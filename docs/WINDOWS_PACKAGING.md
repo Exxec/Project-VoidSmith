@@ -1,4 +1,4 @@
-# Windows Portable Packaging
+# Portable Packaging
 
 Build a self-contained, versioned Windows x64 portable ZIP from the repository
 root:
@@ -63,3 +63,18 @@ The repository test remains the deterministic source-level check:
 ```powershell
 uv run python tools/gui_smoke_test.py
 ```
+
+## Linux x64 portable archive
+
+Linux packages are built natively, never cross-built from the Windows bundle:
+
+```bash
+bash tools/build_portable_release_linux.sh --bootstrap-dependencies --clean
+```
+
+The script produces `dist/VoidSmith-<version>-linux-x64.tar.gz` and its
+SHA-256 file. It runs the GUI smoke test with `QT_QPA_PLATFORM=offscreen`
+before and after archive extraction. The **Linux portable release** GitHub
+workflow runs this same script for version tags and manual dispatch, then
+uploads the archive as a workflow artifact; it does not publish a GitHub
+release automatically.
