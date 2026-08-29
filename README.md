@@ -1,82 +1,67 @@
 # VoidSmith
-Read-only Starsector variant analysis and generation.
 
-## Major Systems
+VoidSmith is an offline, deterministic desktop tool for read-only Starsector
+ship fitting, variant inspection, and faction-capability analysis.
 
-- safe scanner/parsers
-- Build Inspector
-- hullmod effect engine
-- combat + civilian classifiers
-- automatic faction capability analyzer
-- Faction Doctrine & Retrofit Knowledge Packs
-- factionless weapon/fighter/hullmod pack support
-- separate equipment provenance and faction affinity
-- Exact / Starsector-Style / Adaptive retrofit application
-- Refit / Repair Assistant
-- Native / Retrofit / Acquisition recommendations
-- recommendation confidence and Why-Not explanations
-- full variant generator
-- PySide6 desktop workspaces
-- locked-fleet Fleet Support Advisor with composition synergy
-- Scenario / Mission Advisor for generic templates and user-declared targets
+**Current pre-release:** [v0.1.25rc1](https://github.com/Exxec/Project-VoidSmith/releases/tag/v0.1.25rc1) · [All releases](https://github.com/Exxec/Project-VoidSmith/releases)
 
-## GUI Workspaces
+## What it does
 
-1. Ships
-2. Retrofits
-3. Faction
-4. Data / Analysis
-5. Settings / Export
+- safely scans locally installed core and enabled-mod data without changing it;
+- validates variants independently from recommendation quality;
+- generates bounded legal fits and minimal-change refit suggestions;
+- analyzes faction capabilities and explains Native, Retrofit, and Acquisition
+  recommendations, including confidence and Why-Not paths;
+- provides locked-selection Fleet Support and static Scenario / Mission
+  advisory workflows; and
+- exports only to a user-selected local output directory.
 
-## Current Scope
+## Quick start
 
-Per-ship and faction-capability analysis, a locked-selection Fleet Support
-Advisor that ranks individual complementary additions, and a Scenario / Mission
-Advisor that reports static mechanical alignment with generic or user-declared
-objectives. Whole-fleet optimization, player inventory, market acquisition,
-and save-state planning remain deferred.
+For a portable release, download the available archive for your platform from
+[Releases](https://github.com/Exxec/Project-VoidSmith/releases), extract it to
+a writable directory, and launch the included executable. Windows and Linux
+release artifacts are built natively for their respective platforms when
+published.
 
-## Current Plan
-
-The next work is evidence-first: finish portable scenario workflows and the
-scenario-fit handoff; define read-only campaign-save discovery; then consider
-bounded officer and deployment-point advisory views. Calibration, mod
-qualification, explainability, and GUI clarity take priority over new broad
-optimization systems. See [ROADMAP.md](ROADMAP.md) for the authoritative plan
-and constraints.
-
-## Development verification
-
-The supported test command mirrors CI and installs the project editable for
-the run:
+For a source checkout, install Python 3.11+ and [uv](https://docs.astral.sh/uv/):
 
 ```powershell
-uv run --no-project --with-editable . python -m unittest discover -s tests -v
+uv sync --extra gui
+uv run voidsmith-gui
 ```
 
-It requires Python 3.11+ and `uv`. The local canonical benchmark test skips
-when its user-generated Starsector fixtures are unavailable; the portable
-suite always runs.
+See the [Quick Start](docs/QUICK_START.md) for setup and the
+[packaging guide](docs/WINDOWS_PACKAGING.md) for local portable builds.
 
-## Windows executable build
+## Safety and scope
 
-From a local checkout, run [`dist/build_voidsmith.bat`](dist/build_voidsmith.bat).
-It invokes the reproducible PyInstaller pipeline and writes only local build
-artifacts, including a versioned `dist/VoidSmith-<version>.exe`. It also
-refreshes `dist/VoidSmith.exe` when that legacy path is not currently locked by
-a running copy. It packages neither Starsector nor mod content. The script
-fails if packaging fails, so a prior executable is never presented as a newly
-successful build.
+VoidSmith reads game and mod sources as untrusted, read-only input. It does not
+overwrite source variants, alter Starsector files, execute mod scripts, or
+bundle Starsector/mod data in this repository or its packages. Unknown or
+scripted mechanics remain explicit rather than guessed.
 
-## Read Order
+It is not a combat simulator, whole-fleet optimizer, save-state planner, or
+market/inventory availability tool. Legality, quality, confidence, and warnings
+are deliberately separate.
 
-1. AGENTS.md
-2. FORMAL_SPECIFICATION.md
-3. DATA_SCHEMA.md
-4. HULLMODS_CIVILIAN_AND_REFIT.md
-5. FACTION_KNOWLEDGE_PACKS.md
-6. EQUIPMENT_ACCESS_AND_AUTOFIT.md
-7. TEST_PLAN.md
-8. HEURISTICS.md
-9. GUI.md
-10. ROADMAP.md
+## Documentation
+
+- [Documentation index](docs/README.md)
+- [User guide](docs/USER_GUIDE.md)
+- [Developer guide](docs/DEVELOPER_GUIDE.md)
+- [Fleet Support Advisor](docs/FLEET_SUPPORT_ADVISOR.md)
+- [Roadmap](ROADMAP.md)
+
+## Contributing and issues
+
+Please read [AGENTS.md](AGENTS.md) and the [developer guide](docs/DEVELOPER_GUIDE.md)
+before contributing. Use the issue forms for bugs, mod compatibility, and
+recommendation quality. Do not attach game/mod source files, extracted entity
+lists, or other third-party content; provide redacted diagnostics instead.
+
+## License and disclaimer
+
+VoidSmith is licensed under the [GNU General Public License v3.0](LICENSE). It is an
+unofficial tool and is not affiliated with, endorsed by, or distributed with
+Starsector or any mod author.

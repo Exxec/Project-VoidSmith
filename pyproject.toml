@@ -6,7 +6,13 @@ build-backend = "setuptools.build_meta"
 name = "voidsmith"
 version = "0.1.25rc1"
 description = "VoidSmith: read-only Starsector variant analysis and generation"
+readme = "README.md"
+license = "GPL-3.0-only"
 requires-python = ">=3.11"
+
+[project.urls]
+Homepage = "https://github.com/Exxec/Project-VoidSmith"
+Issues = "https://github.com/Exxec/Project-VoidSmith/issues"
 
 [project.scripts]
 voidsmith = "starsector_variant_generator.cli.main:main"

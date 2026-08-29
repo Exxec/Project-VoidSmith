@@ -1,0 +1,29 @@
+name: Recommendation quality
+description: Report an explainable recommendation, confidence, diversity, or Why-Not concern.
+title: "recommendation: "
+body:
+  - type: input
+    id: version
+    attributes:
+      label: VoidSmith version
+    validations:
+      required: true
+  - type: textarea
+    id: scenario
+    attributes:
+      label: Request and constraints
+      description: Describe the selected hull/faction, role, locks, and constraints without pasting source data.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Observed recommendation and explanation
+      description: Include redacted score/confidence/Why-Not text and why it seems incorrect or incomplete.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected evidence or behavior
+      description: Explain the expected outcome without asserting undocumented game behavior.

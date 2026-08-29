@@ -1,0 +1,32 @@
+name: Mod compatibility
+description: Report a mod-data parsing, adapter, or unknown-mechanic compatibility concern.
+title: "compat: "
+body:
+  - type: input
+    id: voidsmith_version
+    attributes:
+      label: VoidSmith version
+    validations:
+      required: true
+  - type: textarea
+    id: concern
+    attributes:
+      label: Compatibility concern
+      description: Describe the observed behavior and expected evidence boundary. Do not attach mod archives or extracted source data.
+    validations:
+      required: true
+  - type: textarea
+    id: redacted_evidence
+    attributes:
+      label: Redacted evidence
+      description: Provide redacted diagnostics, source locations, or publicly linkable upstream context. Keep third-party data out of this repository.
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Affected area
+      options:
+        - Scan/parsing
+        - Legality/validation
+        - Adapter or scripted effect
+        - Recommendation quality
+        - GUI presentation

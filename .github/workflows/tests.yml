@@ -2,7 +2,9 @@ name: tests
 
 on:
   push:
+    branches: [master]
   pull_request:
+    branches: [master]
 
 jobs:
   unittest:
@@ -23,3 +25,37 @@ jobs:
         run: |
           pip install build
           python -m build
+
+  windows-smoke:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install uv
+        run: pip install uv
+      - name: Run test suite
+        run: uv run --no-project --with-editable . python -m unittest discover -s tests -v
+      - name: Run GUI smoke test
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: uv run --extra gui python tools/gui_smoke_test.py
+
+  static-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install uv
+        run: pip install uv
+      - name: Lint critical syntax errors
+        run: uv run --no-project --with ruff ruff check src tests --select E9
+      - name: Type-check recent public API boundaries
+        run: >-
+          uv run --no-project --with mypy mypy
+          src/starsector_variant_generator/analysis/campaign_save_discovery.py
+          src/starsector_variant_generator/analysis/fleet_advisory_boundaries.py
+          --follow-imports=skip --no-error-summary

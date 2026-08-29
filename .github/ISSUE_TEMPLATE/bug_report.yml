@@ -1,0 +1,30 @@
+name: Bug report
+description: Report an unexpected application failure or incorrect behavior.
+title: "bug: "
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Include the expected and actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      placeholder: "1. Open ...\n2. Select ...\n3. Run ..."
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: VoidSmith version
+      placeholder: v0.1.25rc1
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Redacted diagnostics
+      description: Paste logs/error text only after removing personal paths and third-party game/mod data. Do not upload source game or mod files.
