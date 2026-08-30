@@ -1,0 +1,31 @@
+{
+  "example_only": true,
+  "manifest": {
+    "schema_version": "1.0",
+    "pack_version": "0.1.0",
+    "target_faction_id": "example_faction",
+    "target_mod_id": "example_mod",
+    "authored_date": "2026-08-23",
+    "authorship_method": "HUMAN_AUTHORED"
+  },
+  "faction": {
+    "traits": ["example_trait"]
+  },
+  "hull_archetypes": [
+    {
+      "hull_id": "example_hull",
+      "preferred_roles": ["LINE_BRAWLER"],
+      "basis": ["MECHANICAL_ANALYSIS"],
+      "confidence": 0.8
+    }
+  ],
+  "retrofit_templates": [
+    {
+      "id": "example_hull_pd_refit",
+      "hull_id": "example_hull",
+      "target_role": "PD_ESCORT",
+      "category": "RETROFIT",
+      "confidence": 0.7
+    }
+  ]
+}

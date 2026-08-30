@@ -1,0 +1,430 @@
+Yes, and I’d tweak point 7 in exactly that direction.
+
+Instead of only saying:
+
+> “HMI is weak at long-range energy.”
+
+the tool should go one step further and produce:
+
+> **I recommend these installed hulls for that gap**, ranked and explained.
+
+That makes the feature actually actionable.
+
+For your uploaded HMI guide, there is already support for the idea that HMI lacks advanced energy/phase capability and uses captured ships like Medusas, Auroras, Paragons, Onslaughts, and Astrals to fill those gaps.  The guide also explicitly frames “Capture High-Tech” as a faction principle. 
+
+## How I’d make auto-recommendation work
+
+The engine can do most of this **without a hand-written review for every mod**.
+
+Think of it as two layers:
+
+### Layer 1: Automatic mod scan
+
+The program scans the mod and builds a **Faction Capability Profile** from actual data:
+
+* hull stats
+* mount types/sizes
+* flux
+* armor/shields
+* mobility
+* fighter bays
+* ship systems where parseable
+* built-in hullmods
+* known weapons
+* existing variants
+* faction known-hull/weapon lists
+* hull roles inferred by the classifier
+
+That lets it infer things such as:
+
+```text
+HMI
+
+Strong:
+- armored brawlers
+- ballistic pressure
+- PD
+- salvage-oriented support
+
+Weak:
+- long-range energy platforms
+- phase ships
+- high-mobility high-tech skirmishers
+```
+
+Then it can scan **all installed hulls** and look for ships that cover the weak dimensions.
+
+So the logic becomes:
+
+```text
+Faction capability profile
+        ↓
+Detect weak/missing roles
+        ↓
+Search installed hull registry
+        ↓
+Exclude faction-native hulls if desired
+        ↓
+Score candidates for missing role
+        ↓
+Return top recommendations
+```
+
+That can happen automatically.
+
+## Example
+
+Say the tool detects:
+
+```text
+Capability gap:
+LONG_RANGE_ENERGY_PLATFORM
+```
+
+It then evaluates installed hulls:
+
+```text
+Paragon         94
+Executor        82
+Champion        79
+Aurora          61
+Medusa          48
+```
+
+Then the UI says:
+
+### Recommended gap fillers
+
+* **Paragon** — excellent long-range energy platform, strong shields, ideal for a role HMI lacks
+* **Champion** — cheaper mixed-tech alternative, easier to integrate
+* **Executor** — strong long-range platform with more hybrid characteristics
+
+That’s much better than merely listing “energy ships.”
+
+---
+
+# Where the knowledge pack helps
+
+The automatic scanner can tell you what is **mechanically true**.
+
+The knowledge pack can tell you what is **faction-flavored or historically sensible**.
+
+For example:
+
+```text
+Automatic engine:
+HMI is weak in long-range energy.
+
+Knowledge pack:
+HMI lore/playstyle tolerates captured/salvaged foreign hulls.
+
+Result:
+Recommend high-tech foreign hulls as retrofit/acquisition targets.
+```
+
+Without the pack, the engine might still find the right ships, but it wouldn’t know whether cross-faction acquisition fits the intended playstyle.
+
+---
+
+# Do you need me to review every mod?
+
+**Not necessarily.**
+
+I would make three levels.
+
+## Level 1: Fully automatic
+
+No human-written mod review.
+
+Use only parsed mod data.
+
+The tool generates:
+
+```text
+AUTO_INFERRED
+```
+
+for:
+
+* faction strengths
+* weaknesses
+* hull archetypes
+* recommended gap fillers
+* likely retrofit roles
+
+This should work for most ordinary faction mods.
+
+## Level 2: Auto + generated draft knowledge pack
+
+This is probably the sweet spot.
+
+You give me or another model the mod files, and ask for:
+
+> “Review this faction mod and generate a Faction Doctrine & Retrofit Pack.”
+
+The review would inspect:
+
+* faction files
+* hulls
+* weapons
+* variants
+* hullmods
+* systems where inspectable
+* README/lore if present
+
+Then generate structured output like:
+
+```text
+hmi/
+    faction.json
+    hulls.json
+    retrofit_rules.json
+    progression.json
+    notes.md
+```
+
+The program loads it as curated metadata.
+
+This is much better than manually writing everything yourself.
+
+## Level 3: Hand-tuned pack
+
+Later, if you play the faction and discover:
+
+> “No, this ship is terrible as artillery despite the stats.”
+
+you edit the pack or override.
+
+That becomes:
+
+```text
+USER_CURATED
+```
+
+and outranks auto inference.
+
+---
+
+# I’d add confidence to recommendations
+
+This is important.
+
+Each recommendation should tell you **why it exists**.
+
+Example:
+
+```text
+Recommended Hull:
+Paragon
+
+Gap addressed:
+Long-range energy fire support
+
+Recommendation score:
+92
+
+Basis:
+- mechanical hull analysis
+- faction capability gap
+- installed weapon compatibility
+- curated HMI doctrine
+
+Confidence:
+HIGH
+```
+
+Another might be:
+
+```text
+Recommended Hull:
+Modded Cruiser X
+
+Gap addressed:
+Fast skirmisher
+
+Basis:
+- automated stat inference only
+
+Confidence:
+MEDIUM
+```
+
+That prevents auto-generated advice from masquerading as gospel.
+
+---
+
+# How the automatic mod review could work
+
+I’d create a dedicated module:
+
+```text
+analysis/
+    faction_capability_analyzer/
+```
+
+It would build something like:
+
+```text
+FactionCapabilityProfile
+    armor_strength
+    shield_strength
+    ballistic_strength
+    energy_strength
+    missile_strength
+    carrier_strength
+    phase_strength
+    mobility_strength
+    long_range_strength
+    brawler_strength
+    logistics_strength
+    salvage_strength
+    survey_strength
+```
+
+Each normalized 0–1.
+
+Then define thresholds:
+
+```text
+>= 0.75    STRONG
+0.45–0.74 ADEQUATE
+0.20–0.44 WEAK
+< 0.20     GAP
+```
+
+The exact thresholds belong in `HEURISTICS.md`.
+
+---
+
+# Then recommend ships against gaps
+
+For each gap:
+
+```text
+candidate_score =
+    role_fit
+  + capability_gain
+  + equipment_compatibility
+  + AI_friendliness
+  + availability_policy
+  + faction_style_compatibility
+```
+
+Then show top 3–5.
+
+I’d avoid dumping 40 ships on you.
+
+Default:
+
+> **I recommend these 3**
+
+with:
+
+> Show more
+
+if desired.
+
+---
+
+# Retrofit recommendations can use the same machinery
+
+This is the clever part.
+
+For an existing HMI hull, ask:
+
+> Can this hull itself cover the faction gap with a retrofit?
+
+So before recommending a foreign ship, the engine can test:
+
+```text
+Current hull
+    ↓
+Alternative role profiles
+    ↓
+Can retrofit reach acceptable score?
+```
+
+Example:
+
+```text
+Gap:
+PD escort
+
+Native option:
+Cockroach retrofit
+Score: 90
+
+Foreign acquisition:
+Enforcer PD
+Score: 78
+
+Recommendation:
+Use Cockroach retrofit.
+```
+
+But:
+
+```text
+Gap:
+High-end long-range energy
+
+Native retrofit:
+Best HMI hull score: 54
+
+Foreign hull:
+Paragon: 94
+Champion: 83
+
+Recommendation:
+Acquire/retrofit foreign hull.
+```
+
+That gives you exactly the **“I recommend these”** behavior you want.
+
+---
+
+# The mod-review workflow I’d use
+
+You could later hand me one mod at a time and ask:
+
+> “Analyze this Starsector faction mod and generate a Doctrine & Retrofit Pack compatible with the generator schema.”
+
+I would output:
+
+* faction strengths/weaknesses
+* ship archetypes
+* recommended native fits
+* alternate retrofit roles
+* poor-fit roles
+* faction-specific hullmod tendencies
+* weapon families
+* capability gaps
+* recommended foreign/installed gap fillers
+* confidence/basis metadata
+* structured JSON/TOML pack
+
+That becomes a **review translated into machine-readable guidance**.
+
+The nice part is that the program would still validate all of it against the actual installed version. If the mod updates, stale recommendations can be flagged instead of silently trusted.
+
+## My recommendation
+
+Build the system so **manual reviews are optional enrichment, not required input**.
+
+The ideal hierarchy is:
+
+```text
+Raw mod scan
+    ↓
+Automatic faction capability analysis
+    ↓
+Automatic recommendations
+    ↓
+Optional knowledge pack
+    ↓
+Optional user overrides
+```
+
+That way you can install some obscure faction mod tomorrow and still get useful recommendations immediately, while a reviewed pack makes the advice sharper and more thematic.
+
+I would definitely add this architecture before we freeze the planning docs, because it ties together faction analysis, retrofit recommendations, and future mod-specific review packs very cleanly.

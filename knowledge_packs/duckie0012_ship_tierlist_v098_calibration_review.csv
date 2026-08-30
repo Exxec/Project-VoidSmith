@@ -1,0 +1,62 @@
+﻿ship_display,reviewer_tier,player_suitability_claim,ai_suitability_claim,claim_summary,timestamp_range,evidence_class,expectation_strength,review_status,requires_local_id_resolution,requires_mechanical_validation
+Afflictor,B,PLAYER_HIGH,AI_LIMITED,Player extremely good; AI relegated to safer ship-system use.,0:34-0:54,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Apogee,C,UNKNOWN,UNKNOWN,"Good shields, flare launcher, flexible mounts; good all-rounder, limited endgame evidence.",0:56-1:20,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Astral,B,UNKNOWN,GOOD_WITH_BUILD,Performs well with Trident bombers and the right build.,1:22-1:46,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Atlas Mk.II,D,UNKNOWN,CONDITIONAL,Works mainly in massed firing-line setups; hard to use and command.,1:39-2:04,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Aurora,A,PLAYER_EXCELLENT,AI_GOOD,Especially strong with Safety Overrides/player control; AI can also do well.,2:04-2:23,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Brawler,D,UNKNOWN,UNKNOWN,Regular Brawler rated low overall.,2:28-2:34,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Brawler (LP),B,PLAYER_GOOD,AI_SWARM_GOOD,Built-in Safety Overrides; effective player-piloted or in groups.,2:31-2:53,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Centurion,C,UNKNOWN,GOOD,Good all-rounder and durable.,3:20-3:34,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Cerberus,D,UNKNOWN,DISPOSABLE,"Useful early, disposable, replace when better hulls appear.",3:39-3:52,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Champion,B,UNKNOWN,GOOD_WITH_BUILD,Can perform well even in endgame with the right build.,3:52-4:00,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Condor,C,UNKNOWN,GOOD,Solid light carrier reference point.,4:18-4:24,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Conquest,C,UNKNOWN,AVERAGE,Can perform well but is vulnerable to flanking/overflux.,4:39-4:59,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Dominator,B,UNKNOWN,GOOD,Recent experiments suggest it is underrated.,4:59-5:12,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Doom,B,PLAYER_EXCELLENT,AI_UNTRUSTED,Player can contribute huge damage; AI is not trusted.,5:12-5:29,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Drover,B,UNKNOWN,GOOD,Preferred over Condor by creator; B Deck and missile slots praised.,5:29-5:45,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Eagle,C,UNKNOWN,AVERAGE_GOOD,Average but reliable; build it and it works.,5:45-5:53,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Enforcer,C,UNKNOWN,GOOD_SUPPORT,Good straightforward support ship.,6:01-6:18,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Eradicator,A,PLAYER_GOOD,AI_GOOD,Creator almost always takes one; strong player or fleet ship.,6:18-6:30,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Eradicator (P),C,UNKNOWN,GOOD,Lower than regular due to loss of Accelerated Ammo Feeder.,6:30-6:38,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Executor,A,UNKNOWN,GOOD_WITH_BUILD,Properly built can fight all game content.,6:38-7:06,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Falcon,A,PLAYER_GOOD,AI_GOOD,Ballistic variants rated highly; usable into all fights.,7:06-7:22,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Falcon (P),C,PLAYER_FUN,AI_UNKNOWN,Missile-heavy; strong early with many Reapers.,7:24-7:39,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Fury,B,UNKNOWN,GOOD,Strong all-rounder; shield hullmods recommended.,7:39-7:56,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Gremlin,D,PLAYER_STRONG,AI_POOR,"Missile-heavy; strong player ship, poor fleet-AI use case.",8:05-8:37,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Gryphon,C,UNKNOWN,MIXED,"Specialized, mixed results, fragile under pressure.",8:53-9:05,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Hammerhead,C,UNKNOWN,GOOD,Straightforward and works on varied builds.,9:05-9:18,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Harbinger,D,UNKNOWN,LOW,Afflictor generally preferred; niche uses only.,9:18-9:36,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Heron,B,UNKNOWN,GOOD_DAMAGE_CARRIER,Triple bays and Targeting Feed fighter bonus praised.,9:36-9:50,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Hound,D,UNKNOWN,DISPOSABLE_POINT_RUNNER,Use as disposable point runner; SO + Assault Chaingun suggested.,9:50-10:09,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Hyperion,C,PLAYER_EXCELLENT,AI_UNCERTAIN,A-tier potential in player hands; AI value questionable for DP.,10:09-10:35,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Invictus,A,PLAYER_HIGH_SKILL,GOOD_WITH_SUPPORT,Can fight all content with support; requires skill/patience.,10:35-10:52,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Kite,D,UNKNOWN,EARLY_GAME_GOOD,Early value with Expanded Missile Racks + Hammers.,10:52-11:12,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Lasher,B,UNKNOWN,GOOD,Reliable frigate usable against most content.,11:12-11:30,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Lasher (LP),C,UNKNOWN,CONDITIONAL_SO,"Fine in Safety Overrides fleets, less compelling otherwise.",11:30-11:42,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Legion,A,UNKNOWN,GOOD,Both variants can fight any content and are dependable.,11:42-11:53,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Manticore,B,UNKNOWN,GOOD,Regular and pirate versions rated strong.,11:53-12:03,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Manticore (LP),C,UNKNOWN,CONDITIONAL,More restrictive than regular/pirate versions.,11:59-12:03,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Medusa,A,UNKNOWN,AI_EXCELLENT,Favorite destroyer; long-range AI builds stay out of trouble.,12:03-12:25,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Mora,B,UNKNOWN,GOOD_OFFTANK,"Heron for damage, Mora for tanking/offtank.",12:25-12:43,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Mudskipper Mk.I,JOKE,UNKNOWN,UNKNOWN,A-tier placement is clearly sarcastic; exclude from rank calibration.,12:43-13:12,VIDEO_EXPLICIT_CLAIM,OBSERVATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Mule,C,UNKNOWN,AVERAGE,Solidly average; creator prefers Enforcer.,13:12-13:33,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Odyssey,C,PLAYER_EXCELLENT,AI_POOR,A-tier in skilled player hands; poor in AI hands.,13:33-14:08,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Omen,A,UNKNOWN,AI_GOOD_DEFENSIVE,Very effective defensive frigate; EMP and tanking emphasized.,14:08-14:23,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Onslaught,A,PLAYER_GOOD,AI_GOOD,Can approach all game content; mono-fleet success cited.,14:23-14:53,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Paragon,A,UNKNOWN,GOOD,A-tier capital; second to Onslaught in stated preference order.,14:53-15:29,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Pegasus,B,PLAYER_A_WITH_SKILLS,AI_UNKNOWN,Missile-limited in long fights; player with combat skills can be A-tier.,15:34-16:02,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Prometheus Mk.II,C,UNKNOWN,CONDITIONAL,"Generalist starter capital; flexible mounts, Burn Drive, squishy.",16:06-16:36,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Retribution,B,PLAYER_GOOD,AI_CONDITIONAL,AI works if deployed late/held back; dies if sent in early.,16:36-17:07,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Scarab,C,UNKNOWN,UNKNOWN,Likely still good; creator lacks recent experience.,17:07-17:17,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Shade,C,UNKNOWN,NICHE_DEFENSIVE,Defensive phase niche with EMP; weaker than Afflictor offensively.,17:17-17:38,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Shrike,D,UNKNOWN,LOW,Rarely used beyond early-game necessity.,17:38-17:47,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Sunder,B,UNKNOWN,GOOD_ESCORT,Deadly offensive escort if kept alive.,17:47-18:02,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Tempest,A,UNKNOWN,AI_GOOD_OFFENSIVE,Offensive counterpart to Omen; effective with little babysitting.,18:02-18:18,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Venture,C,UNKNOWN,UTILITY_COMBAT,Cargo brick with fleet utility; not an endgame killer.,18:18-19:29,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Venture (P),C,UNKNOWN,MISSILE_SUPPORT,Large missile slot gives niche support role.,18:47-19:06,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Venture (LP),C,UNKNOWN,GOOD_IN_LP_SO,Good in Luddic Path/SO style; Orion Drive + Jackhammer Pods noted.,19:06-19:29,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Vigilance,C,UNKNOWN,NICHE,Medium missile and ballistic mounts create a niche.,19:29-19:46,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Wayfarer,D,UNKNOWN,EARLY_SMUGGLING,Useful for early smuggling with sensor-profile reduction/Solar Shielding.,19:46-19:58,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Wolf,C,UNKNOWN,GOOD,Respectable high-tech frigate; Phase Skimmer mobility praised.,19:58-20:12,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Wolf (P),D,UNKNOWN,LOWER_MOBILITY,Directional phase-skim restriction hurts it.,20:12-20:20,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True
+Wolf (H/Aux),D,UNKNOWN,LOW,Creator barely uses this variant.,20:20-20:27,VIDEO_EXPLICIT_CLAIM,SOFT_EXPECTATION,PROVISIONAL_REVIEW_REQUIRED,True,True

@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "faction_pack.schema.json",
+  "title": "Faction Knowledge Pack",
+  "description": "Machine-enforced contract for a Faction Knowledge Pack (root ROADMAP.md Phase 7; see FACTION_KNOWLEDGE_PACKS.md for field semantics and knowledge_packs/examples/faction.example.json for a neutral, non-canonical example). A pack is optional, curated guidance that biases the Gap Recommendation Engine (GAP_RECOMMENDATION_ENGINE.md) toward faction-thematic solutions -- it can never override hard legality, and every guidance section carries its own basis/confidence rather than one pack-wide number.",
+  "type": "object",
+  "required": ["manifest", "faction"],
+  "additionalProperties": false,
+  "properties": {
+    "example_only": {
+      "type": "boolean",
+      "description": "Present and true only on neutral, non-canonical worked examples (e.g. knowledge_packs/examples/faction.example.json), never on a real pack. A loader should treat the presence of this key as true as a strong signal to keep the pack out of any bundled/user pack directory scan, regardless of its own value."
+    },
+    "manifest": { "$ref": "#/$defs/manifest" },
+    "faction": { "$ref": "#/$defs/factionIdentity" },
+    "hull_archetypes": { "type": "array", "items": { "$ref": "#/$defs/hullArchetype" } },
+    "retrofit_templates": { "type": "array", "items": { "$ref": "#/$defs/retrofitTemplate" } },
+    "approved_equipment": { "type": "array", "items": { "$ref": "#/$defs/approvedEquipment" } },
+    "progression_tiers": { "type": "array", "items": { "$ref": "#/$defs/progressionTier" } },
+    "capability_gap_guidance": { "type": "array", "items": { "$ref": "#/$defs/capabilityGapGuidance" } },
+    "officer_guidance": { "type": "array", "items": { "$ref": "#/$defs/officerGuidance" } },
+    "notes": { "type": "string" }
+  },
+  "$defs": {
+    "authorshipMethod": {
+      "type": "string",
+      "enum": ["HUMAN_AUTHORED", "AI_ASSISTED_REVIEW", "AI_GENERATED"]
+    },
+    "basisSource": {
+      "type": "string",
+      "enum": ["EXISTING_VARIANTS", "FACTION_DATA", "CURATED_GUIDE", "MECHANICAL_ANALYSIS", "COMMUNITY_KNOWLEDGE"],
+      "description": "Where one section's guidance actually came from. Not a legality claim -- see FACTION_KNOWLEDGE_PACKS.md section 6 (score vs confidence) and Agent.md's evidence-provenance rule."
+    },
+    "manifest": {
+      "type": "object",
+      "required": ["schema_version", "pack_version", "target_faction_id", "target_mod_id", "authored_date", "authorship_method"],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "type": "string",
+          "description": "Version of THIS schema the pack was authored against (e.g. \"1.0\"), independent of pack_version and target_mod_version. Loaders may need a migration path between schema_version values in the future -- not implemented in v1 (only 1.0 exists)."
+        },
+        "pack_version": {
+          "type": "string",
+          "description": "The pack content's own version, independent of schema_version and the target mod's version."
+        },
+        "target_faction_id": { "type": "string" },
+        "target_mod_id": { "type": "string" },
+        "target_mod_version": { "type": ["string", "null"] },
+        "source_hashes": {
+          "type": "object",
+          "description": "Maps a real, resolvable evidence key (e.g. \"faction:<id>\", \"hull:<id>\") to the SHA-256 source_hash that entity had when this pack was authored, exactly matching core/models.py Entity.source_hash. Used for freshness assessment (FACTION_KNOWLEDGE_PACKS.md section 12) by comparing against the entity's current real hash -- never a fabricated or estimated hash.",
+          "additionalProperties": { "type": "string" }
+        },
+        "authored_date": { "type": "string", "format": "date" },
+        "authorship_method": { "$ref": "#/$defs/authorshipMethod" }
+      }
+    },
+    "factionIdentity": {
+      "type": "object",
+      "required": ["traits"],
+      "additionalProperties": false,
+      "properties": {
+        "traits": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Free-text thematic descriptors (e.g. \"armor-heavy\", \"ballistic\", \"attrition\", \"salvage-oriented\"). Descriptive framing only -- never consulted by validation/legality.py or treated as a mechanical fact."
+        },
+        "doctrine_notes": { "type": "string" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["basis", "confidence"],
+      "properties": {
+        "basis": { "type": "array", "items": { "$ref": "#/$defs/basisSource" }, "minItems": 1 },
+        "confidence": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+      }
+    },
+    "hullArchetype": {
+      "type": "object",
+      "required": ["hull_id", "basis", "confidence"],
+      "additionalProperties": false,
+      "properties": {
+        "hull_id": { "type": "string", "description": "Runtime-local hull id, e.g. \"example_hull\" -- never a display name. Not guaranteed to resolve against every installation; see the loader's unresolved-reference handling." },
+        "preferred_roles": { "type": "array", "items": { "type": "string" } },
+        "secondary_roles": { "type": "array", "items": { "type": "string" } },
+        "discouraged_roles": { "type": "array", "items": { "type": "string" } },
+        "basis": { "$ref": "#/$defs/provenance/properties/basis" },
+        "confidence": { "$ref": "#/$defs/provenance/properties/confidence" }
+      }
+    },
+    "retrofitTemplate": {
+      "type": "object",
+      "required": ["id", "hull_id", "target_role", "category", "confidence"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "hull_id": { "type": "string" },
+        "target_role": { "type": "string" },
+        "category": { "type": "string", "enum": ["NATIVE", "RETROFIT", "ACQUISITION"] },
+        "confidence": { "$ref": "#/$defs/provenance/properties/confidence" },
+        "basis": { "$ref": "#/$defs/provenance/properties/basis" },
+        "notes": { "type": "string" }
+      }
+    },
+    "approvedEquipment": {
+      "type": "object",
+      "description": "Curated permission for an otherwise non-native item. This is access/doctrine guidance only: it never bypasses slot, OP, hullmod, fighter-bay, or any other hard legality check.",
+      "required": ["id", "kind", "confidence"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "kind": { "type": "string", "enum": ["weapons", "fighters", "hullmods", "hulls"] },
+        "confidence": { "$ref": "#/$defs/provenance/properties/confidence" },
+        "basis": { "$ref": "#/$defs/provenance/properties/basis" },
+        "notes": { "type": "string" }
+      }
+    },
+    "progressionTier": {
+      "type": "object",
+      "required": ["tier"],
+      "additionalProperties": false,
+      "properties": {
+        "tier": { "type": "string", "enum": ["EARLY", "MID", "LATE", "ENDGAME"] },
+        "guidance": { "type": "string" },
+        "recommended_hull_ids": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "capabilityGapGuidance": {
+      "type": "object",
+      "required": ["role", "basis", "confidence"],
+      "additionalProperties": false,
+      "properties": {
+        "role": { "type": "string" },
+        "notes": { "type": "string" },
+        "basis": { "$ref": "#/$defs/provenance/properties/basis" },
+        "confidence": { "$ref": "#/$defs/provenance/properties/confidence" }
+      }
+    },
+    "officerGuidance": {
+      "type": "object",
+      "required": ["notes"],
+      "additionalProperties": false,
+      "properties": {
+        "hull_id": { "type": ["string", "null"] },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

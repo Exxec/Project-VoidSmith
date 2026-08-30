@@ -1,0 +1,493 @@
+{
+  "schema_name": "reddit_calibration_source_pack",
+  "schema_version": "0.1",
+  "status": "PROVISIONAL_REVIEW_REQUIRED",
+  "series": {
+    "author": "Grievous69",
+    "game_version": "0.98a",
+    "platform": "Reddit",
+    "methodology": {
+      "subjective_personal_tier_list": true,
+      "tier_distance_is_small": true,
+      "first_rank_is_ai_second_is_player": true,
+      "single_rank_means_no_material_ai_player_difference": true,
+      "campaign_stats_matter": true,
+      "safety_overrides_not_counted_strongly_by_author": true,
+      "spoiler_content_separate": true
+    }
+  },
+  "evidence_contract": {
+    "original_post": "REVIEWER_EXPLICIT_CLAIM",
+    "author_comment": "REVIEWER_FOLLOWUP",
+    "non_author_comment": "COMMUNITY_DISCUSSION",
+    "mechanical_claim_requires_local_validation": true,
+    "tier_is_soft_expectation_not_truth": true,
+    "local_legality_authoritative": true,
+    "do_not_merge_comment_consensus_into_author_rank": true,
+    "availability_and_spoiler_constraints_preserved": true
+  },
+  "sources": [
+    {
+      "source_id": "grievous69_capitals_098a",
+      "category": "SHIP_CAPITAL",
+      "title": "Capital ship tier list - 0.98a (with intro)",
+      "url": "https://www.reddit.com/r/starsector/comments/1k6ydy5/capital_ship_tier_list_098a_with_intro/",
+      "author": "Grievous69",
+      "game_version": "0.98a",
+      "spoiler": false
+    },
+    {
+      "source_id": "grievous69_cruisers_098a",
+      "category": "SHIP_CRUISER",
+      "title": "Cruiser ship tier list - 0.98a",
+      "url": "https://www.reddit.com/r/starsector/comments/1k9569u/cruiser_ship_tier_list_098a/",
+      "author": "Grievous69",
+      "game_version": "0.98a",
+      "spoiler": false
+    },
+    {
+      "source_id": "grievous69_destroyers_098a",
+      "category": "SHIP_DESTROYER",
+      "title": "Destroyer ship tier list - 0.98a",
+      "url": "https://www.reddit.com/r/starsector/comments/1kca3jd/destroyer_ship_tier_list_098a/",
+      "author": "Grievous69",
+      "game_version": "0.98a",
+      "spoiler": false
+    },
+    {
+      "source_id": "grievous69_frigates_098a",
+      "category": "SHIP_FRIGATE",
+      "title": "Frigate ship tier list - 0.98a",
+      "url": "https://www.reddit.com/r/starsector/comments/1kh6jan/frigate_ship_tier_list_098a/",
+      "author": "Grievous69",
+      "game_version": "0.98a",
+      "spoiler": false
+    },
+    {
+      "source_id": "grievous69_ballistics_098a",
+      "category": "WEAPON_BALLISTIC",
+      "title": "Ballistic weapon tier list - 0.98a",
+      "url": "https://www.reddit.com/r/starsector/comments/1kky9ta/ballistic_weapon_tier_list_098a/",
+      "author": "Grievous69",
+      "game_version": "0.98a",
+      "spoiler": false
+    },
+    {
+      "source_id": "grievous69_energy_098a",
+      "category": "WEAPON_ENERGY",
+      "title": "Energy weapon tier list - 0.98a",
+      "url": "https://www.reddit.com/r/starsector/comments/1ko7eww/energy_weapon_tier_list_098a/",
+      "author": "Grievous69",
+      "game_version": "0.98a",
+      "spoiler": false
+    },
+    {
+      "source_id": "grievous69_missiles_098a",
+      "category": "WEAPON_MISSILE",
+      "title": "Missile weapon tier list - 0.98a",
+      "url": "https://www.reddit.com/r/starsector/comments/1kv7kxe/missile_weapon_tier_list_098a/",
+      "author": "Grievous69",
+      "game_version": "0.98a",
+      "spoiler": false
+    },
+    {
+      "source_id": "grievous69_fighters_098a",
+      "category": "FIGHTER",
+      "title": "Fighter tier list - 0.98a",
+      "url": "https://www.reddit.com/r/starsector/comments/1lkexa8/fighter_tier_list_098a/",
+      "author": "Grievous69",
+      "game_version": "0.98a",
+      "spoiler": false
+    },
+    {
+      "source_id": "grievous69_spoiler_ship_fighter_098a",
+      "category": "SPOILER_SHIP_FIGHTER",
+      "title": "[SPOILER] ship + fighter tier list - 0.98a",
+      "url": "https://www.reddit.com/r/starsector/comments/1lvlpdg/spoiler_ship_fighter_tier_list_098a/",
+      "author": "Grievous69",
+      "game_version": "0.98a",
+      "spoiler": true
+    },
+    {
+      "source_id": "grievous69_spoiler_weapons_098a",
+      "category": "SPOILER_WEAPON",
+      "title": "[SPOILER] weapon tier list - 0.98a",
+      "url": "https://www.reddit.com/r/starsector/comments/1m8wn6l/spoiler_weapon_tier_list_098a/",
+      "author": "Grievous69",
+      "game_version": "0.98a",
+      "spoiler": true
+    }
+  ],
+  "high_value_seed_records": [
+    {
+      "entity_type": "SHIP",
+      "entity_display": "Afflictor",
+      "ai_tier": "B",
+      "player_tier": "S",
+      "claim_summary": "AI/player split; phase assassin/support; player especially strong",
+      "source_id": "grievous69_frigates_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "SHIP",
+      "entity_display": "Aurora",
+      "ai_tier": "A-",
+      "player_tier": "S-",
+      "claim_summary": "Elite high-tech cruiser; large player upside; spoiler weapons improve further",
+      "source_id": "grievous69_cruisers_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "SHIP",
+      "entity_display": "Doom",
+      "ai_tier": "B",
+      "player_tier": "S+",
+      "claim_summary": "Very large player-vs-AI performance gap; Systems Expertise important",
+      "source_id": "grievous69_cruisers_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "SHIP",
+      "entity_display": "Odyssey",
+      "ai_tier": "C",
+      "player_tier": "A+",
+      "claim_summary": "Strong player battlecruiser, poor value in AI hands",
+      "source_id": "grievous69_capitals_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "SHIP",
+      "entity_display": "Onslaught",
+      "ai_tier": "A",
+      "player_tier": "S-",
+      "claim_summary": "Gold-standard battleship; player gains from maneuver/control",
+      "source_id": "grievous69_capitals_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "SHIP",
+      "entity_display": "Conquest",
+      "ai_tier": "B",
+      "player_tier": "A",
+      "claim_summary": "Battlecruiser with player advantage; AI comparatively competent",
+      "source_id": "grievous69_capitals_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "SHIP",
+      "entity_display": "Invictus",
+      "ai_tier": "B",
+      "player_tier": "A",
+      "claim_summary": "Player timing of Lidar Array materially improves value",
+      "source_id": "grievous69_capitals_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "SHIP",
+      "entity_display": "Pegasus",
+      "ai_tier": "C",
+      "player_tier": "A-",
+      "claim_summary": "Missile capital with significant player advantage",
+      "source_id": "grievous69_capitals_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "SHIP",
+      "entity_display": "Retribution",
+      "ai_tier": "D+",
+      "player_tier": "A+",
+      "claim_summary": "Extremely player-sensitive battlecruiser",
+      "source_id": "grievous69_capitals_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "SHIP",
+      "entity_display": "Medusa",
+      "ai_tier": "A+",
+      "player_tier": "S",
+      "claim_summary": "Top destroyer; AI benefits strongly from Accelerated Shields/System Expertise",
+      "source_id": "grievous69_destroyers_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "SHIP",
+      "entity_display": "Harbinger",
+      "ai_tier": "C",
+      "player_tier": "A",
+      "claim_summary": "Player control materially improves phase destroyer",
+      "source_id": "grievous69_destroyers_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "SHIP",
+      "entity_display": "Scarab",
+      "ai_tier": "S-",
+      "player_tier": "S-",
+      "claim_summary": "Highly consistent frigate; Temporal Shell and PPT support matter",
+      "source_id": "grievous69_frigates_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "WEAPON",
+      "entity_display": "Assault Chaingun",
+      "ai_tier": "B-",
+      "player_tier": "A+",
+      "claim_summary": "SO-focused weapon with strong player-control benefit",
+      "source_id": "grievous69_ballistics_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "WEAPON",
+      "entity_display": "Heavy Needler",
+      "ai_tier": "B",
+      "player_tier": "A",
+      "claim_summary": "Player timing improves burst kinetic use",
+      "source_id": "grievous69_ballistics_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "WEAPON",
+      "entity_display": "Mjolnir",
+      "ai_tier": "C+",
+      "player_tier": "A",
+      "claim_summary": "Flux-heavy energy ballistic; player gains from flux/vent control",
+      "source_id": "grievous69_ballistics_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "WEAPON",
+      "entity_display": "Storm Needler",
+      "ai_tier": "A+",
+      "player_tier": "S",
+      "claim_summary": "High DPS kinetic magazine weapon; strong player use",
+      "source_id": "grievous69_ballistics_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "WEAPON",
+      "entity_display": "Antimatter Blaster",
+      "ai_tier": "A-",
+      "player_tier": "S",
+      "claim_summary": "Short-range burst; especially strong for player ships",
+      "source_id": "grievous69_energy_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "WEAPON",
+      "entity_display": "Ion Pulser",
+      "ai_tier": "A-",
+      "player_tier": "A+",
+      "claim_summary": "High burst EMP/damage, flux management important",
+      "source_id": "grievous69_energy_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "WEAPON",
+      "entity_display": "Heavy Blaster",
+      "ai_tier": "C+",
+      "player_tier": "A+",
+      "claim_summary": "High flux burden makes player control much more valuable",
+      "source_id": "grievous69_energy_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "WEAPON",
+      "entity_display": "Plasma Cannon",
+      "ai_tier": "B-",
+      "player_tier": "A-",
+      "claim_summary": "AI flux usage is a weakness; better in human hands",
+      "source_id": "grievous69_energy_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "WEAPON",
+      "entity_display": "Tachyon Lance",
+      "ai_tier": "A",
+      "player_tier": "S-",
+      "claim_summary": "Timing and target selection reward player control",
+      "source_id": "grievous69_energy_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "WEAPON",
+      "entity_display": "Reaper-class Torpedo",
+      "ai_tier": "B",
+      "player_tier": "A+",
+      "claim_summary": "High impact but player timing/aim matters substantially",
+      "source_id": "grievous69_missiles_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "WEAPON",
+      "entity_display": "Sabot SRM",
+      "ai_tier": "A",
+      "player_tier": "S",
+      "claim_summary": "Strong burst kinetic/EMP; player can exploit timing/shield interaction",
+      "source_id": "grievous69_missiles_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "WEAPON",
+      "entity_display": "Typhoon Reaper Launcher",
+      "ai_tier": "A-",
+      "player_tier": "S",
+      "claim_summary": "High player ceiling; alternating fire recommended",
+      "source_id": "grievous69_missiles_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "WEAPON",
+      "entity_display": "Cyclone Reaper Launcher",
+      "ai_tier": "B",
+      "player_tier": "A+",
+      "claim_summary": "Player can exploit high-impact torpedo timing better than AI",
+      "source_id": "grievous69_missiles_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "WEAPON",
+      "entity_display": "Hammer Barrage",
+      "ai_tier": "B",
+      "player_tier": "A+",
+      "claim_summary": "Short-range burst weapon with player benefit",
+      "source_id": "grievous69_missiles_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "WEAPON",
+      "entity_display": "Reality Disruptor",
+      "ai_tier": "SS",
+      "player_tier": "SS",
+      "claim_summary": "Author considers uniquely broken; hard-limited Omega source",
+      "source_id": "grievous69_spoiler_weapons_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "WEAPON",
+      "entity_display": "Cryoblaster",
+      "ai_tier": "S+",
+      "player_tier": "S+",
+      "claim_summary": "Very high general damage utility; spoiler availability constrained",
+      "source_id": "grievous69_spoiler_weapons_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "WEAPON",
+      "entity_display": "Voidblaster",
+      "ai_tier": "C",
+      "player_tier": "S",
+      "claim_summary": "AI wastes charges; dramatic player-vs-AI split",
+      "source_id": "grievous69_spoiler_weapons_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "WEAPON",
+      "entity_display": "Volatile Particle Driver",
+      "ai_tier": "B",
+      "player_tier": "A+",
+      "claim_summary": "Close-range finesse and flux management favor player",
+      "source_id": "grievous69_spoiler_weapons_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "FIGHTER",
+      "entity_display": "Broadsword",
+      "ai_tier": "S-",
+      "player_tier": "S-",
+      "claim_summary": "Excellent shield pressure, durable, flares, low OP",
+      "source_id": "grievous69_fighters_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "FIGHTER",
+      "entity_display": "Dagger",
+      "ai_tier": "A",
+      "player_tier": "A",
+      "claim_summary": "Reliable bomber with Atropos payload",
+      "source_id": "grievous69_fighters_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "FIGHTER",
+      "entity_display": "Longbow",
+      "ai_tier": "A+",
+      "player_tier": "A+",
+      "claim_summary": "Kinetic bomber with Sabots; strong pairing with Daggers",
+      "source_id": "grievous69_fighters_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "FIGHTER",
+      "entity_display": "Sarissa",
+      "ai_tier": "A",
+      "player_tier": "A",
+      "claim_summary": "Zero-range support fighter; kinetic + flak utility",
+      "source_id": "grievous69_fighters_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "FIGHTER",
+      "entity_display": "Xyphos",
+      "ai_tier": "A+",
+      "player_tier": "A+",
+      "claim_summary": "Elite zero-range support wing with Ion Beam + Burst PD",
+      "source_id": "grievous69_fighters_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "FIGHTER",
+      "entity_display": "Warthog",
+      "ai_tier": "C-",
+      "player_tier": "C-",
+      "claim_summary": "Slow HE fighter with poor practical delivery",
+      "source_id": "grievous69_fighters_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    },
+    {
+      "entity_type": "FIGHTER",
+      "entity_display": "Spark",
+      "ai_tier": "A+",
+      "player_tier": "A+",
+      "claim_summary": "Spoiler drone fighter; excellent anti-fighter/missile/frigate role",
+      "source_id": "grievous69_spoiler_ship_fighter_098a",
+      "expectation_strength": "SOFT_EXPECTATION",
+      "review_status": "PROVISIONAL_REVIEW_REQUIRED"
+    }
+  ]
+}
