@@ -66,7 +66,10 @@ def _source_root(source_path: Path) -> Path:
 def _safe_sprite_path(source_root: Path, sprite_name: str) -> Path | None:
     """Accept only a sprite path physically beneath the scanned source root."""
     try:
-        relative = Path(sprite_name.replace("/", "\\"))
+        # Starsector declarations use either separator. Normalize to the
+        # host path syntax so a valid forward-slash asset path works on Linux
+        # and a backslash traversal attempt cannot become one literal filename.
+        relative = Path(sprite_name.replace("\\", "/"))
         if relative.suffix:
             candidates = (relative,)
         else:
