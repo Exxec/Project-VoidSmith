@@ -45,3 +45,10 @@ config/*.toml
 .pyinstaller/
 build/
 dist/
+
+# Local source/archive snapshots
+/src.zip
+src/**/*.zip
+
+# Obsolete local planning-pack snapshot
+/Starsector-Variant-Generator-Planning-Pack/

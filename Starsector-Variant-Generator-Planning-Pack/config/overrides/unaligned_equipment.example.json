@@ -1,9 +1,0 @@
-{
-  "entity_id": "example_weapon",
-  "source_mod_id": "example_weapon_pack",
-  "faction_affinity": [
-    "UNALIGNED"
-  ],
-  "availability_class": "STANDARD",
-  "notes": "Example only."
-}

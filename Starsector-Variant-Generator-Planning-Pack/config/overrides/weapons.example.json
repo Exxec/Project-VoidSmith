@@ -1,9 +1,0 @@
-{
-  "entity_id": "example_weapon",
-  "role_tags": [
-    "ARTILLERY",
-    "KINETIC_PRESSURE"
-  ],
-  "ai_friendliness_score": 0.85,
-  "notes": "Example only. Manual overrides may not bypass hard legality."
-}
