@@ -24,7 +24,7 @@ else
     uv sync --locked --offline --extra gui --group release
 fi
 
-version="$(uv run --locked --offline --no-sync python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version])')"
+version="$(uv run --locked --offline --no-sync python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
 if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-]?[A-Za-z0-9.]+)?$ ]]; then
     echo "Unsafe release version: $version" >&2
     exit 2
