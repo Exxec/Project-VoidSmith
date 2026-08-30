@@ -607,6 +607,7 @@ class GuiCanvasTests(unittest.TestCase):
             self.assertIsNotNone(window._scan_thread)
             self.assertTrue(window.cancel_scan_button.isEnabled())
             window._discard_scan()
+            self._join_scan_thread(window)
             window.close()
 
     def test_maybe_auto_scan_is_a_no_op_once_a_scan_is_already_underway(self) -> None:
@@ -619,6 +620,7 @@ class GuiCanvasTests(unittest.TestCase):
             window._maybe_auto_scan()  # must not start a second, competing scan
             self.assertIs(first_thread, window._scan_thread)
             window._discard_scan()
+            self._join_scan_thread(window)
             window.close()
 
     def test_scan_forwards_include_disabled_mods_checkbox_into_config(self) -> None:
@@ -630,6 +632,7 @@ class GuiCanvasTests(unittest.TestCase):
             window._start_scan()
             self.assertTrue(window._config.include_disabled_mods)
             window._discard_scan()
+            self._join_scan_thread(window)
             window.close()
 
     def test_include_disabled_mods_preference_is_restored_on_next_launch(self) -> None:
@@ -677,9 +680,9 @@ class GuiCanvasTests(unittest.TestCase):
         # new and deterministic: requesting cancellation sets the real
         # cooperative cancel flag Scanner.scan() checks, immediately and
         # synchronously, regardless of how long the background thread then
-        # takes to notice it. ignore_cleanup_errors: a real background
-        # thread is started (and never waited on here), so it may still
-        # hold this directory's log file open when this block exits.
+        # takes to notice it. ignore_cleanup_errors: Windows can keep this
+        # directory's log file handle open for a brief moment past the
+        # real thread actually stopping (see _join_scan_thread below).
         with TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
             root = Path(tmp) / "install"; (root / "starsector-core").mkdir(parents=True)
             window = MainWindow()
@@ -690,6 +693,7 @@ class GuiCanvasTests(unittest.TestCase):
             window._discard_scan()
             self.assertTrue(window._scan_cancel_event.is_set())
             self.assertFalse(window.cancel_scan_button.isEnabled())
+            self._join_scan_thread(window)
             window.close()
 
     def test_scan_worker_emits_cancelled_not_failed_on_scan_cancelled(self) -> None:
@@ -736,6 +740,7 @@ class GuiCanvasTests(unittest.TestCase):
             self.assertIsNotNone(window._scan_worker)
             self.assertIsInstance(window._scan_worker, ScanWorker)
             window._discard_scan()
+            self._join_scan_thread(window)
             window.close()
 
     def test_active_workers_mapping_retains_the_generic_run_worker(self) -> None:
@@ -749,6 +754,7 @@ class GuiCanvasTests(unittest.TestCase):
         self.assertEqual(1, len(window._active_workers))
         thread = next(iter(window._active_workers))
         self.assertIsInstance(window._active_workers[thread], AnalysisWorker)
+        self._join_scan_thread(window)
         window.close()
 
     def test_terminal_scan_paths_clear_the_retained_worker_reference(self) -> None:
@@ -765,6 +771,7 @@ class GuiCanvasTests(unittest.TestCase):
             window.root.setText(str(root)); window.output.setText(str(Path(tmp) / "output"))
             window._start_scan()
             self.assertIsNotNone(window._scan_worker)
+            self._join_scan_thread(window)  # _scan_finished below assumes the real thread already stopped, same as production's thread.finished wiring
             window._scan_finished()
             self.assertIsNone(window._scan_worker)
             self.assertTrue(window.scan_button.isEnabled())
@@ -786,6 +793,36 @@ class GuiCanvasTests(unittest.TestCase):
         window._scan_progress = QProgressDialog("", "Cancel", 0, 0, window)
         window.scan_button.setEnabled(False); window.cancel_scan_button.setEnabled(True)
 
+    @staticmethod
+    def _join_scan_thread(window: "MainWindow") -> None:
+        """Stops and joins every real background QThread `window` still
+        holds (the scan thread plus any generic _run()-launched one in
+        `window._threads`), before the test ends and drops its reference
+        to `window`. Production's _start_scan/_run wiring quits each
+        thread via worker.completed/failed/cancelled -> thread.quit, but
+        that is a cross-thread queued connection that only gets delivered
+        once the receiving (main) thread's Qt event loop actually runs --
+        true in the real app (app.exec()) but never true in this headless
+        unittest process, which runs no event loop at all. Left alone, a
+        genuinely started QThread just sits idling in its own event loop
+        forever: nothing in this process ever asks it to stop, so it is
+        still very much `isRunning()` when interpreter shutdown gets
+        around to destroying the MainWindow (and thus its child QThread).
+        Destroying a QThread that is still running is Qt's own fatal
+        `QThread: Destroyed while thread ... is still running` condition,
+        which aborts the whole test process after every test has already
+        reported its result -- confirmed as the cause of this suite's
+        post-"OK" abort (BUGS: leaked GUI-test background thread).
+        `.quit()` and `.wait()` are plain same-thread member calls on each
+        `thread` (constructed on the main thread), so they need no event
+        loop to take effect; both are also harmless no-ops on a thread
+        that was never started, e.g. `_simulate_scan_in_flight`'s
+        placeholder."""
+        for thread in (window._scan_thread, *window._threads):
+            if thread is not None:
+                thread.quit()
+                thread.wait(5000)
+
     def test_scan_can_restart_after_successful_completion(self) -> None:
         # _scan_thread is not None: return guards _start_scan against a
         # concurrent scan -- if a terminal path ever failed to clear it,
@@ -803,7 +840,7 @@ class GuiCanvasTests(unittest.TestCase):
             self.assertTrue(window.scan_button.isEnabled())
             window._start_scan()
             self.assertIsNotNone(window._scan_thread)
-            window._discard_scan(); window.close()
+            window._discard_scan(); self._join_scan_thread(window); window.close()
 
     def test_scan_can_restart_after_failure(self) -> None:
         with TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
@@ -819,7 +856,7 @@ class GuiCanvasTests(unittest.TestCase):
             self.assertTrue(window.scan_button.isEnabled())
             window._start_scan()
             self.assertIsNotNone(window._scan_thread)
-            window._discard_scan(); window.close()
+            window._discard_scan(); self._join_scan_thread(window); window.close()
 
     def test_scan_can_restart_after_cancellation(self) -> None:
         with TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
@@ -834,7 +871,7 @@ class GuiCanvasTests(unittest.TestCase):
             window._start_scan()
             self.assertIsNotNone(window._scan_thread)
             self.assertFalse(window._scan_discarded)  # a fresh scan is not pre-discarded
-            window._discard_scan(); window.close()
+            window._discard_scan(); self._join_scan_thread(window); window.close()
 
     def test_scan_stall_watchdog_logs_last_known_state_once(self) -> None:
         # A genuine stall (no progress event for a long stretch) must be
@@ -860,6 +897,7 @@ class GuiCanvasTests(unittest.TestCase):
                 window._check_scan_stall()
                 get_logger.return_value.warning.assert_not_called()
             window._discard_scan()
+            self._join_scan_thread(window)
             window.close()
 
     def test_scan_stall_watchdog_is_silent_while_progress_is_recent(self) -> None:
@@ -873,6 +911,7 @@ class GuiCanvasTests(unittest.TestCase):
                 window._check_scan_stall()
                 get_logger.assert_not_called()
             window._discard_scan()
+            self._join_scan_thread(window)
             window.close()
 
     def test_scan_watchdog_starts_and_stops_with_the_scan(self) -> None:
@@ -883,6 +922,7 @@ class GuiCanvasTests(unittest.TestCase):
             self.assertFalse(window._scan_watchdog.isActive())
             window._start_scan()
             self.assertTrue(window._scan_watchdog.isActive())
+            self._join_scan_thread(window)  # _scan_finished below assumes the real thread already stopped, same as production's thread.finished wiring
             window._scan_finished()
             self.assertFalse(window._scan_watchdog.isActive())
             window.close()
@@ -891,6 +931,7 @@ class GuiCanvasTests(unittest.TestCase):
         window = MainWindow()
         window._run("Working…", lambda: "result", lambda _result: None, window.generate_button)
         thread = next(iter(window._active_workers))
+        thread.quit(); thread.wait(5000)  # _finish_thread below assumes the thread already stopped, same as production's thread.finished wiring
         window._finish_thread(thread, window.generate_button)
         self.assertEqual({}, window._active_workers)
         # control.setEnabled(self._registry is not None) -- a fresh window
