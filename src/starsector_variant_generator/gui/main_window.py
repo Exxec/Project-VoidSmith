@@ -546,7 +546,7 @@ class MainWindow(QMainWindow):
         # (including raising), rather than the thread's own termination
         # depending on an application handler completing cleanly first.
         worker.completed.connect(thread.quit); worker.completed.connect(self._scan_complete)
-        worker.failed.connect(thread.quit); worker.failed.connect(lambda error: self._fail_operation(control, token, error))
+        worker.failed.connect(thread.quit); worker.failed.connect(self._operation_failed)
         worker.cancelled.connect(thread.quit)
         thread.finished.connect(worker.deleteLater); thread.finished.connect(self._scan_finished)
         self._scan_thread = thread; self._scan_worker = worker; self.scan_button.setEnabled(False); self.statusBar().showMessage("Scanning read-only source data…")
