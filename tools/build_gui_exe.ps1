@@ -94,12 +94,12 @@ $StagedDist = Join-Path $ProjectRoot 'build/onefile-dist'
 # release pipeline locks in `uv.lock`. `-BootstrapDependencies` is the one
 # explicit, reviewed path that's allowed to touch the network.
 if ($BootstrapDependencies) {
-    & uv sync --locked --no-build-isolation --extra gui --group release
+    & uv sync --locked --extra gui --group release
     if ($LASTEXITCODE -ne 0) {
         throw 'Dependency bootstrap failed. The lockfile was not changed; resolve the materialization failure before building.'
     }
 } else {
-    & uv sync --locked --offline --no-build-isolation --extra gui --group release
+    & uv sync --locked --offline --extra gui --group release
     if ($LASTEXITCODE -ne 0) {
         throw 'Locked build dependencies are not fully materialized in the local cache/environment. Run this script once with -BootstrapDependencies on an approved network connection; normal builds never resolve online.'
     }

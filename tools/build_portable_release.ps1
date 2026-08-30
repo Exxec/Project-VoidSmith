@@ -29,12 +29,12 @@ $env:UV_CACHE_DIR = Join-Path $ProjectRoot 'build/uv-cache'
 # when a cache is incomplete.  The one explicit bootstrap path is reserved for
 # a reviewed, permitted materialization of exactly the already-locked graph.
 if ($BootstrapDependencies) {
-    & uv sync --locked --no-build-isolation --extra gui --group release
+    & uv sync --locked --extra gui --group release
     if ($LASTEXITCODE -ne 0) {
         throw 'Release dependency bootstrap failed. The lockfile was not changed; resolve the materialization failure before building.'
     }
 } else {
-    & uv sync --locked --offline --no-build-isolation --extra gui --group release
+    & uv sync --locked --offline --extra gui --group release
     if ($LASTEXITCODE -ne 0) {
         throw 'Locked release dependencies are not fully materialized in the local cache/environment. Run this script once with -BootstrapDependencies on an approved network connection; normal releases never resolve online.'
     }
