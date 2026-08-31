@@ -79,7 +79,7 @@ def main() -> int:
     for index in range(window.workspace_tabs.count()):
         window.workspace_tabs.setCurrentIndex(index)
         QCoreApplication.processEvents()
-    if any(table.rowCount() < 1 for table in window.data_tables.values()):
+    if any(table.model() is None or table.model().rowCount() < 1 for table in window.data_tables.values()):
         raise RuntimeError("GUI did not populate Data / Analysis tables on workspace activation")
 
     # Exercise an allowed write through the Settings / Export workspace.

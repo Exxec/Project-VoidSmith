@@ -103,6 +103,14 @@ from starsector_variant_generator.analysis.video_review import (
     load_video_review_transcript,
     resolve_control_suitability_evidence,
 )
+from starsector_variant_generator.analysis.recommendation_feedback import (
+    RecommendationFeedback,
+    append_feedback,
+)
+from starsector_variant_generator.analysis.release_verification import (
+    ReleaseVerification,
+    verify_portable_release,
+)
 from starsector_variant_generator.core.cache import (
     CacheComparison,
     load_manifest,
@@ -955,6 +963,18 @@ def run_why_not(
     return explain_candidate(faction, registry, role, hull_id, heuristic_set, knowledge_pack)
 
 
+def run_build_why_not_comparison(
+    registry: Registry, faction_id: str, role: str, build_paths: tuple[tuple[str, str], ...],
+    source_mod: str | None = None, heuristic_set: str = "baseline_0.2",
+    knowledge_pack: ResolvedKnowledgePack | None = None, campaign_stage: str | None = None,
+) -> tuple[BuildWhyNotExplanation, ...]:
+    """Return independent, existing Why-Not records for presentation only."""
+    if len(build_paths) < 2:
+        raise ValueError("At least two Hull + BuildArchetype paths are required for comparison")
+    faction = resolve_faction(registry, faction_id, source_mod)
+    return tuple(explain_build_candidate(faction, registry, role, hull_id, build_id, heuristic_set, knowledge_pack, campaign_stage) for hull_id, build_id in build_paths)
+
+
 def run_analyze_variant(
     registry: Registry, variant_id: str, profile: str, flux_mode: str,
     heuristic_set: str = "baseline_0.2",
@@ -1001,6 +1021,27 @@ def run_variant_control_evidence(registry: Registry, variant_id: str, transcript
         "unresolved_records": sum(item.hull_id is None for item in all_evidence),
         "advisory_only": True,
     }
+
+
+def run_local_calibration_workspace(
+    fixture: Path, scan: ScanResult, registry: Registry, heuristic_set: str,
+) -> Any:
+    """Evaluate local labels without tuning heuristics or writing reports."""
+    # Imported only on use: calibration_runner calls this API module for
+    # generation observations, so importing its workspace facade at module
+    # initialization would form a circular import.
+    from starsector_variant_generator.analysis.calibration_workspace import evaluate_local_workspace
+    return evaluate_local_workspace(fixture, scan, registry, heuristic_set)
+
+
+def save_recommendation_feedback(output_dir: Path, entry: RecommendationFeedback) -> Path:
+    """Persist explicit user feedback below the configured local output root."""
+    return append_feedback(output_dir, entry)
+
+
+def run_verify_portable_release(archive: Path, checksum: Path | None = None) -> ReleaseVerification:
+    """Read and verify a local release archive without extracting or running it."""
+    return verify_portable_release(archive, checksum)
 
 
 def run_check_export(registry: Registry, manifest: Path) -> StalenessReport:

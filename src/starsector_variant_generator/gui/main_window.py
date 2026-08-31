@@ -56,6 +56,10 @@ from starsector_variant_generator.analysis.scenario_advisor import (
     scenario_advisor_request_to_payload,
     user_defined_scenario,
 )
+from starsector_variant_generator.analysis.recommendation_feedback import (
+    FeedbackKind,
+    RecommendationFeedback,
+)
 from starsector_variant_generator.core.config import DEFAULT_HEURISTIC_SET, AppConfig
 from starsector_variant_generator.core.mod_import import (
     ModImportResult,
@@ -71,6 +75,7 @@ from starsector_variant_generator.gui.canvas import (
 from starsector_variant_generator.gui.helpers import _looks_like_starsector_install
 from starsector_variant_generator.gui.models import EntityTableModel
 from starsector_variant_generator.gui.presentation import (
+    format_build_why_not_comparison,
     format_fleet_support_comparison,
     format_fleet_support_result,
     format_fleet_support_why_not,
@@ -372,6 +377,12 @@ class MainWindow(QMainWindow):
         for button, slot in ((self.capability_button, self._analyze_capability), (self.recommend_button, self._gap_recommendations)):
             button.setEnabled(False); button.clicked.connect(slot); controls.addWidget(button)
         layout.addLayout(controls)
+        build_comparison_group = QGroupBox("BUILD PATH EXPLAINABILITY COMPARISON")
+        build_comparison_form = QFormLayout(build_comparison_group)
+        self.build_comparison_role = QLineEdit("LINE_BRAWLER"); self.build_comparison_role.setPlaceholderText("Capability role, for example LINE_BRAWLER")
+        self.build_comparison_paths = QLineEdit(); self.build_comparison_paths.setPlaceholderText("hull_id:build_id, hull_id:build_id")
+        self.build_comparison_button = QPushButton("Compare Why-Not Evidence"); self.build_comparison_button.setEnabled(False); self.build_comparison_button.clicked.connect(self._compare_build_paths)
+        build_comparison_form.addRow("Role", self.build_comparison_role); build_comparison_form.addRow("Paths", self.build_comparison_paths); build_comparison_form.addRow(self.build_comparison_button); layout.addWidget(build_comparison_group)
         support_group = QGroupBox("FLEET SUPPORT ADVISOR — LOCKED SHIPS")
         support_form = QFormLayout(support_group)
         self.fleet_support_hulls = QLineEdit(); self.fleet_support_hulls.setPlaceholderText("Comma-separated hull IDs; repeat an ID for another selected ship")
@@ -394,7 +405,14 @@ class MainWindow(QMainWindow):
         self.load_fleet_support_button = QPushButton("Load Request…"); self.load_fleet_support_button.clicked.connect(self._load_fleet_support_request)
         self.compare_fleet_support_button = QPushButton("Compare Selected"); self.compare_fleet_support_button.clicked.connect(self._compare_fleet_support_cards)
         support_buttons = QWidget(); support_buttons_layout = QHBoxLayout(support_buttons); support_buttons_layout.setContentsMargins(0, 0, 0, 0); support_buttons_layout.addWidget(self.fleet_support_button); support_buttons_layout.addWidget(self.fleet_support_why_not_button); support_buttons_layout.addWidget(self.generate_support_fit_button); support_buttons_layout.addWidget(self.compare_fleet_support_button); support_buttons_layout.addWidget(self.save_fleet_support_button); support_buttons_layout.addWidget(self.load_fleet_support_button); support_buttons_layout.addWidget(self.clear_fleet_support_button)
-        support_form.addRow("Keep / lock", self.fleet_support_hulls); support_form.addRow("Focus", self.fleet_support_focus); support_form.addRow("Access", self.fleet_support_access); support_form.addRow("Heuristics", self.fleet_support_heuristic); support_form.addRow("Availability", self.fleet_support_allow_foreign); support_form.addRow("Visibility", self.fleet_support_include_hidden); support_form.addRow("Candidate", self.fleet_support_candidate); support_form.addRow(support_buttons)
+        self.feedback_kind = QComboBox()
+        for kind in FeedbackKind:
+            self.feedback_kind.addItem(kind.value.replace("_", " ").title(), kind.value)
+        self.save_feedback_button = QPushButton("Record Feedback")
+        self.save_feedback_button.setEnabled(False); self.save_feedback_button.setToolTip("Stores explicit local review feedback only; it never changes legality, rankings, or heuristics automatically.")
+        self.save_feedback_button.clicked.connect(self._save_recommendation_feedback)
+        feedback_row = QWidget(); feedback_layout = QHBoxLayout(feedback_row); feedback_layout.setContentsMargins(0, 0, 0, 0); feedback_layout.addWidget(self.feedback_kind); feedback_layout.addWidget(self.save_feedback_button)
+        support_form.addRow("Keep / lock", self.fleet_support_hulls); support_form.addRow("Focus", self.fleet_support_focus); support_form.addRow("Access", self.fleet_support_access); support_form.addRow("Heuristics", self.fleet_support_heuristic); support_form.addRow("Availability", self.fleet_support_allow_foreign); support_form.addRow("Visibility", self.fleet_support_include_hidden); support_form.addRow("Candidate", self.fleet_support_candidate); support_form.addRow("Local feedback", feedback_row); support_form.addRow(support_buttons)
         scenario_group = QGroupBox("SCENARIO / MISSION ADVISOR — LOCKED SHIPS"); scenario_form = QFormLayout(scenario_group)
         self.scenario_profile = QComboBox()
         for profile in generic_scenario_profiles(): self.scenario_profile.addItem(profile.display_name, profile.scenario_id)
@@ -444,7 +462,23 @@ class MainWindow(QMainWindow):
         summary_group = QGroupBox("LATEST LOCAL SCAN / REPORT STATUS"); summary_layout = QVBoxLayout(summary_group)
         self.scan_summary = QPlainTextEdit(); self.scan_summary.setReadOnly(True); self.scan_summary.setMaximumHeight(150)
         self.scan_summary.setPlainText("No local scan has been loaded. Source files are read-only; reports are written only under the configured output directory.")
-        summary_layout.addWidget(self.scan_summary); layout.addWidget(summary_group); layout.addStretch(); return page
+        summary_layout.addWidget(self.scan_summary); layout.addWidget(summary_group)
+        calibration_group = QGroupBox("LOCAL CALIBRATION WORKSPACE"); calibration_layout = QFormLayout(calibration_group)
+        self.calibration_fixture = QLineEdit(str(self._preferences.value("paths/calibration_fixture", ""))); self.calibration_fixture.setPlaceholderText("Optional local hash-bound calibration labels JSON")
+        choose_calibration = QPushButton("Choose…"); choose_calibration.clicked.connect(self._choose_calibration_fixture)
+        calibration_path_row = QWidget(); calibration_path_layout = QHBoxLayout(calibration_path_row); calibration_path_layout.setContentsMargins(0, 0, 0, 0); calibration_path_layout.addWidget(self.calibration_fixture, 1); calibration_path_layout.addWidget(choose_calibration)
+        self.calibration_button = QPushButton("Evaluate Local Labels"); self.calibration_button.setEnabled(False); self.calibration_button.clicked.connect(self._evaluate_local_calibration)
+        self.calibration_detail = QPlainTextEdit(); self.calibration_detail.setReadOnly(True); self.calibration_detail.setMaximumHeight(110); self.calibration_detail.setPlainText("Load a local label fixture after scanning. Evaluation is read-only and never tunes heuristics.")
+        calibration_layout.addRow("Fixture", calibration_path_row); calibration_layout.addRow(self.calibration_button); calibration_layout.addRow(self.calibration_detail); layout.addWidget(calibration_group)
+        release_group = QGroupBox("PORTABLE RELEASE VERIFICATION")
+        release_layout = QFormLayout(release_group)
+        self.release_archive = QLineEdit(str(self._preferences.value("paths/release_archive", ""))); self.release_archive.setPlaceholderText("Local VoidSmith .zip or .tar.gz archive")
+        choose_release = QPushButton("Choose…"); choose_release.clicked.connect(self._choose_release_archive)
+        release_row = QWidget(); release_row_layout = QHBoxLayout(release_row); release_row_layout.setContentsMargins(0, 0, 0, 0); release_row_layout.addWidget(self.release_archive, 1); release_row_layout.addWidget(choose_release)
+        self.release_verify_button = QPushButton("Verify Archive"); self.release_verify_button.clicked.connect(self._verify_release_archive)
+        self.release_detail = QPlainTextEdit(); self.release_detail.setReadOnly(True); self.release_detail.setMaximumHeight(80); self.release_detail.setPlainText("Reads the archive and optional adjacent checksum without extracting or running it.")
+        release_layout.addRow("Archive", release_row); release_layout.addRow(self.release_verify_button); release_layout.addRow(self.release_detail); layout.addWidget(release_group)
+        layout.addStretch(); return page
 
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:  # type: ignore[override]
         if event.mimeData().hasUrls():
@@ -555,6 +589,48 @@ class MainWindow(QMainWindow):
     def _choose_installation(self) -> None:
         path = QFileDialog.getExistingDirectory(self, "Select Starsector installation")
         if path: self.root.setText(path)
+
+    def _choose_calibration_fixture(self) -> None:
+        path, _ = QFileDialog.getOpenFileName(self, "Choose local calibration labels", self.calibration_fixture.text(), "JSON files (*.json)")
+        if path:
+            self.calibration_fixture.setText(path)
+            self._preferences.setValue("paths/calibration_fixture", path)
+
+    def _choose_release_archive(self) -> None:
+        path, _ = QFileDialog.getOpenFileName(self, "Choose VoidSmith portable archive", self.release_archive.text(), "Archives (*.zip *.tar.gz *.tgz *.tar)")
+        if path:
+            self.release_archive.setText(path)
+            self._preferences.setValue("paths/release_archive", path)
+
+    def _verify_release_archive(self) -> None:
+        archive_text = self.release_archive.text().strip()
+        if not archive_text:
+            self.release_detail.setPlainText("Choose a local portable archive first."); return
+        archive = Path(archive_text); checksum = Path(f"{archive}.sha256")
+        def complete(result: Any) -> None:
+            self.release_detail.setPlainText(
+                f"{'PASS' if result.passed else 'CHECK REQUIRED'} — {result.version or 'unknown version'} / {result.platform or 'unknown platform'}\n"
+                f"Checksum: {result.checksum_status}; inventory: {result.inventory_status}.\n"
+                + "\n".join(result.findings)
+            )
+        self._run("Verifying portable archive inventory…", lambda: api.run_verify_portable_release(archive, checksum if checksum.is_file() else None), complete, self.release_verify_button)
+
+    def _evaluate_local_calibration(self) -> None:
+        if self._scan_result is None or self._registry is None:
+            self.calibration_detail.setPlainText("Scan local data before evaluating calibration labels."); return
+        fixture_text = self.calibration_fixture.text().strip()
+        if not fixture_text:
+            self.calibration_detail.setPlainText("Choose a local hash-bound calibration label fixture first."); return
+        heuristic_set = self._config.heuristic_set if self._config is not None else DEFAULT_HEURISTIC_SET
+        fixture, scan, registry = Path(fixture_text), self._scan_result, self._registry
+        def complete(result: Any) -> None:
+            report = result.report
+            self.calibration_detail.setPlainText(
+                f"Fixture: {report.fixture_id}\nHeuristic set: {report.heuristic_set}\n"
+                f"Match {report.matched}; mismatch {report.mismatched}; stale {report.stale}; unsupported {report.unsupported}.\n"
+                "Review result only: labels and heuristics were not changed."
+            )
+        self._run("Evaluating local hash-bound calibration labels…", lambda: api.run_local_calibration_workspace(fixture, scan, registry, heuristic_set), complete, self.calibration_button)
 
     def _choose_advanced_config(self) -> None:
         path, _ = QFileDialog.getOpenFileName(self, "Select advanced generation request", filter="JSON files (*.json)")
@@ -739,7 +815,7 @@ class MainWindow(QMainWindow):
         self._data_entities = {"Weapons": self._scan_result.weapons, "Hullmods": self._scan_result.hullmods, "Fighters": self._scan_result.fighters, "Variants": self._scan_result.variants}
         self._data_tables_pending = True
         self.provenance_detail.setPlainText("Open Data / Analysis to materialize local normalized tables on demand.")
-        for button in (self.fix_button, self.improve_button, self.compare_refit_button, self.copy_retrofit_button, self.load_editable_retrofit_button, self.populate_retrofits_button, self.capability_button, self.recommend_button, self.fleet_support_button, self.fleet_support_why_not_button, self.scenario_evaluate_button, self.export_button): button.setEnabled(True)
+        for button in (self.fix_button, self.improve_button, self.compare_refit_button, self.copy_retrofit_button, self.load_editable_retrofit_button, self.populate_retrofits_button, self.capability_button, self.recommend_button, self.build_comparison_button, self.fleet_support_button, self.fleet_support_why_not_button, self.scenario_evaluate_button, self.export_button, self.calibration_button, self.save_feedback_button): button.setEnabled(True)
 
     def _populate_data_tables(self) -> None:
         if not self._data_tables_pending:
@@ -984,7 +1060,7 @@ class MainWindow(QMainWindow):
         dialog = self._operation_progress.pop(thread, None)
         if dialog is not None:
             dialog.close(); dialog.deleteLater()
-        self._threads.discard(thread); self._active_workers.pop(thread, None); control.setEnabled(self._registry is not None); thread.deleteLater()
+        self._threads.discard(thread); self._active_workers.pop(thread, None); control.setEnabled(self._registry is not None or control is self.release_verify_button); thread.deleteLater()
         self._maybe_close_after_background_work()
     def _operation_failed(self, message: str) -> None: self.statusBar().showMessage(f"Operation failed: {message}"); QMessageBox.critical(self, "Operation failed", message)
 
@@ -1322,6 +1398,47 @@ class MainWindow(QMainWindow):
             pack = api.resolve_optional_knowledge_pack(Path(pack_path), self._registry) if pack_path else None
             return api.run_gap_recommendations(self._registry, faction, source, heuristic_set, pack)
         self._faction_run(recommend, self.recommend_button, "Ranking Hull + BuildArchetype gap solutions…")
+
+    def _compare_build_paths(self) -> None:
+        selected = self._faction_id()
+        if self._registry is None or selected is None:
+            self.faction_detail.setPlainText("Select a scanned faction before comparing build paths."); return
+        role = self.build_comparison_role.text().strip().upper()
+        entries = [item.strip() for item in self.build_comparison_paths.text().split(",") if item.strip()]
+        paths: list[tuple[str, str]] = []
+        try:
+            for entry in entries:
+                hull_id, build_id = (part.strip() for part in entry.split(":", 1))
+                if not hull_id or not build_id:
+                    raise ValueError
+                paths.append((hull_id, build_id.upper()))
+        except ValueError:
+            self.faction_detail.setPlainText("Use comma-separated hull_id:build_id entries, with at least two paths."); return
+        if len(paths) < 2 or not role:
+            self.faction_detail.setPlainText("Enter one role and at least two build paths."); return
+        faction_id, source_mod = selected
+        heuristic_set = self._config.heuristic_set if self._config is not None else DEFAULT_HEURISTIC_SET
+        self._run("Comparing already-computed Build Why-Not evidence…", lambda: api.run_build_why_not_comparison(self._registry, faction_id, role, tuple(paths), source_mod, heuristic_set), lambda result: self.faction_detail.setPlainText(format_build_why_not_comparison(result)), self.build_comparison_button)
+
+    def _save_recommendation_feedback(self) -> None:
+        if self._registry is None:
+            self.faction_detail.setPlainText("Scan local data before recording feedback."); return
+        output_text = self.output.text().strip()
+        candidate = self.fleet_support_candidate.text().strip()
+        if not output_text or not candidate:
+            self.faction_detail.setPlainText("Choose an advisor candidate and configured output directory before recording feedback."); return
+        hull = self._registry.hulls.by_id.get(candidate)
+        if hull is None:
+            self.faction_detail.setPlainText("The selected advisor candidate is no longer a uniquely resolved hull."); return
+        kind = FeedbackKind(str(self.feedback_kind.currentData()))
+        note, accepted = QInputDialog.getText(self, "Local recommendation feedback", "Optional note (stored locally only):")
+        if not accepted:
+            return
+        try:
+            path = api.save_recommendation_feedback(Path(output_text), RecommendationFeedback(kind, f"fleet-support:{candidate}", candidate, hull.source_mod, note or None))
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            self.faction_detail.setPlainText(f"Feedback was not saved: {exc}"); return
+        self.faction_detail.setPlainText(f"Recorded local {kind.value} feedback for {candidate}.\n{path}\n\nFeedback is review material only; it did not alter legality, recommendation score, confidence, or heuristics.")
 
     def _fleet_support(self) -> None:
         if self._registry is None:

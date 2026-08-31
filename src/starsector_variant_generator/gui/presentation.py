@@ -8,6 +8,7 @@ from starsector_variant_generator.analysis.fleet_support import (
     FleetSupportResult,
     FleetSupportWhyNotExplanation,
 )
+from starsector_variant_generator.analysis.gap_recommendation import BuildWhyNotExplanation
 from starsector_variant_generator.analysis.scenario_advisor import (
     ScenarioFleetAssessment,
 )
@@ -97,6 +98,21 @@ def format_fleet_support_comparison(items: tuple[FleetSupportRecommendation, ...
             "Components: " + (f"support {item.score_components.support_need_coverage:.3f} | doctrine {item.score_components.doctrine_cohesion:.3f} | composition {item.score_components.composition_synergy:.3f} | friction {item.score_components.static_friction:.3f} | access {item.score_components.access_affinity:.3f}" if item.score_components is not None else "Unavailable."),
             "Friction: " + (", ".join(item.friction.notes) or "No resolved static friction."),
             "Fit legality: " + item.fit_legality_status,
+        ))
+    return "\n".join(lines)
+
+
+def format_build_why_not_comparison(items: tuple[BuildWhyNotExplanation, ...]) -> str:
+    """Compare already-computed Build Why-Not evidence without re-ranking."""
+    lines = ["BUILD PATH EXPLAINABILITY COMPARISON"]
+    for item in items:
+        lines.extend((
+            "", f"{item.hull_id} / {item.build_archetype_id}",
+            f"Resolved: {item.resolved} | Rank: {item.rank if item.rank is not None else 'Unavailable'} | Score: {item.recommendation_score if item.recommendation_score is not None else 'Unavailable'}",
+            "Recommended legs: " + (", ".join(item.recommended_legs) or "None"),
+            "Build evidence: " + (f"compatibility {item.build.compatibility:.3f}; confidence {item.build.confidence:.3f}; maturity {item.build.maturity}" if item.build is not None else "Unavailable."),
+            "Components: " + (", ".join(f"{key}={value:.3f}" for key, value in sorted(item.scoring_components.items())) or "Unavailable."),
+            "Reason: " + item.reason,
         ))
     return "\n".join(lines)
 

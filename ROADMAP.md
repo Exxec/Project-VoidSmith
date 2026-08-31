@@ -43,6 +43,14 @@ files, or make campaign-inventory or market-availability decisions.
 | 48 — Public repository hygiene | Complete with limitations | Public README, GPL-3.0-only license/NOTICE, documentation index, issue forms, and scoped Windows/static-analysis CI have been added. Full-repository Ruff and mypy are intentionally deferred: the inherited baseline has 215 Ruff findings and broad mypy errors, so CI gates critical syntax errors plus the newly typed public advisory boundaries without masking that debt. |
 | 49 — Cross-platform release publication | Complete with limitations | Tag-driven CI builds and smoke-tests Windows and Linux artifacts, then attaches both archives and checksums to one prerelease using the repository token. Manual dispatch keeps artifacts for inspection but does not publish. Hosted tag-run success and broader Linux runtime testing remain external verification. |
 
+| 50 — Release verification and evidence | Complete with limitations | Settings / Export verifies a supplied ZIP/tar archive, optional adjacent checksum, and package inventory without extraction or execution. It cannot prove hosted publication success or runtime behavior. |
+| 51 — Local calibration workspace | Complete with limitations | Settings / Export evaluates local hash-bound labels against the loaded read-only scan and reports match/mismatch/stale/unsupported counts. It does not write reports, labels, or heuristic values. |
+| 52 — Local recommendation feedback | Complete with limitations | Faction records explicit feedback only under the configured output directory. It is never automatically applied to legality, ranking, score, confidence, or heuristics. |
+| 53 — Explainability comparison | Complete with limitations | Faction compares two or more specified Hull + BuildArchetype Why-Not records using backend-generated evidence only. It does not rerank paths or make outcome claims. |
+| 54 — Player-suitability semantics | Decision-gated | `player_suitability` is presently a compatibility placeholder. Define its evidence and vocabulary before changing behavior; do not infer player skill or combat outcomes from static data. |
+| 55 — Linux compatibility matrix | Complete with limitations | `docs/LINUX_COMPATIBILITY_MATRIX.md` records the local qualification protocol and unverified Ubuntu/Mint/Fedora boundaries. Native archive smoke evidence is distinct from broader desktop/distribution runtime qualification. |
+| 56 — Campaign-save parser preparation | Decision-gated | Keep direct metadata discovery only until a documented, read-only save format and a normalized campaign data contract exist. No content parsing or campaign inference is authorized before that gate. |
+
 ## Latest implementation note
 
 The Scenario Advisor now saves and restores only user-declared locked

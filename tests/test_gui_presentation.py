@@ -16,14 +16,23 @@ from starsector_variant_generator.analysis.scenario_advisor import (
 from starsector_variant_generator.core.models import Hull, ScanResult
 from starsector_variant_generator.core.registry import Registry
 from starsector_variant_generator.gui.presentation import (
+    format_build_why_not_comparison,
     format_fleet_support_result,
     format_fleet_support_why_not,
     format_generation_results,
     format_scenario_fleet_assessment,
 )
+from starsector_variant_generator.analysis.gap_recommendation import BuildWhyNotExplanation
 
 
 class GuiPresentationTests(unittest.TestCase):
+    def test_build_why_not_comparison_keeps_scores_and_confidence_as_backend_fields(self) -> None:
+        first = BuildWhyNotExplanation("LINE_BRAWLER", "first", "TANK", True, None, (), "No viable path.", .4, 4, .6, {"functional_capability": .4})
+        second = BuildWhyNotExplanation("LINE_BRAWLER", "second", "FINISHER", False, None, (), "Not resolved.")
+        rendered = format_build_why_not_comparison((first, second))
+        self.assertIn("first / TANK", rendered)
+        self.assertIn("functional_capability=0.400", rendered)
+        self.assertIn("second / FINISHER", rendered)
     def test_generation_presentation_surfaces_backend_score_and_confidence(self) -> None:
         rendered = format_generation_results([{
             "legality": "LEGAL", "recommendation_label": "Best Tank",

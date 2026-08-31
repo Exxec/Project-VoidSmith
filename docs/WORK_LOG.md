@@ -701,6 +701,12 @@
 
   Final Ruff count: 222 -> 22 (12 `TRY004` + 10 `B008`, both deliberately left with the reasoning above -- not unreviewed). `mypy src/` re-confirmed clean (0 errors) after the `analysis_reports.py` fix. Full suite: 764 passing, 1 skipped, 0 regressions. `from starsector_variant_generator.gui.main_window import MainWindow` re-confirmed importable after the import-sorting pass touched `gui/` files. New `docs/BUGS.md` entry: SVG-023 (Open, awaiting a human decision on `player_suitability` semantics).
 
+## Post-1.0 phase log
+
+| Phase | Status | Evidence and limit |
+| --- | --- | --- |
+| 50–56 | Complete with limitations / decision gates retained | Added offline portable archive verification (GUI and CLI; ZIP/tar inventory plus optional SHA-256, no extraction/execution), a local hash-bound calibration workspace, explicit local feedback capture, and backend-only Build Why-Not comparison. Added Linux qualification, player-suitability decision, and campaign-parser evidence-gate documents. Full suite: 772 passing, 1 skipped; GUI acceptance passed after correcting its `QTableView`/model row-count check. Hosted release success, real Linux desktop qualification, player-suitability semantics, and campaign content parsing remain explicitly external or decision-gated. |
+
 ## Traceability rules
 
 - Every scan records source errors, warnings, and heuristic provenance.
