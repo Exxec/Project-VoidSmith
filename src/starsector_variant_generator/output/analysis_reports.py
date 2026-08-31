@@ -7,26 +7,50 @@ of attempting to execute or interpret scripts.
 
 from __future__ import annotations
 
-from dataclasses import asdict
-from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
 import os
-from pathlib import Path
 import re
+from collections.abc import Sequence
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import asdict
+from pathlib import Path
 
-from starsector_variant_generator.analysis.classification import classify_hullmod, classify_weapon
-from starsector_variant_generator.analysis.build_archetypes import infer_build_archetypes
-from starsector_variant_generator.analysis.capability_vector import infer_hull_capability_vector
+from starsector_variant_generator.analysis.build_archetypes import (
+    infer_build_archetypes,
+)
+from starsector_variant_generator.analysis.capability_vector import (
+    infer_hull_capability_vector,
+)
+from starsector_variant_generator.analysis.classification import (
+    classify_hullmod,
+    classify_weapon,
+)
 from starsector_variant_generator.analysis.doctrine import analyze_faction_doctrine
-from starsector_variant_generator.analysis.faction_capability import analyze_faction_capability
-from starsector_variant_generator.analysis.mechanical_archetypes import infer_mechanical_archetypes
-from starsector_variant_generator.analysis.hullmod_static_analysis import API_EFFECT_REGISTRY_VERSION, _java_sources, analyze_hullmod_sources, static_analysis_record
+from starsector_variant_generator.analysis.faction_capability import (
+    analyze_faction_capability,
+)
+from starsector_variant_generator.analysis.hullmod_static_analysis import (
+    API_EFFECT_REGISTRY_VERSION,
+    _java_sources,
+    analyze_hullmod_sources,
+    static_analysis_record,
+)
+from starsector_variant_generator.analysis.mechanical_archetypes import (
+    infer_mechanical_archetypes,
+)
 from starsector_variant_generator.core.cache import build_manifest
-from starsector_variant_generator.core.models import ScanResult, SourceType
 from starsector_variant_generator.core.heuristics import get_heuristic_set
+from starsector_variant_generator.core.models import (
+    Entity,
+    Faction,
+    Hull,
+    Hullmod,
+    ScanResult,
+    SourceType,
+    Weapon,
+)
 from starsector_variant_generator.core.registry import Registry
-
 
 # Includes explicit source-analysis availability states such as
 # COMPILED_ONLY_SCRIPT.  Bump so reusable per-mod fragments cannot hide a
@@ -98,7 +122,7 @@ def write_scan_analysis_reports(
         else:
             reused_faction_reports += 1
         faction_paths.extend((str(capability_path), str(doctrine_path)))
-    pending_hulls: list[tuple[object, Path, str | None]] = []
+    pending_hulls: list[tuple[Hull, Path, str | None]] = []
     for hull in sorted(scan.hulls, key=_entity_sort_key):
         base = hull_names[(hull.source_mod, hull.id)]
         path = hull_dir / f"{base}_profile.json"
@@ -129,7 +153,7 @@ def write_scan_analysis_reports(
         scan.hullmods, equipment_dir, heuristic_set, reuse_if_unchanged,
     )
     _write_json(hullmod_analysis_path, hullmod_analysis)
-    manifest = {
+    manifest: dict[str, object] = {
         "schema_version": REPORT_SCHEMA_VERSION,
         "heuristic_set": heuristic_set,
         "dependency_fingerprint": dependency_fingerprint,
@@ -150,7 +174,7 @@ def write_scan_analysis_reports(
     return manifest
 
 
-def _hull_profile_record(hull: object, registry: Registry, heuristic_set: str, hull_fingerprint: str | None) -> dict[str, object]:
+def _hull_profile_record(hull: Hull, registry: Registry, heuristic_set: str, hull_fingerprint: str | None) -> dict[str, object]:
     """Build one deterministic hull report; safe to call from a worker."""
     profile = infer_mechanical_archetypes(hull, registry)
     record = _envelope(hull.source_mod, heuristic_set, asdict(profile))
@@ -166,11 +190,11 @@ def _hull_profile_record(hull: object, registry: Registry, heuristic_set: str, h
 
 
 def _write_equipment_fragments(
-    entities: list, equipment_dir: Path, heuristic_set: str, kind: str, reuse_if_unchanged: bool,
+    entities: Sequence[Entity], equipment_dir: Path, heuristic_set: str, kind: str, reuse_if_unchanged: bool,
 ) -> tuple[dict[str, object], int, int]:
     """Persist direct classification fragments per mod and assemble legacy output."""
     grouped: dict[str, list[dict[str, object]]] = {}
-    by_mod: dict[str, list[object]] = {}
+    by_mod: dict[str, list[Entity]] = {}
     for entity in sorted(entities, key=_entity_sort_key):
         by_mod.setdefault(entity.source_mod, []).append(entity)
     reused = 0
@@ -184,7 +208,12 @@ def _write_equipment_fragments(
         if fragment is None:
             profiles: list[dict[str, object]] = []
             for entity in mod_entities:
-                classification = asdict(classify_weapon(entity) if kind == "weapon" else classify_hullmod(entity))
+                if kind == "weapon":
+                    assert isinstance(entity, Weapon)
+                    classification = asdict(classify_weapon(entity))
+                else:
+                    assert isinstance(entity, Hullmod)
+                    classification = asdict(classify_hullmod(entity))
                 profiles.append({
                     "id": entity.id, "name": entity.name, "source_mod": entity.source_mod,
                     "source_mod_version": entity.source_mod_version, "classification": classification,
@@ -203,9 +232,9 @@ def _write_equipment_fragments(
             recomputed += 1
         else:
             reused += 1
-        profiles = fragment.get("profiles", [])
-        if isinstance(profiles, list):
-            grouped[mod_id] = profiles
+        fragment_profiles = fragment.get("profiles", [])
+        if isinstance(fragment_profiles, list):
+            grouped[mod_id] = fragment_profiles
     return ({
         "schema_version": REPORT_SCHEMA_VERSION,
         "heuristic_set": heuristic_set,
@@ -215,12 +244,12 @@ def _write_equipment_fragments(
 
 
 def _write_hullmod_source_fragments(
-    hullmods: list, equipment_dir: Path, heuristic_set: str, reuse_if_unchanged: bool,
+    hullmods: Sequence[Hullmod], equipment_dir: Path, heuristic_set: str, reuse_if_unchanged: bool,
 ) -> tuple[dict[str, object], int, int]:
     """Cache Java-derived hullmod evidence per source mod, then aggregate it."""
     grouped: dict[str, list[dict[str, object]]] = {}
     all_records: list[dict[str, object]] = []
-    by_mod: dict[str, list[object]] = {}
+    by_mod: dict[str, list[Hullmod]] = {}
     for hullmod in sorted(hullmods, key=_entity_sort_key):
         by_mod.setdefault(hullmod.source_mod, []).append(hullmod)
     reused = 0
@@ -249,10 +278,10 @@ def _write_hullmod_source_fragments(
             recomputed += 1
         else:
             reused += 1
-        records = fragment.get("hullmods", [])
-        if isinstance(records, list):
-            grouped[mod_id] = records
-            all_records.extend(records)
+        fragment_records = fragment.get("hullmods", [])
+        if isinstance(fragment_records, list):
+            grouped[mod_id] = fragment_records
+            all_records.extend(fragment_records)
     return ({
         "schema_version": REPORT_SCHEMA_VERSION,
         "api_effect_registry": API_EFFECT_REGISTRY_VERSION,
@@ -271,7 +300,7 @@ def _envelope(source_mod: str, heuristic_set: str, profile: dict[str, object]) -
     }
 
 
-def _report_names(entities: list) -> dict[tuple[str, str], str]:
+def _report_names(entities: Sequence[Entity]) -> dict[tuple[str, str], str]:
     counts: dict[str, int] = {}
     for entity in entities:
         counts[entity.id] = counts.get(entity.id, 0) + 1
@@ -378,7 +407,7 @@ def _file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _hull_profile_fingerprint(hull: object, registry: Registry, heuristic_set: str) -> str | None:
+def _hull_profile_fingerprint(hull: Hull, registry: Registry, heuristic_set: str) -> str | None:
     """Declare the narrow, exact dependency context of one hull profile.
 
     Mechanical/build/capability profile inference uses the hull itself, its
@@ -387,10 +416,10 @@ def _hull_profile_fingerprint(hull: object, registry: Registry, heuristic_set: s
     factions, hulls, or equipment, so those changes may safely leave this one
     output intact. Any missing source hash fails closed.
     """
-    variants = registry.variants_for_hull(getattr(hull, "id"))
+    variants = registry.variants_for_hull(hull.id)
     weapon_ids = {weapon_id for variant in variants for weapon_id in variant.weapons_by_mount.values()}
     hullmod_ids = {hullmod_id for variant in variants for hullmod_id in variant.hullmods}
-    dependencies = [hull, *variants]
+    dependencies: list[Entity] = [hull, *variants]
     dependencies.extend(registry.weapons.by_id[item] for item in sorted(weapon_ids) if item in registry.weapons.by_id)
     dependencies.extend(registry.hullmods.by_id[item] for item in sorted(hullmod_ids) if item in registry.hullmods.by_id)
     if any(getattr(entity, "source_hash", None) is None for entity in dependencies):
@@ -416,9 +445,9 @@ def _reusable_hull_profile(path: Path, heuristic_set: str, fingerprint: str) -> 
     )
 
 
-def _faction_capability_fingerprint(faction: object, registry: Registry, heuristic_set: str) -> str | None:
-    resolved_hulls = [registry.hulls.by_id[item] for item in getattr(faction, "known_hulls") if item in registry.hulls.by_id]
-    dependencies: list[object] = [faction, *resolved_hulls]
+def _faction_capability_fingerprint(faction: Faction, registry: Registry, heuristic_set: str) -> str | None:
+    resolved_hulls = [registry.hulls.by_id[item] for item in faction.known_hulls if item in registry.hulls.by_id]
+    dependencies: list[Entity] = [faction, *resolved_hulls]
     for hull in resolved_hulls:
         variants = registry.variants_for_hull(hull.id)
         dependencies.extend(variants)
@@ -429,16 +458,16 @@ def _faction_capability_fingerprint(faction: object, registry: Registry, heurist
     return _entity_dependencies_hash(dependencies, {"report_schema": REPORT_SCHEMA_VERSION, "operation": "faction_capability", "heuristic_set": heuristic_set})
 
 
-def _faction_doctrine_fingerprint(faction: object, registry: Registry) -> str | None:
-    variants = [variant for variant in registry.variants.by_id.values() if variant.source_mod == getattr(faction, "source_mod")]
+def _faction_doctrine_fingerprint(faction: Faction, registry: Registry) -> str | None:
+    variants = [variant for variant in registry.variants.by_id.values() if variant.source_mod == faction.source_mod]
     weapon_ids = {weapon for variant in variants for weapon in variant.weapons_by_mount.values()}
-    dependencies: list[object] = [faction, *variants]
+    dependencies: list[Entity] = [faction, *variants]
     dependencies.extend(registry.weapons.by_id[item] for item in sorted(weapon_ids) if item in registry.weapons.by_id)
     return _entity_dependencies_hash(dependencies, {"report_schema": REPORT_SCHEMA_VERSION, "operation": "faction_doctrine"})
 
 
-def _entity_dependencies_hash(dependencies: list[object], context: dict[str, object]) -> str | None:
-    if any(getattr(entity, "source_hash", None) is None for entity in dependencies):
+def _entity_dependencies_hash(dependencies: Sequence[Entity], context: dict[str, object]) -> str | None:
+    if any(entity.source_hash is None for entity in dependencies):
         return None
     # Sort actual serialized dependency records to make cache identity immune
     # to collection iteration order while preserving every semantic input.
@@ -446,12 +475,12 @@ def _entity_dependencies_hash(dependencies: list[object], context: dict[str, obj
     return _canonical_hash({**context, "dependencies": records})
 
 
-def _hullmod_source_fingerprint(hullmods: list[object], heuristic_set: str) -> str | None:
+def _hullmod_source_fingerprint(hullmods: Sequence[Hullmod], heuristic_set: str) -> str | None:
     """Include declared hullmod rows and all locally readable Java inputs."""
-    if any(getattr(hullmod, "source_hash", None) is None for hullmod in hullmods):
+    if any(hullmod.source_hash is None for hullmod in hullmods):
         return None
     java_hashes: list[tuple[str, str]] = []
-    roots = {root for hullmod in hullmods if (root := _source_root(getattr(hullmod, "source_path"))) is not None}
+    roots = {root for hullmod in hullmods if (root := _source_root(hullmod.source_path)) is not None}
     for root in sorted(roots, key=str):
         source_dir = root / "src"
         if source_dir.is_dir():
@@ -504,8 +533,8 @@ def _canonical_hash(value: object) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def _entity_sort_key(entity: object) -> tuple[str, str]:
-    return (str(getattr(entity, "source_mod")), str(getattr(entity, "id")))
+def _entity_sort_key(entity: Entity) -> tuple[str, str]:
+    return (str(entity.source_mod), str(entity.id))
 
 
 def _write_json(path: Path, value: object) -> None:

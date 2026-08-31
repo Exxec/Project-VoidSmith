@@ -1,26 +1,45 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
-import hashlib
 import marshal
 import re
 import sys
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from collections.abc import Callable
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from time import perf_counter
-from typing import Callable
+from typing import cast
 
-from starsector_variant_generator.core.models import ModInfo, ScanMetrics, ScanProgress, ScanResult, SourceType
+from starsector_variant_generator.core.models import (
+    Entity,
+    Faction,
+    FighterWing,
+    Hull,
+    Hullmod,
+    ModInfo,
+    ScanMetrics,
+    ScanProgress,
+    ScanResult,
+    SourceType,
+    Variant,
+    Weapon,
+)
 from starsector_variant_generator.parsers.common import csv_rows, json_file
 from starsector_variant_generator.parsers.entities import (
-    faction_from_file, fighter_from_row, hull_from_row, hull_from_skin, hullmod_from_row,
-    variant_from_file, weapon_from_row, weapon_spec_fields,
+    faction_from_file,
+    fighter_from_row,
+    hull_from_row,
+    hull_from_skin,
+    hullmod_from_row,
+    variant_from_file,
+    weapon_from_row,
+    weapon_spec_fields,
 )
 
-
-Parser = Callable[..., object]
+Parser = Callable[..., Entity]
 
 
 class ScanCancelled(Exception):
@@ -274,7 +293,7 @@ class Scanner:
             if not (source.source_type is SourceType.MOD and source.enabled is False and not self.include_disabled_mods)
         ]
         fingerprint_worker_count = min(4, max(1, len(fingerprint_targets)))
-        fingerprint_futures: dict[int, object] = {}
+        fingerprint_futures: dict[int, Future[tuple[str | None, dict[Path, str], int]]] = {}
         fingerprint_executor = ThreadPoolExecutor(
             max_workers=fingerprint_worker_count, thread_name_prefix="voidsmith-fingerprint",
         ) if fingerprint_targets else None
@@ -775,12 +794,12 @@ def _fragment_from_json(payload: dict[str, object]) -> SourceScanFragment:
     if not isinstance(entities, dict):
         raise ValueError("source snapshot has no entity document")
     result = ScanResult(
-        hulls=[_entity_from_json("hulls", item) for item in _json_list(entities.get("hulls"))],
-        weapons=[_entity_from_json("weapons", item) for item in _json_list(entities.get("weapons"))],
-        fighters=[_entity_from_json("fighters", item) for item in _json_list(entities.get("fighters"))],
-        hullmods=[_entity_from_json("hullmods", item) for item in _json_list(entities.get("hullmods"))],
-        variants=[_entity_from_json("variants", item) for item in _json_list(entities.get("variants"))],
-        factions=[_entity_from_json("factions", item) for item in _json_list(entities.get("factions"))],
+        hulls=[cast(Hull, _entity_from_json("hulls", item)) for item in _json_list(entities.get("hulls"))],
+        weapons=[cast(Weapon, _entity_from_json("weapons", item)) for item in _json_list(entities.get("weapons"))],
+        fighters=[cast(FighterWing, _entity_from_json("fighters", item)) for item in _json_list(entities.get("fighters"))],
+        hullmods=[cast(Hullmod, _entity_from_json("hullmods", item)) for item in _json_list(entities.get("hullmods"))],
+        variants=[cast(Variant, _entity_from_json("variants", item)) for item in _json_list(entities.get("variants"))],
+        factions=[cast(Faction, _entity_from_json("factions", item)) for item in _json_list(entities.get("factions"))],
         warnings=[str(item) for item in _json_list(payload.get("warnings"))],
         errors=[str(item) for item in _json_list(payload.get("errors"))],
         skipped_entities=[str(item) for item in _json_list(payload.get("skipped_entities"))],

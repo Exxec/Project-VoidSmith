@@ -17,13 +17,17 @@ weapon/fighter/hullmod, so no separate classifier was warranted.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 from starsector_variant_generator.core.evidence import EvidenceClass
+from starsector_variant_generator.core.knowledge_packs import (
+    ResolvedKnowledgePack,
+    approved_equipment_ids,
+    equipment_guidance_confidence,
+)
 from starsector_variant_generator.core.models import Entity, Faction, Hullmod
 from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.core.knowledge_packs import ResolvedKnowledgePack, approved_equipment_ids, equipment_guidance_confidence
 
 # Cache attribute name for the per-registry reverse ownership index built by
 # `_ownership_index` below. Stored directly on the `Registry` instance
@@ -172,8 +176,16 @@ def classify_equipment_affinity(
         affinity = "COMMON"
     else:
         affinity = "FOREIGN"
+    # `approved`'s own definition above already requires
+    # `requesting_faction_id is not None`; restated directly here (rather
+    # than branching on `approved` alone) so the type checker can narrow
+    # `requesting_faction_id` for this call too.
+    confidence = (
+        equipment_guidance_confidence(knowledge_pack, requesting_faction_id, entity_kind, entity_id)
+        if approved and requesting_faction_id is not None else None
+    )
     return EquipmentAffinityClassification(
         entity_id, entity_kind, affinity, owners,
-        equipment_guidance_confidence(knowledge_pack, requesting_faction_id, entity_kind, entity_id) if approved else None,
+        confidence,
         evidence_class=EvidenceClass.CURATED_GUIDANCE if approved else EvidenceClass.DIRECT_DATA,
     )

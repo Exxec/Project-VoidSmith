@@ -4,7 +4,10 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from starsector_variant_generator.analysis.calibration import CalibrationExpectationKind, CalibrationLabel
+from starsector_variant_generator.analysis.calibration import (
+    CalibrationExpectationKind,
+    CalibrationLabel,
+)
 from starsector_variant_generator.analysis.calibration_runner import (
     collect_all_observations,
     collect_build_observations,
@@ -58,7 +61,9 @@ class CalibrationRunnerTests(unittest.TestCase):
         mock_generate.assert_called_once()
 
     def test_expected_top_set_records_rank_of_first_matching_legal_candidate(self) -> None:
-        from starsector_variant_generator.analysis.calibration import CalibrationExpectationKind
+        from starsector_variant_generator.analysis.calibration import (
+            CalibrationExpectationKind,
+        )
         scan = ScanResult(hulls=[hull()])
         registry = Registry.from_scan(scan)
         label = CalibrationLabel("hull:fixture:test", "hash", "EXPECTED_TOP_2", "TANK", CalibrationExpectationKind.EXPECTED_TOP_SET, top_n=2)
@@ -72,8 +77,12 @@ class CalibrationRunnerTests(unittest.TestCase):
         self.assertEqual(2, result.observations[label.entity_key]["actual_rank"])
 
     def test_expected_top_set_reports_not_in_ranked_set_sentinel_when_absent(self) -> None:
-        from starsector_variant_generator.analysis.calibration import CalibrationExpectationKind
-        from starsector_variant_generator.analysis.calibration_runner import NOT_IN_RANKED_SET
+        from starsector_variant_generator.analysis.calibration import (
+            CalibrationExpectationKind,
+        )
+        from starsector_variant_generator.analysis.calibration_runner import (
+            NOT_IN_RANKED_SET,
+        )
         scan = ScanResult(hulls=[hull()])
         registry = Registry.from_scan(scan)
         label = CalibrationLabel("hull:fixture:test", "hash", "EXPECTED_TOP_2", "MISSILE_SUPPORT", CalibrationExpectationKind.EXPECTED_TOP_SET, top_n=2)
@@ -83,7 +92,9 @@ class CalibrationRunnerTests(unittest.TestCase):
         self.assertEqual(NOT_IN_RANKED_SET, result.observations[label.entity_key]["actual_rank"])
 
     def test_equipment_expectation_reads_the_requested_mounts_weapon(self) -> None:
-        from starsector_variant_generator.analysis.calibration import CalibrationExpectationKind
+        from starsector_variant_generator.analysis.calibration import (
+            CalibrationExpectationKind,
+        )
         scan = ScanResult(hulls=[hull()])
         registry = Registry.from_scan(scan)
         label = CalibrationLabel("hull:fixture:test", "hash", "ACCEPTABLE_SUBSTITUTES", "weapon_a", CalibrationExpectationKind.EQUIPMENT_EXPECTATION, expected_any=("weapon_a", "weapon_b"), mount_id="WS0001")
@@ -95,7 +106,9 @@ class CalibrationRunnerTests(unittest.TestCase):
         self.assertEqual("weapon_b", result.observations[label.entity_key]["actual"])
 
     def test_equipment_expectation_without_mount_id_is_unsupported(self) -> None:
-        from starsector_variant_generator.analysis.calibration import CalibrationExpectationKind
+        from starsector_variant_generator.analysis.calibration import (
+            CalibrationExpectationKind,
+        )
         scan = ScanResult(hulls=[hull()])
         registry = Registry.from_scan(scan)
         label = CalibrationLabel("hull:fixture:test", "hash", "ACCEPTABLE_SUBSTITUTES", "weapon_a", CalibrationExpectationKind.EQUIPMENT_EXPECTATION)

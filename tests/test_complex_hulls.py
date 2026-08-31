@@ -10,7 +10,6 @@ from starsector_variant_generator.analysis.complex_hulls import (
     complex_hull_matrix_entry,
 )
 from starsector_variant_generator.analysis.composite_hulls import (
-    CompositeHullDefinition,
     CompositeHullProfile,
     CompositeShipProfile,
     HullDefinition,

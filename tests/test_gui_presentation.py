@@ -1,14 +1,26 @@
 from __future__ import annotations
 
 import unittest
-
 from pathlib import Path
 
-from starsector_variant_generator.analysis.fleet_support import FleetSelection, explain_fleet_support_candidate, recommend_fleet_support
-from starsector_variant_generator.analysis.scenario_advisor import ScenarioCapabilityTarget, assess_scenario_fleet, user_defined_scenario
+from starsector_variant_generator.analysis.fleet_support import (
+    FleetSelection,
+    explain_fleet_support_candidate,
+    recommend_fleet_support,
+)
+from starsector_variant_generator.analysis.scenario_advisor import (
+    ScenarioCapabilityTarget,
+    assess_scenario_fleet,
+    user_defined_scenario,
+)
 from starsector_variant_generator.core.models import Hull, ScanResult
 from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.gui.presentation import format_fleet_support_result, format_fleet_support_why_not, format_generation_results, format_scenario_fleet_assessment
+from starsector_variant_generator.gui.presentation import (
+    format_fleet_support_result,
+    format_fleet_support_why_not,
+    format_generation_results,
+    format_scenario_fleet_assessment,
+)
 
 
 class GuiPresentationTests(unittest.TestCase):

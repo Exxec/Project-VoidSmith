@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 from starsector_variant_generator.adapters import defense_hullmod_effects
 from starsector_variant_generator.core.evidence import EvidenceClass

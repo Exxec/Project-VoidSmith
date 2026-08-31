@@ -47,7 +47,7 @@ class AnalysisContextFingerprint:
 
 
 def resolve_cache_status(
-    result_cache: "AnalysisResultCache | None",
+    result_cache: AnalysisResultCache | None,
     fingerprint: AnalysisContextFingerprint | None,
 ) -> CacheReadiness:
     """The real, inspectable reason a cache decision landed where it did.

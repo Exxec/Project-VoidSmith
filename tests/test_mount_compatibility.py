@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import unittest
 
-from starsector_variant_generator.core.mount_compatibility import MOUNT_TYPE_COMPATIBILITY
+from starsector_variant_generator.core.mount_compatibility import (
+    MOUNT_TYPE_COMPATIBILITY,
+)
 
 
 class MountCompatibilityTests(unittest.TestCase):

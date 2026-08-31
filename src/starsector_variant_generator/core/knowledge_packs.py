@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from starsector_variant_generator.core.registry import Registry
+from starsector_variant_generator.core.registry import EntityIndex, Registry
 
 _REQUIRED_TOP_LEVEL = ("manifest", "faction")
 _REQUIRED_MANIFEST_FIELDS = (
@@ -99,10 +99,14 @@ def _current_source_hash(key: str, registry: Registry) -> str | None:
     kind, _, entity_id = key.partition(":")
     if kind not in _HASH_KEY_KINDS or not entity_id:
         return None
-    index = {
+    # `EntityIndex[Any]`: these five indices are each parametrized
+    # differently (an invariant generic), so a plain dict literal has no
+    # common non-`object` value type. Only `.by_id` is read below.
+    indexes_by_kind: dict[str, EntityIndex[Any]] = {
         "faction": registry.factions, "hull": registry.hulls, "weapon": registry.weapons,
         "hullmod": registry.hullmods, "fighter": registry.fighters,
-    }[kind]
+    }
+    index = indexes_by_kind[kind]
     entity = index.by_id.get(entity_id)
     return entity.source_hash if entity is not None else None
 
@@ -190,7 +194,9 @@ def resolve_knowledge_pack(pack: KnowledgePack, registry: Registry) -> ResolvedK
         else:
             unresolved.append(f"retrofit_templates[{index}].hull_id={hull_id!r}")
     approved_equipment = []
-    indexes = {
+    # `EntityIndex[Any]`: see the matching comment in `_current_source_hash`
+    # above -- these four indices are each parametrized differently.
+    indexes: dict[str, EntityIndex[Any]] = {
         "weapons": registry.weapons, "fighters": registry.fighters,
         "hullmods": registry.hullmods, "hulls": registry.hulls,
     }
@@ -357,6 +363,13 @@ def build_archetype_preference(pack: ResolvedKnowledgePack | None, faction_id: s
         if not isinstance(entry, dict) or entry.get("build_id") != build_id:
             continue
         preference, confidence = entry.get("preference"), entry.get("confidence")
-        if all(isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and 0.0 <= value <= 1.0 for value in (preference, confidence)):
+        # Written as two direct `isinstance` checks (rather than looping
+        # `all(...)` over a tuple of both values) so the type checker can
+        # narrow `preference`/`confidence` themselves, not just a throwaway
+        # loop variable -- both are still validated identically.
+        if (
+            isinstance(preference, (int, float)) and not isinstance(preference, bool) and math.isfinite(preference) and 0.0 <= preference <= 1.0
+            and isinstance(confidence, (int, float)) and not isinstance(confidence, bool) and math.isfinite(confidence) and 0.0 <= confidence <= 1.0
+        ):
             return float(preference), float(confidence) * multiplier
     return None

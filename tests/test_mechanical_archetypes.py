@@ -3,7 +3,11 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from starsector_variant_generator.analysis.mechanical_archetypes import ARCHETYPES, infer_hull_feature_vector, infer_mechanical_archetypes
+from starsector_variant_generator.analysis.mechanical_archetypes import (
+    ARCHETYPES,
+    infer_hull_feature_vector,
+    infer_mechanical_archetypes,
+)
 from starsector_variant_generator.core.models import Hull, ScanResult, Variant, Weapon
 from starsector_variant_generator.core.registry import Registry
 
@@ -38,6 +42,34 @@ class MechanicalArchetypeTests(unittest.TestCase):
         self.assertEqual(0.5, vector.variant_long_range_weapon_fraction)
         profile = infer_mechanical_archetypes(hull, registry)
         self.assertIn("existing_variant_evidence", " ".join(profile.evidence_by_archetype["MISSILE_SUPPORT"]))
+
+    def test_explicit_variants_without_a_registry_do_not_crash(self) -> None:
+        """Regression for docs/BUGS.md SVG-020.
+
+        `variants` is normally derived from `registry` (line ~111 of
+        mechanical_archetypes.py), but a caller may also supply `variants`
+        explicitly while omitting `registry` -- the two parameters are
+        independently optional. Weapon-level evidence (missile/PD/long-range
+        fractions) genuinely requires a registry to resolve weapon ids, so it
+        is correctly omitted in that combination; it must not crash trying to
+        dereference a `None` registry. Fighter-wing evidence needs no
+        registry and must still be computed.
+        """
+        hull = Hull("h", "Hull", "core", SOURCE, weapon_mounts=(
+            {"id": "M", "type": "MISSILE", "size": "MEDIUM"},
+        ))
+        variant = Variant(
+            "v", "Variant", "core", SOURCE, hull_id="h",
+            weapons_by_mount={"M": "m"}, fighter_wings=("wing_a",),
+        )
+        vector = infer_hull_feature_vector(hull, registry=None, variants=(variant,))
+        self.assertEqual(1, vector.existing_variant_count)
+        self.assertIsNone(vector.variant_missile_mount_fraction)
+        self.assertIsNone(vector.variant_pd_weapon_fraction)
+        self.assertIsNone(vector.variant_long_range_weapon_fraction)
+        self.assertEqual(1.0, vector.variant_fighter_wing_fraction)
+        # Must not raise even at the higher-level entry point.
+        infer_mechanical_archetypes(hull, registry=None, variants=(variant,))
 
     def test_unknown_shield_and_system_are_preserved_not_guessed(self) -> None:
         hull = Hull("h", "Hull", "core", SOURCE, raw={"systemId": "custom_scripted_system"})

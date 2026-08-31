@@ -1,16 +1,15 @@
 from __future__ import annotations
 
+import json
 import shutil
 import tempfile
 import time
 import unittest
-import json
 from pathlib import Path
 
-from starsector_variant_generator.core.scanner import Scanner, ScanCancelled
-from starsector_variant_generator.core.registry import Registry
 from starsector_variant_generator.core.models import FighterWing, Hullmod, ScanResult
-
+from starsector_variant_generator.core.registry import Registry
+from starsector_variant_generator.core.scanner import ScanCancelled, Scanner
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

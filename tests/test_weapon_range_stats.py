@@ -3,11 +3,18 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from starsector_variant_generator.analysis.weapon_range_stats import compute_derived_combat_stats
+from starsector_variant_generator.analysis.weapon_range_stats import (
+    compute_derived_combat_stats,
+)
 from starsector_variant_generator.core.evidence import EvidenceClass
-from starsector_variant_generator.core.models import Hull, Hullmod, ScanResult, Variant, Weapon
+from starsector_variant_generator.core.models import (
+    Hull,
+    Hullmod,
+    ScanResult,
+    Variant,
+    Weapon,
+)
 from starsector_variant_generator.core.registry import Registry
-
 
 SOURCE = Path("fixture")
 

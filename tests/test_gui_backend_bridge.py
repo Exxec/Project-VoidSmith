@@ -1,9 +1,12 @@
 from __future__ import annotations
+
 import unittest
 from pathlib import Path
+
 from starsector_variant_generator.api import run_fit_summary, run_slot_eligible_weapons
 from starsector_variant_generator.core.models import Hull, ScanResult, Variant, Weapon
 from starsector_variant_generator.core.registry import Registry
+
 
 class GuiBackendBridgeTests(unittest.TestCase):
     def test_slot_eligibility_uses_backend_mount_rules(self) -> None:

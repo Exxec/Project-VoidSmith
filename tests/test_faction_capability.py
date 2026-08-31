@@ -3,7 +3,9 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from starsector_variant_generator.analysis.faction_capability import analyze_faction_capability
+from starsector_variant_generator.analysis.faction_capability import (
+    analyze_faction_capability,
+)
 from starsector_variant_generator.core.models import Faction, Hull, ScanResult
 from starsector_variant_generator.core.registry import Registry
 

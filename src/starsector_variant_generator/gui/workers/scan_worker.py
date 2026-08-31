@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 from PySide6.QtCore import QObject, Signal, Slot
 
@@ -36,7 +36,7 @@ class ScanWorker(QObject):
             self.completed.emit(api.run_scan(self._config, logger, include_disabled_mods=self._config.include_disabled_mods, include_entities=False, progress_callback=self.progress.emit, cancel_check=self._cancel_check))
         except ScanCancelled:
             self.cancelled.emit()
-        except Exception as exc:  # noqa: BLE001 - UI boundary: detailed trace remains in logs.
+        except Exception as exc:
             # logger.exception() captures the full traceback to
             # <output_dir>/logs/svg.log, not just str(exc) -- previously
             # nothing actually wrote the traceback anywhere despite this

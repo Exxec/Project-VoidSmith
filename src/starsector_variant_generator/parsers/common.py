@@ -3,11 +3,12 @@ from __future__ import annotations
 import csv
 import io
 import json
-import re
 import math
+import re
+from collections.abc import Iterator
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 
 def _relaxed_json(text: str) -> str:
@@ -78,9 +79,7 @@ def _relaxed_json(text: str) -> str:
                 output.append(char)
                 index += 1
                 continue
-            if char == "{":
-                expects_key = True
-            elif char == ",":
+            if char == "{" or char == ",":
                 expects_key = True
             elif expects_key and (char.isalpha() or char == "_"):
                 end = index + 1

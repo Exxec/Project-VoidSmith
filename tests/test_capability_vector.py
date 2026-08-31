@@ -3,8 +3,17 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from starsector_variant_generator.analysis.capability_vector import CAPABILITY_DIMENSIONS, infer_hull_capability_vector
-from starsector_variant_generator.core.models import Hull, Hullmod, ScanResult, Variant, Weapon
+from starsector_variant_generator.analysis.capability_vector import (
+    CAPABILITY_DIMENSIONS,
+    infer_hull_capability_vector,
+)
+from starsector_variant_generator.core.models import (
+    Hull,
+    Hullmod,
+    ScanResult,
+    Variant,
+    Weapon,
+)
 from starsector_variant_generator.core.registry import Registry
 
 

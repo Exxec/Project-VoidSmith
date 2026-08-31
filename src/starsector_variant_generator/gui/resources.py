@@ -70,6 +70,7 @@ def _safe_sprite_path(source_root: Path, sprite_name: str) -> Path | None:
         # host path syntax so a valid forward-slash asset path works on Linux
         # and a backslash traversal attempt cannot become one literal filename.
         relative = Path(sprite_name.replace("\\", "/"))
+        candidates: tuple[Path, ...]
         if relative.suffix:
             candidates = (relative,)
         else:

@@ -5,7 +5,13 @@ import unittest
 from pathlib import Path
 
 from starsector_variant_generator.core.config import AppConfig
-from starsector_variant_generator.core.heuristics import BASELINE_0_1, BASELINE_0_2, BASELINE_0_7, BASELINE_0_8, get_heuristic_set
+from starsector_variant_generator.core.heuristics import (
+    BASELINE_0_1,
+    BASELINE_0_2,
+    BASELINE_0_7,
+    BASELINE_0_8,
+    get_heuristic_set,
+)
 from starsector_variant_generator.core.logging import configure_logging
 
 

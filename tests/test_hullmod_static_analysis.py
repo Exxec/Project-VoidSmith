@@ -1,8 +1,15 @@
 from __future__ import annotations
-import tempfile, unittest
+
+import tempfile
+import unittest
 from pathlib import Path
-from starsector_variant_generator.analysis.hullmod_static_analysis import analyze_hullmod_sources
+
+from starsector_variant_generator.analysis.hullmod_static_analysis import (
+ analyze_hullmod_sources,
+)
 from starsector_variant_generator.core.models import Hullmod
+
+
 class HullmodStaticAnalysisTests(unittest.TestCase):
  def test_compiled_only_declared_script_is_distinguished(self):
   with tempfile.TemporaryDirectory() as temp:

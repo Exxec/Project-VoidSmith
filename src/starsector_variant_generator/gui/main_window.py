@@ -4,9 +4,9 @@ from __future__ import annotations
 import json
 import logging
 import threading
-from dataclasses import replace as dataclass_replace
 from collections import deque
 from collections.abc import Callable
+from dataclasses import replace as dataclass_replace
 from pathlib import Path
 from time import monotonic
 from typing import Any
@@ -14,10 +14,10 @@ from typing import Any
 from PySide6.QtCore import QObject, QSettings, QSize, Qt, QThread, QTimer
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
 from PySide6.QtWidgets import (
-    QApplication,
     QAbstractItemView,
-    QComboBox,
+    QApplication,
     QCheckBox,
+    QComboBox,
     QFileDialog,
     QFormLayout,
     QFrame,
@@ -33,8 +33,8 @@ from PySide6.QtWidgets import (
     QPlainTextEdit,
     QProgressDialog,
     QPushButton,
-    QSplitter,
     QSpinBox,
+    QSplitter,
     QTableView,
     QTabWidget,
     QVBoxLayout,
@@ -42,15 +42,41 @@ from PySide6.QtWidgets import (
 )
 
 from starsector_variant_generator import api
-from starsector_variant_generator.analysis.fleet_support import FleetSelection, FleetSupportConstraints, SupportFocus, fleet_support_request_from_payload, fleet_support_request_to_payload, parse_fleet_selections
-from starsector_variant_generator.analysis.scenario_advisor import ScenarioCapabilityTarget, generic_scenario_profiles, scenario_advisor_request_from_payload, scenario_advisor_request_to_payload, user_defined_scenario
+from starsector_variant_generator.analysis.fleet_support import (
+    FleetSupportConstraints,
+    SupportFocus,
+    fleet_support_request_from_payload,
+    fleet_support_request_to_payload,
+    parse_fleet_selections,
+)
+from starsector_variant_generator.analysis.scenario_advisor import (
+    ScenarioCapabilityTarget,
+    generic_scenario_profiles,
+    scenario_advisor_request_from_payload,
+    scenario_advisor_request_to_payload,
+    user_defined_scenario,
+)
 from starsector_variant_generator.core.config import DEFAULT_HEURISTIC_SET, AppConfig
-from starsector_variant_generator.core.mod_import import ModImportResult, resolve_dropped_mod
+from starsector_variant_generator.core.mod_import import (
+    ModImportResult,
+    resolve_dropped_mod,
+)
 from starsector_variant_generator.core.models import Hull, Variant
-from starsector_variant_generator.gui.canvas import MOUNT_TYPE_COLORS, TechnicalCanvas, _detect_mirror_mount_pairs, _displayable_weapon_mounts
+from starsector_variant_generator.gui.canvas import (
+    MOUNT_TYPE_COLORS,
+    TechnicalCanvas,
+    _detect_mirror_mount_pairs,
+    _displayable_weapon_mounts,
+)
 from starsector_variant_generator.gui.helpers import _looks_like_starsector_install
 from starsector_variant_generator.gui.models import EntityTableModel
-from starsector_variant_generator.gui.presentation import format_fleet_support_comparison, format_fleet_support_result, format_fleet_support_why_not, format_generation_results, format_scenario_fleet_assessment
+from starsector_variant_generator.gui.presentation import (
+    format_fleet_support_comparison,
+    format_fleet_support_result,
+    format_fleet_support_why_not,
+    format_generation_results,
+    format_scenario_fleet_assessment,
+)
 from starsector_variant_generator.gui.session import HullCatalog
 from starsector_variant_generator.gui.workers.analysis_worker import AnalysisWorker
 from starsector_variant_generator.gui.workers.scan_worker import ScanWorker
@@ -326,8 +352,13 @@ class MainWindow(QMainWindow):
         self.video_review_path.setPlaceholderText("Optional local VIDEO_REVIEW_TRANSCRIPT JSON")
         choose_video_review = QPushButton("Choose…"); choose_video_review.clicked.connect(self._choose_video_review)
         video_review_row = QWidget(); video_review_layout = QHBoxLayout(video_review_row); video_review_layout.setContentsMargins(0, 0, 0, 0); video_review_layout.addWidget(self.video_review_path, 1); video_review_layout.addWidget(choose_video_review)
-        for label, widget in (("Quality mode", self.refit_mode_selector), ("Target profile", self.refit_profile_selector), ("Legality substitution", self.refit_substitution_selector), ("Locked mounts", self.refit_locked_mounts), ("Locked hullmods", self.refit_locked_hullmods), ("Locked fighter wings", self.refit_locked_wings), ("Editable hullmods", self.editable_hullmods), ("Editable fighter wings", self.editable_wings), ("Editable flux vents", self.editable_vents), ("Editable flux capacitors", self.editable_capacitors), ("Video review evidence", video_review_row)):
-            form.addRow(label, widget)
+        # Named distinctly from the `widget` loop variable used above (line
+        # 317's placeholder-text loop): that binding's narrower `QLineEdit`
+        # type otherwise gets attributed to this, unrelated, mixed-widget
+        # loop (QComboBox/QLineEdit/QWidget), since both share one function
+        # scope.
+        for label, form_widget in (("Quality mode", self.refit_mode_selector), ("Target profile", self.refit_profile_selector), ("Legality substitution", self.refit_substitution_selector), ("Locked mounts", self.refit_locked_mounts), ("Locked hullmods", self.refit_locked_hullmods), ("Locked fighter wings", self.refit_locked_wings), ("Editable hullmods", self.editable_hullmods), ("Editable fighter wings", self.editable_wings), ("Editable flux vents", self.editable_vents), ("Editable flux capacitors", self.editable_capacitors), ("Video review evidence", video_review_row)):
+            form.addRow(label, form_widget)
         layout.addWidget(options); self.refit_detail = QPlainTextEdit(); self.refit_detail.setReadOnly(True); self.refit_detail.setPlainText("Choose a scanned variant. Suggestions preserve backend legality and selected locks."); layout.addWidget(self.refit_detail, 1); return page
 
     def _faction(self) -> QWidget:
@@ -464,8 +495,19 @@ class MainWindow(QMainWindow):
 
     def _incorporate_dropped_mods(self, newly_added: list[ModImportResult]) -> None:
         config, existing_result = self._config, self._scan_result
-        mod_roots = tuple(mod.mod_root for mod in newly_added)
-        operation = lambda: api.run_incremental_mod_scan(config, existing_result, mod_roots)  # noqa: E731
+        # Both narrowed here defensively, not just for the type checker: the
+        # sole caller (dropEvent) already verified `self._config is not None`
+        # and `self._scan_result is not None` before invoking this method,
+        # but that guarantee doesn't cross a method boundary on its own.
+        assert config is not None
+        # `newly_added` only ever contains entries with `error is None`
+        # (dropEvent filters on that), and `resolve_dropped_mod`/
+        # `_locate_mod_info` (core/mod_import.py) only ever return
+        # `error is None` together with a real `mod_root` -- never both
+        # `None`. So `mod_root` is never `None` here.
+        mod_roots = tuple(mod.mod_root for mod in newly_added if mod.mod_root is not None)
+        assert len(mod_roots) == len(newly_added)
+        operation = lambda: api.run_incremental_mod_scan(config, existing_result, mod_roots)
         self._run(f"Incorporating {len(newly_added)} dropped mod(s)…", operation, self._apply_incremental_scan_outcome, self.scan_button)
 
     def _apply_incremental_scan_outcome(self, outcome: Any) -> None:
@@ -537,7 +579,12 @@ class MainWindow(QMainWindow):
         self._scan_recent_sources.clear()
         self._scan_progress = QProgressDialog("Scanning read-only Starsector and enabled-mod data…", "Cancel Scan", 0, 0, self)
         self._scan_progress.setWindowTitle("Scanning Local Data"); self._scan_progress.setWindowModality(Qt.WindowModal); self._scan_progress.canceled.connect(self._discard_scan); self._scan_progress.show()
-        self._config = AppConfig(root, output, output / "logs", extra_mod_paths=tuple(mod.mod_root for mod in self._extra_mods), include_disabled_mods=self.include_disabled_mods.isChecked())
+        # `self._extra_mods` only ever holds `ModImportResult`s with
+        # `error is None` (see `dropEvent`'s own filter), which
+        # `core/mod_import.py` guarantees always carries a real `mod_root`.
+        extra_mod_paths = tuple(mod.mod_root for mod in self._extra_mods if mod.mod_root is not None)
+        assert len(extra_mod_paths) == len(self._extra_mods)
+        self._config = AppConfig(root, output, output / "logs", extra_mod_paths=extra_mod_paths, include_disabled_mods=self.include_disabled_mods.isChecked())
         thread = QThread(self); worker = ScanWorker(self._config, cancel_check=self._scan_cancel_event.is_set); worker.moveToThread(thread); thread.started.connect(worker.run); worker.progress.connect(self._scan_progressed)
         # thread.quit is connected FIRST for every terminal signal, before
         # the application-level handler that acts on the result -- Qt calls
@@ -790,7 +837,15 @@ class MainWindow(QMainWindow):
         available = summary["hull_ordnance_points"] if summary["hull_ordnance_points"] is not None else "Unknown"
         text = f"FIT STATUS: {summary['legality']}\nWeapon OP {summary['weapon_op_used']}/{available}"
         if summary["weapon_op_remaining"] is not None: text += f" (remaining {summary['weapon_op_remaining']})"
-        notes = [*summary["failures"], *summary["uncertainties"]]
+        # `run_fit_summary` (api.py) is typed `dict[str, object]`, but its
+        # own construction always populates "failures"/"uncertainties" with
+        # a `list[str]`; the `isinstance` guards below narrow that for the
+        # type checker without changing behavior in that always-true case.
+        failures, uncertainties = summary["failures"], summary["uncertainties"]
+        notes = [
+            *(failures if isinstance(failures, list) else []),
+            *(uncertainties if isinstance(uncertainties, list) else []),
+        ]
         self.fit_metrics.setText(text + (f"\n{'; '.join(notes)}" if notes else ""))
 
     def _editable_canvas_variant(self, variant_id: str, name: str) -> Variant:
@@ -1212,8 +1267,30 @@ class MainWindow(QMainWindow):
     def _populate_missing_retrofits(self) -> None:
         if self._registry is None or self._current_hull is None or (output := self._retrofit_output_root()) is None:
             self.refit_detail.setPlainText("Select a hull in Ships, then choose an output directory."); return
+        # Captured now, not read inside the background lambda: `_run`'s
+        # operation only actually executes once its worker thread starts,
+        # by which point the user may have changed or cleared the hull
+        # selection -- the same race `_generate`'s own `hull_id = self.
+        # _current_hull.id` capture (above) exists to avoid. See
+        # docs/BUGS.md SVG-021.
+        hull_id = self._current_hull.id
         heuristic_set = self._config.heuristic_set if self._config is not None else DEFAULT_HEURISTIC_SET
-        self._run("Checking existing retrofits and creating local starter variations when absent…", lambda: api.load_or_populate_retrofits(self._registry, self._current_hull.id, output, heuristic_set), lambda result: (self.refit_detail.setPlainText(result.note + ("\nExisting scanned variants:\n" + "\n".join(item.id for item in result.existing_variants) if result.existing_variants else "\nProfiles considered: " + ", ".join(result.attempted_profiles) + "\nProfiles generated: " + (", ".join(result.generated_profiles) or "None") + ("\nEditable local files:\n" + "\n".join(map(str, result.generated_paths)) if result.generated_paths else ""))), self._refresh_editable_retrofit_library()), self.populate_retrofits_button)
+        self._run(
+            "Checking existing retrofits and creating local starter variations when absent…",
+            lambda: api.load_or_populate_retrofits(self._registry, hull_id, output, heuristic_set),
+            self._apply_populate_missing_retrofits_result,
+            self.populate_retrofits_button,
+        )
+
+    def _apply_populate_missing_retrofits_result(self, result: Any) -> None:
+        self.refit_detail.setPlainText(result.note + (
+            "\nExisting scanned variants:\n" + "\n".join(item.id for item in result.existing_variants)
+            if result.existing_variants else
+            "\nProfiles considered: " + ", ".join(result.attempted_profiles)
+            + "\nProfiles generated: " + (", ".join(result.generated_profiles) or "None")
+            + ("\nEditable local files:\n" + "\n".join(map(str, result.generated_paths)) if result.generated_paths else "")
+        ))
+        self._refresh_editable_retrofit_library()
 
     def _faction_selected(self, _: int) -> None: self.faction_detail.setPlainText("Choose capability analysis or gap recommendations.") if self._faction_id() else None
     def _choose_knowledge_pack(self) -> None:

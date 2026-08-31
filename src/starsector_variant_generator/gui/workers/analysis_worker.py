@@ -25,7 +25,7 @@ class AnalysisWorker(QObject):
     def run(self) -> None:
         try:
             self.completed.emit(self._operation())
-        except Exception as exc:  # noqa: BLE001 - worker boundary must return backend failures to Qt.
+        except Exception as exc:
             # logger.exception() captures the full traceback, not just
             # str(exc) -- the GUI only ever showed the bare message, with no
             # way to see where a failure actually originated afterward.

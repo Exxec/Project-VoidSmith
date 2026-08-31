@@ -38,7 +38,10 @@ class CalibrationTests(unittest.TestCase):
             self.assertEqual(1, report.matched)
 
     def test_negative_expectation_fails_only_when_forbidden_result_occurs(self) -> None:
-        from starsector_variant_generator.analysis.calibration import CalibrationExpectationKind, CalibrationLabel
+        from starsector_variant_generator.analysis.calibration import (
+            CalibrationExpectationKind,
+            CalibrationLabel,
+        )
         label = CalibrationLabel("hull:test", "one", "NOT_ARTILLERY", "ARTILLERY", CalibrationExpectationKind.NEGATIVE_EXPECTATION)
         matched = evaluate_calibration("fixture", (label,), {"hull:test": {"entity_hash": "one", "actual": "TANK"}}, "baseline_0.7")
         mismatched = evaluate_calibration("fixture", (label,), {"hull:test": {"entity_hash": "one", "actual": "ARTILLERY"}}, "baseline_0.7")
@@ -46,7 +49,10 @@ class CalibrationTests(unittest.TestCase):
         self.assertEqual((0, 1), (mismatched.matched, mismatched.mismatched))
 
     def test_expected_top_set_matches_when_rank_is_within_top_n(self) -> None:
-        from starsector_variant_generator.analysis.calibration import CalibrationExpectationKind, CalibrationLabel
+        from starsector_variant_generator.analysis.calibration import (
+            CalibrationExpectationKind,
+            CalibrationLabel,
+        )
         label = CalibrationLabel("hull:test", "one", "EXPECTED_TOP_3", "ARTILLERY", CalibrationExpectationKind.EXPECTED_TOP_SET, top_n=3)
         within = evaluate_calibration("fixture", (label,), {"hull:test": {"entity_hash": "one", "actual_rank": 3}}, "baseline_0.7")
         outside = evaluate_calibration("fixture", (label,), {"hull:test": {"entity_hash": "one", "actual_rank": 4}}, "baseline_0.7")
@@ -56,13 +62,19 @@ class CalibrationTests(unittest.TestCase):
         self.assertEqual(3, within.results[0]["top_n"])
 
     def test_expected_top_set_missing_rank_is_unsupported(self) -> None:
-        from starsector_variant_generator.analysis.calibration import CalibrationExpectationKind, CalibrationLabel
+        from starsector_variant_generator.analysis.calibration import (
+            CalibrationExpectationKind,
+            CalibrationLabel,
+        )
         label = CalibrationLabel("hull:test", "one", "EXPECTED_TOP_3", "ARTILLERY", CalibrationExpectationKind.EXPECTED_TOP_SET, top_n=3)
         report = evaluate_calibration("fixture", (label,), {"hull:test": {"entity_hash": "one"}}, "baseline_0.7")
         self.assertEqual((0, 0, 0, 1), (report.matched, report.mismatched, report.stale, report.unsupported))
 
     def test_expected_top_set_stale_hash_still_reported_as_stale_not_mismatch(self) -> None:
-        from starsector_variant_generator.analysis.calibration import CalibrationExpectationKind, CalibrationLabel
+        from starsector_variant_generator.analysis.calibration import (
+            CalibrationExpectationKind,
+            CalibrationLabel,
+        )
         label = CalibrationLabel("hull:test", "one", "EXPECTED_TOP_3", "ARTILLERY", CalibrationExpectationKind.EXPECTED_TOP_SET, top_n=3)
         report = evaluate_calibration("fixture", (label,), {"hull:test": {"entity_hash": "changed", "actual_rank": 1}}, "baseline_0.7")
         self.assertEqual((0, 0, 1, 0), (report.matched, report.mismatched, report.stale, report.unsupported))
@@ -91,7 +103,10 @@ class CalibrationTests(unittest.TestCase):
 
 class ConfidenceWeightedSummaryTests(unittest.TestCase):
     def test_buckets_mismatches_by_supplied_confidence_without_fabricating_missing_values(self) -> None:
-        from starsector_variant_generator.analysis.calibration import CalibrationLabel, confidence_weighted_summary
+        from starsector_variant_generator.analysis.calibration import (
+            CalibrationLabel,
+            confidence_weighted_summary,
+        )
         report = evaluate_calibration(
             "fixture",
             (
@@ -114,7 +129,10 @@ class ConfidenceWeightedSummaryTests(unittest.TestCase):
         self.assertAlmostEqual(0.5, summary["mean_confidence_of_mismatches"])
 
     def test_no_mismatches_yields_empty_summary(self) -> None:
-        from starsector_variant_generator.analysis.calibration import CalibrationLabel, confidence_weighted_summary
+        from starsector_variant_generator.analysis.calibration import (
+            CalibrationLabel,
+            confidence_weighted_summary,
+        )
         report = evaluate_calibration("fixture", (CalibrationLabel("hull:a", "h", "L", "X"),), {"hull:a": {"entity_hash": "h", "actual": "X"}}, "baseline_0.7")
         summary = confidence_weighted_summary(report, {})
         self.assertEqual(0, summary["total_mismatches"])
@@ -123,7 +141,10 @@ class ConfidenceWeightedSummaryTests(unittest.TestCase):
 
 class CompareCalibrationReportsTests(unittest.TestCase):
     def test_reports_labels_whose_status_changed_between_two_heuristic_sets(self) -> None:
-        from starsector_variant_generator.analysis.calibration import CalibrationLabel, compare_calibration_reports
+        from starsector_variant_generator.analysis.calibration import (
+            CalibrationLabel,
+            compare_calibration_reports,
+        )
         labels = (CalibrationLabel("hull:a", "h", "L_A", "X"), CalibrationLabel("hull:b", "h", "L_B", "Y"))
         report_a = evaluate_calibration("fixture", labels, {"hull:a": {"entity_hash": "h", "actual": "X"}, "hull:b": {"entity_hash": "h", "actual": "Z"}}, "baseline_0.7")
         report_b = evaluate_calibration("fixture", labels, {"hull:a": {"entity_hash": "h", "actual": "NOT_X"}, "hull:b": {"entity_hash": "h", "actual": "Y"}}, "baseline_0.10")
@@ -134,14 +155,20 @@ class CompareCalibrationReportsTests(unittest.TestCase):
         self.assertEqual(1, len(diff["matches_lost_by_b"]))
 
     def test_identical_reports_produce_no_changed_labels(self) -> None:
-        from starsector_variant_generator.analysis.calibration import CalibrationLabel, compare_calibration_reports
+        from starsector_variant_generator.analysis.calibration import (
+            CalibrationLabel,
+            compare_calibration_reports,
+        )
         labels = (CalibrationLabel("hull:a", "h", "L_A", "X"),)
         report = evaluate_calibration("fixture", labels, {"hull:a": {"entity_hash": "h", "actual": "X"}}, "baseline_0.7")
         diff = compare_calibration_reports(report, report)
         self.assertEqual((), diff["changed_labels"])
 
     def test_mismatched_fixture_ids_are_rejected(self) -> None:
-        from starsector_variant_generator.analysis.calibration import CalibrationLabel, compare_calibration_reports
+        from starsector_variant_generator.analysis.calibration import (
+            CalibrationLabel,
+            compare_calibration_reports,
+        )
         labels = (CalibrationLabel("hull:a", "h", "L_A", "X"),)
         report_a = evaluate_calibration("fixture_a", labels, {"hull:a": {"entity_hash": "h", "actual": "X"}}, "baseline_0.7")
         report_b = evaluate_calibration("fixture_b", labels, {"hull:a": {"entity_hash": "h", "actual": "X"}}, "baseline_0.7")

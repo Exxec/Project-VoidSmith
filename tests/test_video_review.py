@@ -6,8 +6,14 @@ import unittest
 from pathlib import Path
 
 from starsector_variant_generator import api
-from starsector_variant_generator.analysis.video_review import load_video_review_transcript, resolve_control_suitability_evidence
-from starsector_variant_generator.core.evidence import EvidenceClass, evidence_precedence
+from starsector_variant_generator.analysis.video_review import (
+    load_video_review_transcript,
+    resolve_control_suitability_evidence,
+)
+from starsector_variant_generator.core.evidence import (
+    EvidenceClass,
+    evidence_precedence,
+)
 from starsector_variant_generator.core.models import Hull, ScanResult, Variant
 from starsector_variant_generator.core.registry import Registry
 

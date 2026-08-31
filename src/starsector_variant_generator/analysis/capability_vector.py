@@ -9,13 +9,19 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from starsector_variant_generator.analysis.classification import classify_civilian_role, classify_weapon
-from starsector_variant_generator.analysis.mechanical_archetypes import infer_mechanical_archetypes
-from starsector_variant_generator.analysis.mobility_stats import compute_derived_mobility_stats
-from starsector_variant_generator.core.models import Hull, Variant
+from starsector_variant_generator.analysis.classification import (
+    classify_civilian_role,
+    classify_weapon,
+)
+from starsector_variant_generator.analysis.mechanical_archetypes import (
+    infer_mechanical_archetypes,
+)
+from starsector_variant_generator.analysis.mobility_stats import (
+    compute_derived_mobility_stats,
+)
 from starsector_variant_generator.core.evidence import EvidenceClass
+from starsector_variant_generator.core.models import Hull, Variant
 from starsector_variant_generator.core.registry import Registry
-
 
 CAPABILITY_DIMENSIONS = (
     "LONG_RANGE_PRESSURE", "KINETIC_PRESSURE", "ARMOR_BREAKING", "FINISHING_POWER",
@@ -65,7 +71,7 @@ def infer_hull_capability_vector(
         and derived.effective_values["max_speed"] is not None
     ]
     mobility_score = max(_scale(f.max_speed, 120.0), _scale(max(verified_variant_speeds), 120.0) if verified_variant_speeds else 0.0)
-    mobility_evidence = (f"max_speed={f.max_speed!r}",)
+    mobility_evidence: tuple[str, ...] = (f"max_speed={f.max_speed!r}",)
     if verified_variant_speeds:
         mobility_evidence += (f"Verified existing-variant effective max_speed={max(verified_variant_speeds):.6f} from adapter-backed hullmod effects.",)
 
@@ -100,7 +106,7 @@ def infer_hull_capability_vector(
     return CapabilityVector(hull.id, dimensions)
 
 
-def _scale(value: float | int | None, reference: float) -> float:
+def _scale(value: float | None, reference: float) -> float:
     return min(1.0, max(0.0, float(value) / reference)) if value is not None else 0.0
 
 

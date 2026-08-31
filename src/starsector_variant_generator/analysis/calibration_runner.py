@@ -180,6 +180,10 @@ def collect_build_observations(
                 generated[label.entity_key] = ([], f"generation_failed:{type(exc).__name__}")
         legal_candidates, failure_reason = generated[label.entity_key]
         if not legal_candidates:
+            # `failure_reason` is only ever `None` in the paired "legal
+            # candidates present" case set above; whenever `legal_candidates`
+            # is empty a reason string was always recorded alongside it.
+            assert failure_reason is not None
             diagnostics.append({"entity_key": label.entity_key, "status": "UNSUPPORTED", "reason": failure_reason})
             continue
         if label.expectation_kind is CalibrationExpectationKind.EXPECTED_TOP_SET:
@@ -306,6 +310,13 @@ def collect_faction_and_scenario_observations(
                 explanation = explain_native_candidate(faction, registry, role, hull.id, heuristic_set)
                 has_evidence, rank, recommended, confidence = explanation.resolved, explanation.rank, explanation.recommended, explanation.confidence
             else:
+                # `scenario_value`/`build_archetype_id` are `str | None` only
+                # because they are also assigned (to `None`) on the sibling
+                # `faction_parts is not None` branch above; this branch runs
+                # exactly when `scenario_parts` (not `faction_parts`) matched,
+                # which is the only way either is ever actually set to `None`.
+                assert scenario_value is not None
+                assert build_archetype_id is not None
                 try:
                     scenario_enum = ScenarioCategory(scenario_value)
                 except ValueError:
@@ -314,13 +325,13 @@ def collect_faction_and_scenario_observations(
                 if faction.id not in gap_result_cache:
                     gap_result_cache[faction.id] = recommend_gap_solutions(faction, registry, heuristic_set, knowledge_pack)
                 gap_result = gap_result_cache[faction.id]
-                explanation = explain_scenario_candidate(faction, registry, gap_result, scenario_enum, role, hull.id, build_archetype_id, heuristic_set)
+                scenario_explanation = explain_scenario_candidate(faction, registry, gap_result, scenario_enum, role, hull.id, build_archetype_id, heuristic_set)
                 # `scenario_fit_score is None` only on the early-return path
                 # (hull/build_archetype_id could not even be resolved) --
                 # distinct from a real, computed `considered=False` (a real
                 # Hull+Build pair simply never shortlisted by any leg),
                 # which IS real negative evidence, not missing data.
-                has_evidence, rank, recommended, confidence = explanation.scenario_fit_score is not None, explanation.rank, explanation.recommended, None
+                has_evidence, rank, recommended, confidence = scenario_explanation.scenario_fit_score is not None, scenario_explanation.rank, scenario_explanation.recommended, None
         except (ValueError, KeyError) as exc:
             diagnostics.append({"entity_key": label.entity_key, "status": "UNSUPPORTED", "reason": f"recommendation_lookup_failed:{type(exc).__name__}"})
             continue

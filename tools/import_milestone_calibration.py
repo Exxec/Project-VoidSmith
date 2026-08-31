@@ -1,8 +1,11 @@
 """Import reviewer milestone-table hull roles as hash-bound soft expectations."""
 from __future__ import annotations
 
-import argparse, json, re
+import argparse
+import json
+import re
 from pathlib import Path
+
 from starsector_variant_generator.core.scanner import Scanner
 
 ROLE_MAP = (("carrier", ("CARRIER_SUPPORT", "BATTLECARRIER")), ("pd", ("PD_ESCORT",)), ("escort", ("PD_ESCORT", "LINE_ANCHOR")), ("artillery", ("ARTILLERY",)), ("fire support", ("ARTILLERY",)), ("missile", ("MISSILE_SUPPORT",)), ("anchor", ("LINE_ANCHOR", "TANK")), ("brawler", ("TANK", "FINISHER")), ("assault", ("FINISHER", "TANK")), ("striker", ("FINISHER",)))

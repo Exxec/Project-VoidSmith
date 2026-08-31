@@ -9,7 +9,6 @@ from starsector_variant_generator.core.heuristics import get_heuristic_set
 from starsector_variant_generator.core.models import Hull, Weapon
 from starsector_variant_generator.core.registry import Registry
 
-
 _FLUX_TARGET_KEY = {"SAFE": "beginner_flux_target", "BALANCED": "balanced_flux_target", "AGGRESSIVE": "aggressive_flux_target"}
 
 
@@ -120,10 +119,15 @@ def allocate_vents_and_capacitors(
         # earlier, so their vent/capacitor allocation is untouched -- the
         # hull's raw, unmodified stats are used exactly as before.
         derived = compute_derived_flux_stats(hull, hullmod_ids, registry)
-        flux_dissipation, fd_note = _hullmod_adjusted_flux_stat(
+        adjusted_dissipation, fd_note = _hullmod_adjusted_flux_stat(
             "flux_dissipation", hull.flux_dissipation, derived.effective_flux_dissipation,
             derived.applied_effects, derived.stacking_notes,
         )
+        # `_hullmod_adjusted_flux_stat` only returns `None` when its
+        # `base_value` argument (here `hull.flux_dissipation`) is itself
+        # `None` -- already ruled out by the flux-completeness guard above.
+        assert adjusted_dissipation is not None
+        flux_dissipation = adjusted_dissipation
         if fd_note:
             adjustment_notes.append(fd_note)
         if hull.shield_upkeep is not None:

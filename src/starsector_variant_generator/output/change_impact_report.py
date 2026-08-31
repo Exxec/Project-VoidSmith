@@ -1,10 +1,13 @@
 """Deterministic JSON writer for read-only ChangeImpactReport audit data."""
 from __future__ import annotations
-from dataclasses import asdict
-from collections import Counter
+
 import json
+from collections import Counter
+from dataclasses import asdict
 from pathlib import Path
+
 from starsector_variant_generator.analysis.change_impact import ChangeImpactReport
+
 
 def write_change_impact_report(report: ChangeImpactReport, path: Path) -> None:
     """Write only under a caller-selected output path; never game/mod data."""

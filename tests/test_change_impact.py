@@ -1,13 +1,26 @@
 from __future__ import annotations
-import unittest
+
+import json
 import tempfile
+import unittest
 from pathlib import Path
+
 from starsector_variant_generator.analysis.change_impact import analyze_change_impact
 from starsector_variant_generator.core.cache import build_manifest
-from starsector_variant_generator.core.models import Faction, FighterWing, Hull, Hullmod, ScanResult, Variant, Weapon
 from starsector_variant_generator.core.knowledge_packs import load_knowledge_pack
-from starsector_variant_generator.output.change_impact_report import compact_change_impact, write_change_impact_report
-import json
+from starsector_variant_generator.core.models import (
+    Faction,
+    FighterWing,
+    Hull,
+    Hullmod,
+    ScanResult,
+    Variant,
+    Weapon,
+)
+from starsector_variant_generator.output.change_impact_report import (
+    compact_change_impact,
+    write_change_impact_report,
+)
 
 P = Path("fixture")
 

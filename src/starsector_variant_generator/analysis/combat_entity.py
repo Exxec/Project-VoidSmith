@@ -11,7 +11,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 
-from starsector_variant_generator.analysis.composite_hulls import classify_hull_definition
+from starsector_variant_generator.analysis.composite_hulls import (
+    classify_hull_definition,
+)
 from starsector_variant_generator.core.models import FighterWing, Hull
 
 

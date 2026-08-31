@@ -5,7 +5,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from starsector_variant_generator import api
-from starsector_variant_generator.analysis.campaign_save_discovery import discover_campaign_directory
+from starsector_variant_generator.analysis.campaign_save_discovery import (
+    discover_campaign_directory,
+)
 
 
 class CampaignSaveDiscoveryTests(unittest.TestCase):

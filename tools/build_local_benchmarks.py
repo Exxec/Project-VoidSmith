@@ -19,16 +19,20 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from dataclasses import asdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from starsector_variant_generator.analysis.classification import classify_civilian_role, classify_hull
+from starsector_variant_generator.analysis.classification import (
+    classify_civilian_role,
+    classify_hull,
+)
 from starsector_variant_generator.core.logging import configure_logging
 from starsector_variant_generator.core.registry import Registry
 from starsector_variant_generator.core.scanner import Scanner
-from starsector_variant_generator.generation.candidate import generate_conservative_candidate
+from starsector_variant_generator.generation.candidate import (
+    generate_conservative_candidate,
+)
 from starsector_variant_generator.validation.legality import validate_variant
 
 LOCAL_FIXTURES_DIR = Path(__file__).resolve().parent.parent / "tests" / "local_fixtures"

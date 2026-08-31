@@ -8,7 +8,6 @@ from starsector_variant_generator.core.evidence import EvidenceClass
 from starsector_variant_generator.core.models import Hull, Hullmod, ScanResult
 from starsector_variant_generator.core.registry import Registry
 
-
 SOURCE = Path("fixture")
 
 

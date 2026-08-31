@@ -5,7 +5,9 @@ from pathlib import Path
 
 from starsector_variant_generator.core.models import Hull, Hullmod, ScanResult, Weapon
 from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.generation.vent_cap import allocate_vents_and_capacitors
+from starsector_variant_generator.generation.vent_cap import (
+    allocate_vents_and_capacitors,
+)
 
 
 class VentCapAllocationTests(unittest.TestCase):
@@ -112,7 +114,7 @@ class HullmodAdjustedVentCapAllocationTests(unittest.TestCase):
         # hullmod_ids alone, with no registry to resolve them against, must
         # not silently adjust anything -- registry is a required half of the
         # opt-in context, not an independent trigger.
-        registry, hull, weapons = self._flux_hullmod_fixture()
+        _registry, hull, weapons = self._flux_hullmod_fixture()
         allocation = allocate_vents_and_capacitors(
             hull, weapons, 30, "BALANCED", "baseline_0.10", hullmod_ids=("fluxdistributor",), registry=None,
         )

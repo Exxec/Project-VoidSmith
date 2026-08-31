@@ -10,12 +10,18 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from starsector_variant_generator.analysis.classification import classify_hull
-from starsector_variant_generator.analysis.mechanical_archetypes import MechanicalArchetypeProfile, infer_mechanical_archetypes
+from starsector_variant_generator.analysis.mechanical_archetypes import (
+    MechanicalArchetypeProfile,
+    infer_mechanical_archetypes,
+)
+from starsector_variant_generator.analysis.scenario_objectives import (
+    ScenarioObjective,
+    scenario_objectives_for_build,
+)
+from starsector_variant_generator.core.evidence import EvidenceClass
 from starsector_variant_generator.core.heuristics import get_heuristic_set
 from starsector_variant_generator.core.models import Hull
 from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.analysis.scenario_objectives import ScenarioObjective, scenario_objectives_for_build
-from starsector_variant_generator.core.evidence import EvidenceClass
 
 
 @dataclass(frozen=True)
@@ -92,7 +98,11 @@ def infer_build_archetypes(hull: Hull, registry: Registry, heuristic_set: str = 
             hull.id, build_id, role, style, compatibility, round(confidence, 3), maturity,
             target_range, flux, survival, priorities,
             "GOOD" if maturity == "VIABLE" and style != "FLANK_AND_COMMIT" else "CONDITIONAL",
-            "GOOD" if style == "FLANK_AND_COMMIT" else "GOOD",
+            # SVG-023: this was `"GOOD" if style == "FLANK_AND_COMMIT" else "GOOD"`,
+            # a no-op ternary that always evaluated to "GOOD" regardless of style
+            # or maturity. Collapsed to the literal it always produced rather than
+            # guessing the intended branching -- see docs/BUGS.md SVG-023.
+            "GOOD",
             _strengths(primary, secondary), _weaknesses(maturity, target_range, flux), evidence,
             scenario_objectives_for_build(build_id),
         ))

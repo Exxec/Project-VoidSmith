@@ -7,8 +7,12 @@ from pathlib import Path
 
 from starsector_variant_generator.core.models import Hull, ScanResult, Variant, Weapon
 from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.output.writer import OutputCollisionError, write_compatibility_mod, write_variant
 from starsector_variant_generator.output.staleness import check_generation_manifest
+from starsector_variant_generator.output.writer import (
+    OutputCollisionError,
+    write_compatibility_mod,
+    write_variant,
+)
 
 
 class OutputTests(unittest.TestCase):

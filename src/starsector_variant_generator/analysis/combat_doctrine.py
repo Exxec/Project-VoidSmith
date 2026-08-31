@@ -9,7 +9,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from starsector_variant_generator.analysis.mechanical_archetypes import HullFeatureVector, infer_hull_feature_vector
+from starsector_variant_generator.analysis.mechanical_archetypes import (
+    HullFeatureVector,
+    infer_hull_feature_vector,
+)
 from starsector_variant_generator.core.evidence import EvidenceClass
 from starsector_variant_generator.core.models import Hull, Variant
 from starsector_variant_generator.core.registry import Registry
@@ -114,7 +117,7 @@ def _facts(f: HullFeatureVector) -> tuple[str, ...]:
     return (f"mounts={f.mount_count}; heavy={f.medium_mounts + f.large_mounts}; missile={f.missile_mounts}", f"armor={f.armor_rating!r}; hull={f.hull_hitpoints!r}; flux=(capacity={f.flux_capacity!r}, dissipation={f.flux_dissipation!r})", f"mobility=(speed={f.max_speed!r}, acceleration={f.acceleration!r}, turn_rate={f.max_turn_rate!r})")
 
 
-def _scale(value: float | int | None, reference: float) -> float:
+def _scale(value: float | None, reference: float) -> float:
     return _clamp(float(value) / reference) if value is not None else 0.0
 
 

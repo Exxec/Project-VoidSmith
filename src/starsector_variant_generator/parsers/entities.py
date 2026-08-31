@@ -1,11 +1,24 @@
 from __future__ import annotations
 
-from pathlib import Path
 import re
+from pathlib import Path
 from typing import Any
 
-from starsector_variant_generator.core.models import Faction, FighterWing, Hull, Hullmod, Variant, Weapon
-from starsector_variant_generator.parsers.common import first, json_file, optional_bool, optional_float, optional_int
+from starsector_variant_generator.core.models import (
+    Faction,
+    FighterWing,
+    Hull,
+    Hullmod,
+    Variant,
+    Weapon,
+)
+from starsector_variant_generator.parsers.common import (
+    first,
+    json_file,
+    optional_bool,
+    optional_float,
+    optional_int,
+)
 
 
 def weapon_spec_fields(path: Path) -> dict[str, str]:
@@ -39,7 +52,7 @@ def hull_from_row(row: dict[str, str], source_mod: str, path: Path, ship_path: P
         {str(mount_id): str(weapon_id) for mount_id, weapon_id in built_in_weapons_raw.items()}
         if isinstance(built_in_weapons_raw, dict) else {}
     )
-    raw = dict(row)
+    raw: dict[str, Any] = dict(row)
     if ship_raw:
         raw["ship_data"] = ship_raw
     hints_raw = first(row, "hints")
@@ -121,9 +134,10 @@ def hull_from_skin(base: Hull, skin_raw: dict[str, Any], source_mod: str, skin_p
     skin_built_in_weapons = skin_raw.get("builtInWeapons")
     if isinstance(skin_built_in_weapons, dict):
         built_in_weapons.update({str(mount_id): str(weapon_id) for mount_id, weapon_id in skin_built_in_weapons.items()})
+    skin_hull_name = skin_raw.get("hullName")
     return Hull(
         id=skin_hull_id,
-        name=skin_raw.get("hullName") if isinstance(skin_raw.get("hullName"), str) else base.name,
+        name=skin_hull_name if isinstance(skin_hull_name, str) else base.name,
         source_mod=source_mod, source_path=skin_path,
         hull_size=base.hull_size,
         ordnance_points=optional_int(skin_raw.get("ordnancePoints"), warnings=numeric_warnings, field="ordnancePoints") if "ordnancePoints" in skin_raw else base.ordnance_points,

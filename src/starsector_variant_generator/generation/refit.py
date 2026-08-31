@@ -44,19 +44,44 @@ a fixer here at the same time, not before.
 from __future__ import annotations
 
 import functools
-from dataclasses import dataclass, replace as dataclass_replace
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
+from dataclasses import replace as dataclass_replace
+from typing import Any
 
-from starsector_variant_generator.adapters import defense_hullmod_effects, flux_unit_cost, logistics_hullmod_effects, max_logistics_hullmods
-from starsector_variant_generator.analysis.adaptive_substitution import rank_substitution_candidates
-from starsector_variant_generator.analysis.classification import classify_civilian_role, classify_weapon
-from starsector_variant_generator.analysis.combat_stats import compute_derived_defense_stats
+from starsector_variant_generator.adapters import (
+    defense_hullmod_effects,
+    flux_unit_cost,
+    logistics_hullmod_effects,
+    max_logistics_hullmods,
+)
+from starsector_variant_generator.analysis.adaptive_substitution import (
+    rank_substitution_candidates,
+)
+from starsector_variant_generator.analysis.classification import (
+    classify_civilian_role,
+    classify_weapon,
+)
+from starsector_variant_generator.analysis.combat_stats import (
+    compute_derived_defense_stats,
+)
 from starsector_variant_generator.core.heuristics import get_heuristic_set
 from starsector_variant_generator.core.models import Faction, Variant
-from starsector_variant_generator.core.mount_compatibility import MOUNT_TYPE_COMPATIBILITY
+from starsector_variant_generator.core.mount_compatibility import (
+    MOUNT_TYPE_COMPATIBILITY,
+)
 from starsector_variant_generator.core.registry import Registry
 from starsector_variant_generator.profiles.catalog import get_profile
-from starsector_variant_generator.scoring.candidate_score import QualityAssessment, score_candidate
-from starsector_variant_generator.validation.legality import LegalityAssessment, LegalityFinding, LegalityResult, validate_variant
+from starsector_variant_generator.scoring.candidate_score import (
+    QualityAssessment,
+    score_candidate,
+)
+from starsector_variant_generator.validation.legality import (
+    LegalityAssessment,
+    LegalityFinding,
+    LegalityResult,
+    validate_variant,
+)
 
 _SIZE_ORDER = {"SMALL": 1, "MEDIUM": 2, "LARGE": 3}
 
@@ -162,10 +187,16 @@ def fix_legality(
     return RefitResult(variant, current, tuple(changes), assessment, total_cost, rebuild_recommended, unresolved)
 
 
+_FixerFn = Callable[
+    [Variant, Registry, Mapping[str, float], frozenset[str], frozenset[str], frozenset[str], int],
+    "tuple[Variant, list[RefitChange]]",
+]
+
+
 @dataclass(frozen=True)
 class _Fixer:
     codes: frozenset[str]
-    apply: object  # Callable[[Variant, Registry, dict, frozenset, frozenset, frozenset, int], tuple[Variant, list[RefitChange]]]
+    apply: _FixerFn
 
 
 def _fix_unresolved_weapon_refs(variant, registry, heuristics, locked_mounts, locked_hullmods, locked_wings, budget):
@@ -297,7 +328,7 @@ def _exact_compatible_weapon():
     it as missing rather than replacing it, even when a mount-compatible
     substitute exists in the registry (see
     `test_exact_mode_never_substitutes_even_when_a_compatible_weapon_exists`)."""
-    return None
+    return
 
 
 def _template_compatible_weapon(mount: dict, registry: Registry, target_weapon):
@@ -557,10 +588,17 @@ UNIMPLEMENTED_QUALITY_MODES = {
 def _metric_value(assessment: QualityAssessment, mode: str) -> float | None:
     if mode == "BALANCED_IMPROVEMENT":
         return assessment.final_score
-    return assessment.components.get(_QUALITY_MODE_METRICS[mode])
+    # Every other key in _QUALITY_MODE_METRICS maps to a real metric name;
+    # only the already-handled "BALANCED_IMPROVEMENT" entry is None. The
+    # guard keeps that invariant explicit for the type checker instead of
+    # asserting it silently.
+    metric_name = _QUALITY_MODE_METRICS[mode]
+    if metric_name is None:
+        return None
+    return assessment.components.get(metric_name)
 
 
-def _role_match_progress(variant: Variant, registry: Registry, profile_id: str, heuristics: dict[str, float]) -> tuple[int, int] | None:
+def _role_match_progress(variant: Variant, registry: Registry, profile_id: str, heuristics: Mapping[str, float]) -> tuple[int, int] | None:
     """Return (weapons meeting the profile's range condition, total weapons).
 
     `score_candidate` intentionally keeps role_match as a simple 70/100
@@ -678,6 +716,7 @@ def improve_quality(
             ):
                 continue
             gain = candidate_metric - current_metric
+            selection: tuple[Any, ...]
             if mode == "IMPROVE_ROLE_MATCH" and current_role_progress is not None:
                 candidate_role_progress = _role_match_progress(candidate, registry, profile_id, heuristics)
                 if candidate_role_progress is None:
@@ -718,7 +757,7 @@ def improve_quality(
     return QualityRefitResult(variant, current, tuple(changes), mode, metric_label, start_metric, current_metric, total_cost, rebuild_recommended, note)
 
 
-def _quality_moves(variant: Variant, registry: Registry, mode: str, locked_mount_ids: frozenset[str], locked_hullmod_ids: frozenset[str], heuristics: dict[str, float]):
+def _quality_moves(variant: Variant, registry: Registry, mode: str, locked_mount_ids: frozenset[str], locked_hullmod_ids: frozenset[str], heuristics: Mapping[str, float]):
     """Candidate single-changes for the quality-improvement search.
 
     Weapon-substitution modes explore every mount-eligible weapon on every

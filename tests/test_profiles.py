@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import unittest
 
-from starsector_variant_generator.profiles.catalog import available_profiles, get_profile
+from starsector_variant_generator.profiles.catalog import (
+    available_profiles,
+    get_profile,
+)
 
 
 class ProfileCatalogTests(unittest.TestCase):

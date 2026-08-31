@@ -12,7 +12,6 @@ from pathlib import Path
 from starsector_variant_generator.core.evidence import EvidenceClass, EvidenceRecord
 from starsector_variant_generator.core.registry import Registry
 
-
 VIDEO_REVIEW_SCHEMA_NAME = "video_reviewer_calibration"
 
 

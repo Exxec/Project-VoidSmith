@@ -11,16 +11,33 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 try:
     from PySide6.QtCore import QSettings, QSize, Qt, QThread
     from PySide6.QtWidgets import QApplication, QListWidgetItem, QProgressDialog
-    from starsector_variant_generator.gui.main_window import MainWindow, TechnicalCanvas, _SCAN_STALL_WARNING_INTERVAL_S
+
+    from starsector_variant_generator.gui.main_window import (
+        _SCAN_STALL_WARNING_INTERVAL_S,
+        MainWindow,
+        TechnicalCanvas,
+    )
     from starsector_variant_generator.gui.workers.analysis_worker import AnalysisWorker
 except ImportError:
     QApplication = None
 
 from starsector_variant_generator.core.config import AppConfig
-from starsector_variant_generator.core.models import Faction, Hull, ScanResult, Variant, Weapon
+from starsector_variant_generator.core.models import (
+    Faction,
+    Hull,
+    ScanResult,
+    Variant,
+    Weapon,
+)
 from starsector_variant_generator.core.registry import Registry
+from starsector_variant_generator.gui.canvas import (
+    _displayable_weapon_mounts,
+    _mount_scene_position,
+    _mount_scene_rotation,
+    _sprite_geometry_scale,
+)
 from starsector_variant_generator.gui.resources import _safe_sprite_path
-from starsector_variant_generator.gui.canvas import _displayable_weapon_mounts, _mount_scene_position, _mount_scene_rotation, _sprite_geometry_scale
+from starsector_variant_generator.output.retrofit_library import RetrofitAvailability
 
 
 @unittest.skipIf(QApplication is None, "PySide6 optional GUI dependency is not installed")
@@ -47,7 +64,7 @@ class GuiCanvasTests(unittest.TestCase):
         cls._settings_dir = TemporaryDirectory()
         QSettings.setPath(QSettings.IniFormat, QSettings.UserScope, cls._settings_dir.name)
 
-        class _IsolatedQSettings(QSettings):  # noqa: N801 -- matches QSettings' own naming
+        class _IsolatedQSettings(QSettings):
             def __init__(self, organization: str, application: str) -> None:
                 super().__init__(QSettings.IniFormat, QSettings.UserScope, organization, application)
 
@@ -247,6 +264,70 @@ class GuiCanvasTests(unittest.TestCase):
             self.assertEqual("[UNSCANNED] saved.variant", window.editable_retrofit_list.item(0).text())
             window.close()
 
+    def test_populate_missing_retrofits_captures_hull_id_before_the_background_operation_runs(self) -> None:
+        """Regression for docs/BUGS.md SVG-021.
+
+        `_populate_missing_retrofits`'s background `operation` lambda used
+        to read `self._current_hull.id` directly, rather than capturing it
+        as a local first (the pattern every sibling background operation,
+        e.g. `_generate`'s `hull_id = self._current_hull.id`, already
+        follows precisely to avoid this). Since `_run`'s operation only
+        actually executes once its worker thread starts, a hull-selection
+        change between the click and that execution would read a *different*
+        (or `None`) `self._current_hull` -- generating a retrofit for the
+        wrong hull, or crashing with `AttributeError` on `None`. Verified
+        here without a real QThread (background-thread completion timing
+        isn't reliably observable in this headless harness -- see
+        `test_apply_incremental_scan_outcome_refreshes_hull_list_and_catalog`
+        's docstring for the same reasoning): capture `_run`'s `operation`
+        argument, change `_current_hull` to simulate the race, then invoke
+        `operation()` and confirm it still targets the originally selected
+        hull.
+        """
+        hull = Hull("h", "Hull", "core", Path("fixture"))
+        other_hull = Hull("other", "Other Hull", "core", Path("fixture"))
+        registry = Registry.from_scan(ScanResult(hulls=[hull, other_hull]))
+        window = MainWindow()
+        window._registry = registry; window._visible = (hull, other_hull); window._selected_hull(0)
+        window.output.setText(str(Path.cwd()))
+        with patch.object(window, "_run") as run_mock:
+            window._populate_missing_retrofits()
+        run_mock.assert_called_once()
+        message, operation, completed, control = run_mock.call_args[0]
+        self.assertIn("Checking existing retrofits", message)
+        self.assertEqual(window._apply_populate_missing_retrofits_result, completed)
+        self.assertIs(window.populate_retrofits_button, control)
+
+        # Simulate the user changing the hull selection before the
+        # background operation actually runs.
+        window._selected_hull(1)
+        self.assertEqual("other", window._current_hull.id)
+        with patch("starsector_variant_generator.gui.main_window.api.load_or_populate_retrofits") as backend_mock:
+            operation()
+        backend_mock.assert_called_once()
+        self.assertEqual("h", backend_mock.call_args[0][1])
+        window.close()
+
+    def test_populate_missing_retrofits_result_updates_detail_and_refreshes_library(self) -> None:
+        """The `completed` callback used to be an inline lambda returning a
+        throwaway `(None, None)` tuple built from two comma-joined
+        statements -- both side effects ran, but the shape was accidental
+        and untestable in isolation. Now a real, directly-callable method;
+        exercised directly here (see docs/BUGS.md SVG-021).
+        """
+        window = MainWindow()
+        with TemporaryDirectory() as temp:
+            root = Path(temp); window.output.setText(str(root))
+            result = RetrofitAvailability(
+                "h", existing_variants=(), generated_paths=(root / "editable_retrofits" / "h_svg.variant",),
+                attempted_profiles=("LINE_BRAWLER",), generated_profiles=("LINE_BRAWLER",),
+                note="Created 1 local starter variation(s).",
+            )
+            window._apply_populate_missing_retrofits_result(result)
+            self.assertIn("Created 1 local starter variation(s).", window.refit_detail.toPlainText())
+            self.assertIn("Profiles generated: LINE_BRAWLER", window.refit_detail.toPlainText())
+        window.close()
+
     def test_editable_change_summary_reports_only_explicit_field_differences(self) -> None:
         before = Variant("v", "V", "USER_EDITABLE", Path("v"), hull_id="h", weapons_by_mount={"A": "old"}, hullmods=("old_mod",), flux_vents=2)
         after = Variant("v", "V", "USER_EDITABLE", Path("v"), hull_id="h", weapons_by_mount={"A": "new"}, hullmods=("new_mod",), flux_vents=3)
@@ -382,6 +463,7 @@ class GuiCanvasTests(unittest.TestCase):
         # why waiting on a real QThread here isn't reliable in this
         # headless test harness.
         from unittest.mock import patch
+
         from PySide6.QtCore import QMimeData, QPointF, QUrl
         from PySide6.QtGui import QDropEvent
 
@@ -400,7 +482,7 @@ class GuiCanvasTests(unittest.TestCase):
             with patch.object(window, "_run") as run_mock:
                 window.dropEvent(event)
             run_mock.assert_called_once()
-            message, operation, completed, control = run_mock.call_args[0]
+            message, _operation, completed, control = run_mock.call_args[0]
             self.assertIn("Incorporating", message)
             self.assertEqual(window._apply_incremental_scan_outcome, completed)
             self.assertIs(window.scan_button, control)
@@ -418,7 +500,7 @@ class GuiCanvasTests(unittest.TestCase):
         # of this feature. The real app runs a normal blocking app.exec()
         # event loop, not a polling one, so this is a test-harness
         # limitation, not evidence of a bug in the real threading path.
-        with TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        with TemporaryDirectory(ignore_cleanup_errors=True):
             existing = ScanResult(hulls=[Hull("existing_hull", "Existing Hull", "core", Path("fixture"))])
             window = MainWindow()
             window._scan_complete(SimpleNamespace(result=existing, registry=Registry.from_scan(existing)))
@@ -458,7 +540,9 @@ class GuiCanvasTests(unittest.TestCase):
         window.close()
 
     def test_mirror_detection_pairs_symmetric_hardpoints_and_skips_centerline(self) -> None:
-        from starsector_variant_generator.gui.main_window import _detect_mirror_mount_pairs
+        from starsector_variant_generator.gui.main_window import (
+            _detect_mirror_mount_pairs,
+        )
 
         hull = Hull("hammerhead_like", "Hull", "core", Path("fixture"), weapon_mounts=(
             {"id": "WS 001", "size": "MEDIUM", "type": "BALLISTIC", "mount": "HARDPOINT", "angle": 0, "arc": 10, "locations": [84, 31]},
@@ -473,7 +557,9 @@ class GuiCanvasTests(unittest.TestCase):
         self.assertNotIn("WS SPINE", pairs)
 
     def test_mirror_detection_never_pairs_geometrically_distinct_mounts(self) -> None:
-        from starsector_variant_generator.gui.main_window import _detect_mirror_mount_pairs
+        from starsector_variant_generator.gui.main_window import (
+            _detect_mirror_mount_pairs,
+        )
 
         # Modeled on the real Odyssey: superficially similar (same type/angle)
         # but not true mirror images -- x/y don't negate. Must stay unpaired.
@@ -558,7 +644,9 @@ class GuiCanvasTests(unittest.TestCase):
         window.close()
 
     def test_looks_like_starsector_install_requires_a_real_telltale(self) -> None:
-        from starsector_variant_generator.gui.main_window import _looks_like_starsector_install
+        from starsector_variant_generator.gui.main_window import (
+            _looks_like_starsector_install,
+        )
 
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -777,7 +865,7 @@ class GuiCanvasTests(unittest.TestCase):
             self.assertTrue(window.scan_button.isEnabled())
             window.close()
 
-    def _simulate_scan_in_flight(self, window: "MainWindow") -> None:
+    def _simulate_scan_in_flight(self, window: MainWindow) -> None:
         # A placeholder "a scan is currently running" state, deliberately
         # NOT a real _start_scan() call: _scan_finished is only ever
         # connected to a real thread.finished in production, which by
@@ -794,7 +882,7 @@ class GuiCanvasTests(unittest.TestCase):
         window.scan_button.setEnabled(False); window.cancel_scan_button.setEnabled(True)
 
     @staticmethod
-    def _join_scan_thread(window: "MainWindow") -> None:
+    def _join_scan_thread(window: MainWindow) -> None:
         """Stops and joins every real background QThread `window` still
         holds (the scan thread plus any generic _run()-launched one in
         `window._threads`), before the test ends and drops its reference
@@ -994,6 +1082,7 @@ class GuiCanvasTests(unittest.TestCase):
         # every emit is consistently a real cross-thread queued
         # connection there, not this test's artifact.
         from unittest.mock import patch
+
         from starsector_variant_generator.gui.workers.scan_worker import ScanWorker
 
         for signal_name, emit_args in (("completed", (None,)), ("failed", ("boom",)), ("cancelled", ())):
@@ -1182,9 +1271,9 @@ class GuiCanvasTests(unittest.TestCase):
         # export -- all tracked in self._threads via _run) is already using
         # the current registry.
         from unittest.mock import patch
-        from PySide6.QtCore import QMimeData, QPointF, QUrl
+
+        from PySide6.QtCore import QMimeData, QPointF, QThread, QUrl
         from PySide6.QtGui import QDropEvent
-        from PySide6.QtCore import QThread
 
         with TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
             scan = ScanResult(hulls=[Hull("existing_hull", "Existing Hull", "core", Path("fixture"))])

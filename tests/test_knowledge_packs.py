@@ -5,13 +5,22 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from starsector_variant_generator.api import run_generate
 from starsector_variant_generator.core.knowledge_packs import (
-    approved_equipment_ids, assess_pack_freshness, build_archetype_preference, capability_gap_guidance, equipment_guidance_confidence,
-    load_knowledge_pack, officer_guidance, progression_guidance_confidence, progression_hull_ids, resolve_knowledge_pack, retrofit_template_ids,
+    approved_equipment_ids,
+    assess_pack_freshness,
+    build_archetype_preference,
+    capability_gap_guidance,
+    equipment_guidance_confidence,
+    load_knowledge_pack,
+    officer_guidance,
+    progression_guidance_confidence,
+    progression_hull_ids,
+    resolve_knowledge_pack,
+    retrofit_template_ids,
 )
 from starsector_variant_generator.core.models import Faction, Hull, ScanResult
 from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.api import run_generate
 
 SOURCE = Path("fixture")
 

@@ -4,9 +4,19 @@ import gc
 import unittest
 from pathlib import Path
 
-from starsector_variant_generator.analysis.doctrine import _DOCTRINE_CACHE, DoctrineEvidence, analyze_faction_doctrine, doctrine_match
+from starsector_variant_generator.analysis.doctrine import (
+    _DOCTRINE_CACHE,
+    DoctrineEvidence,
+    analyze_faction_doctrine,
+    doctrine_match,
+)
 from starsector_variant_generator.core.evidence import EvidenceClass
-from starsector_variant_generator.core.models import Faction, ScanResult, Variant, Weapon
+from starsector_variant_generator.core.models import (
+    Faction,
+    ScanResult,
+    Variant,
+    Weapon,
+)
 from starsector_variant_generator.core.registry import Registry
 
 

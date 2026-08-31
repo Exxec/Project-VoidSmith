@@ -1,8 +1,20 @@
 from __future__ import annotations
-import tempfile, unittest
+
+import tempfile
+import unittest
 from pathlib import Path
-from starsector_variant_generator.analysis.change_impact import ChangeImpactReport, ImpactTarget
-from starsector_variant_generator.core.result_cache import AnalysisContextFingerprint, AnalysisResultCache, CacheReadiness
+
+from starsector_variant_generator.analysis.change_impact import (
+ ChangeImpactReport,
+ ImpactTarget,
+)
+from starsector_variant_generator.core.result_cache import (
+ AnalysisContextFingerprint,
+ AnalysisResultCache,
+ CacheReadiness,
+)
+
+
 class AnalysisResultCacheTests(unittest.TestCase):
  def test_fingerprint_changes_for_each_declared_analysis_input(self):
   first=AnalysisContextFingerprint("build",("h1","w1"),"baseline_0.7",("api-0.1",),knowledge_pack_freshness="CURRENT")

@@ -4,11 +4,19 @@ import unittest
 from pathlib import Path
 
 from starsector_variant_generator.core.models import Hull
-from starsector_variant_generator.parsers.common import csv_rows, json_file, parse_float, parse_int
-from starsector_variant_generator.parsers.entities import (
-    faction_from_file, hull_from_row, hull_from_skin, variant_from_file, weapon_from_row,
+from starsector_variant_generator.parsers.common import (
+    csv_rows,
+    json_file,
+    parse_float,
+    parse_int,
 )
-
+from starsector_variant_generator.parsers.entities import (
+    faction_from_file,
+    hull_from_row,
+    hull_from_skin,
+    variant_from_file,
+    weapon_from_row,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

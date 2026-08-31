@@ -1,16 +1,29 @@
 from __future__ import annotations
 
-import unittest
 import json
 import tempfile
+import unittest
 from itertools import product
 from pathlib import Path
 
-from starsector_variant_generator.analysis.equipment_affinity import classify_equipment_affinity, classify_equipment_availability
+from starsector_variant_generator.analysis.equipment_affinity import (
+    classify_equipment_affinity,
+    classify_equipment_availability,
+)
 from starsector_variant_generator.core.evidence import EvidenceClass
-from starsector_variant_generator.core.models import Faction, FighterWing, Hull, Hullmod, ScanResult, Weapon
+from starsector_variant_generator.core.knowledge_packs import (
+    load_knowledge_pack,
+    resolve_knowledge_pack,
+)
+from starsector_variant_generator.core.models import (
+    Faction,
+    FighterWing,
+    Hull,
+    Hullmod,
+    ScanResult,
+    Weapon,
+)
 from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.core.knowledge_packs import load_knowledge_pack, resolve_knowledge_pack
 
 SOURCE = Path("fixture")
 

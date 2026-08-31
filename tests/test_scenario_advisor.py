@@ -4,11 +4,21 @@ import unittest
 from pathlib import Path
 
 from starsector_variant_generator import api
-from starsector_variant_generator.analysis.fleet_support import FleetSelection, FleetSupportConstraints
-from starsector_variant_generator.analysis.scenario_advisor import ScenarioCapabilityTarget, ScenarioPressure, assess_scenario_fleet, generic_scenario_profiles, scenario_advisor_request_from_payload, scenario_advisor_request_to_payload, user_defined_scenario
+from starsector_variant_generator.analysis.fleet_support import (
+    FleetSelection,
+    FleetSupportConstraints,
+)
+from starsector_variant_generator.analysis.scenario_advisor import (
+    ScenarioCapabilityTarget,
+    ScenarioPressure,
+    assess_scenario_fleet,
+    generic_scenario_profiles,
+    scenario_advisor_request_from_payload,
+    scenario_advisor_request_to_payload,
+    user_defined_scenario,
+)
 from starsector_variant_generator.core.models import Hull, ScanResult
 from starsector_variant_generator.core.registry import Registry
-
 
 SOURCE = Path("fixture")
 

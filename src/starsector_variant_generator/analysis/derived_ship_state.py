@@ -1,12 +1,24 @@
 """Typed aggregate of currently verified derived per-ship state."""
 from __future__ import annotations
+
 from dataclasses import dataclass
-from starsector_variant_generator.analysis.civilian import DerivedCivilianStats, compute_derived_civilian_stats
-from starsector_variant_generator.analysis.combat_stats import DerivedDefenseStats, compute_derived_defense_stats
-from starsector_variant_generator.analysis.mobility_stats import DerivedMobilityStats, compute_derived_mobility_stats
+
+from starsector_variant_generator.analysis.civilian import (
+    DerivedCivilianStats,
+    compute_derived_civilian_stats,
+)
 from starsector_variant_generator.analysis.classification import classify_civilian_role
+from starsector_variant_generator.analysis.combat_stats import (
+    DerivedDefenseStats,
+    compute_derived_defense_stats,
+)
+from starsector_variant_generator.analysis.mobility_stats import (
+    DerivedMobilityStats,
+    compute_derived_mobility_stats,
+)
 from starsector_variant_generator.core.models import Hull, Variant
 from starsector_variant_generator.core.registry import Registry
+
 
 @dataclass(frozen=True)
 class DerivedShipState:

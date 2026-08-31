@@ -181,20 +181,22 @@ def confidence_weighted_summary(report: CalibrationReport, confidences: dict[str
     fabricated default; it is reported separately as unknown.
     """
     entries: list[dict[str, object]] = []
+    known: list[float] = []
     for result in report.results:
         if result["status"] != "MISMATCH":
             continue
         confidence = confidences.get(str(result["entity_key"]))
         if confidence is None:
             bucket = "UNKNOWN_CONFIDENCE_MISMATCH"
-        elif confidence >= 0.66:
-            bucket = "HIGH_CONFIDENCE_MISMATCH"
-        elif confidence >= 0.33:
-            bucket = "MEDIUM_CONFIDENCE_MISMATCH"
         else:
-            bucket = "LOW_CONFIDENCE_MISMATCH"
+            known.append(confidence)
+            if confidence >= 0.66:
+                bucket = "HIGH_CONFIDENCE_MISMATCH"
+            elif confidence >= 0.33:
+                bucket = "MEDIUM_CONFIDENCE_MISMATCH"
+            else:
+                bucket = "LOW_CONFIDENCE_MISMATCH"
         entries.append({"entity_key": result["entity_key"], "label": result["label"], "confidence": confidence, "bucket": bucket})
-    known = [entry["confidence"] for entry in entries if entry["confidence"] is not None]
     counts_by_bucket = {name: sum(1 for entry in entries if entry["bucket"] == name) for name in ("HIGH_CONFIDENCE_MISMATCH", "MEDIUM_CONFIDENCE_MISMATCH", "LOW_CONFIDENCE_MISMATCH", "UNKNOWN_CONFIDENCE_MISMATCH")}
     return {
         "fixture_id": report.fixture_id,
@@ -219,15 +221,20 @@ def compare_calibration_reports(report_a: CalibrationReport, report_b: Calibrati
     """
     if report_a.fixture_id != report_b.fixture_id:
         raise ValueError("Reports must be for the same fixture_id to compare")
-    by_key_a = {result["entity_key"]: result for result in report_a.results}
-    by_key_b = {result["entity_key"]: result for result in report_b.results}
+    by_key_a = {str(result["entity_key"]): result for result in report_a.results}
+    by_key_b = {str(result["entity_key"]): result for result in report_b.results}
     changed: list[dict[str, object]] = []
     for key in sorted(set(by_key_a) | set(by_key_b)):
         entry_a, entry_b = by_key_a.get(key), by_key_b.get(key)
         status_a = entry_a["status"] if entry_a else None
         status_b = entry_b["status"] if entry_b else None
         if status_a != status_b:
-            changed.append({"entity_key": key, "label": (entry_a or entry_b)["label"], "status_a": status_a, "status_b": status_b})
+            # At least one entry exists whenever the two statuses differ:
+            # both being absent means both statuses are `None`, which the
+            # `!=` check above already excludes.
+            label_source = entry_a or entry_b
+            assert label_source is not None
+            changed.append({"entity_key": key, "label": label_source["label"], "status_a": status_a, "status_b": status_b})
     return {
         "fixture_id": report_a.fixture_id,
         "heuristic_set_a": report_a.heuristic_set,

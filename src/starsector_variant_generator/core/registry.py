@@ -1,13 +1,23 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field, replace
 import hashlib
 import json
 import re
-from typing import Generic, Iterable, TypeVar
+from collections.abc import Iterable
+from dataclasses import asdict, dataclass, field, replace
+from typing import Any, Generic, TypeVar, cast
 
-from starsector_variant_generator.core.models import Entity, Faction, ModInfo, ScanResult, Variant
-
+from starsector_variant_generator.core.models import (
+    Entity,
+    Faction,
+    FighterWing,
+    Hull,
+    Hullmod,
+    ModInfo,
+    ScanResult,
+    Variant,
+    Weapon,
+)
 
 T = TypeVar("T", bound=Entity)
 
@@ -20,7 +30,7 @@ class EntityIndex(Generic[T]):
     duplicates: dict[str, list[T]] = field(default_factory=dict)
 
     @classmethod
-    def build(cls, entities: Iterable[T]) -> "EntityIndex[T]":
+    def build(cls, entities: Iterable[T]) -> EntityIndex[T]:
         index = cls()
         for entity in entities:
             if entity.id in index.duplicates:
@@ -89,12 +99,21 @@ class ContextualReferenceResolution:
 
 @dataclass
 class Registry:
-    hulls: EntityIndex = field(default_factory=EntityIndex)
-    weapons: EntityIndex = field(default_factory=EntityIndex)
-    fighters: EntityIndex = field(default_factory=EntityIndex)
-    hullmods: EntityIndex = field(default_factory=EntityIndex)
-    variants: EntityIndex = field(default_factory=EntityIndex)
-    factions: EntityIndex = field(default_factory=EntityIndex)
+    # Parametrized per real entity type (rather than bare `EntityIndex`,
+    # which mypy widens to `EntityIndex[Any]`) so every consumer -- e.g.
+    # `weapons_matching`/`hulls_matching`/`fighters_matching`/
+    # `hullmods_matching` below, and `api.py`'s per-entity classification
+    # call sites -- gets the real narrowed element type instead of the
+    # generic `Entity` base. `from_scan` below already only ever builds
+    # each index from its correspondingly-typed `ScanResult` list
+    # (`scan.hulls: list[Hull]`, etc.), so this documents an invariant
+    # that was already true at runtime, not a behavior change.
+    hulls: EntityIndex[Hull] = field(default_factory=EntityIndex)
+    weapons: EntityIndex[Weapon] = field(default_factory=EntityIndex)
+    fighters: EntityIndex[FighterWing] = field(default_factory=EntityIndex)
+    hullmods: EntityIndex[Hullmod] = field(default_factory=EntityIndex)
+    variants: EntityIndex[Variant] = field(default_factory=EntityIndex)
+    factions: EntityIndex[Faction] = field(default_factory=EntityIndex)
     unresolved_references: list[UnresolvedReference] = field(default_factory=list)
     missing_dependencies: list[MissingDependency] = field(default_factory=list)
     canonical_duplicate_resolutions: list[CanonicalDuplicateResolution] = field(default_factory=list)
@@ -103,7 +122,7 @@ class Registry:
     mod_dependencies: dict[str, tuple[str, ...]] = field(default_factory=dict)
 
     @classmethod
-    def from_scan(cls, scan: ScanResult) -> "Registry":
+    def from_scan(cls, scan: ScanResult) -> Registry:
         registry = cls(
             hulls=EntityIndex.build(scan.hulls), weapons=EntityIndex.build(scan.weapons),
             fighters=EntityIndex.build(scan.fighters), hullmods=EntityIndex.build(scan.hullmods),
@@ -127,7 +146,11 @@ class Registry:
         payload = asdict(entity)
         for field_name in ("source_mod", "source_path", "source_hash", "source_mod_version"):
             payload.pop(field_name, None)
-        return Registry._normalize_semantic_value(payload)
+        # `_normalize_semantic_value` is typed `object -> object` (it also
+        # recurses into non-dict values); a `dict` input always returns a
+        # `dict` (see its own `isinstance(value, dict)` branch), so this
+        # narrows a known-safe case rather than asserting an unproven one.
+        return cast(dict, Registry._normalize_semantic_value(payload))
 
     @staticmethod
     def _normalize_semantic_value(value: object) -> object:
@@ -207,7 +230,12 @@ class Registry:
 
     def trace_reference(self, reference_type: str, reference_id: str, requesting_mod: str | None = None) -> dict[str, object]:
         """Return an explicit generic index trace for diagnostics/qualification."""
-        indexes = {"hull": self.hulls, "weapon": self.weapons, "fighter": self.fighters, "hullmod": self.hullmods}
+        # `EntityIndex[Any]`: the four real indices below are each
+        # parametrized differently (`EntityIndex[Hull]`, `EntityIndex
+        # [Weapon]`, ...) -- an invariant generic, so a plain dict literal
+        # has no common non-`object` value type. Only `.by_id`/`.duplicates`
+        # (present on every instantiation regardless of `T`) are read below.
+        indexes: dict[str, EntityIndex[Any]] = {"hull": self.hulls, "weapon": self.weapons, "fighter": self.fighters, "hullmod": self.hullmods}
         index = indexes.get(reference_type)
         if index is None:
             raise ValueError(f"Unsupported reference type: {reference_type}")
@@ -263,7 +291,11 @@ class Registry:
             self.contextual_reference_resolutions.append(ContextualReferenceResolution(
                 variant.id, reference_type, reference_id, str(trace["resolved_source_mod"]),
                 str(trace["resolution_method"]), str(trace["identity_status"]),
-                tuple(trace["shadowed_contextual_candidates"]),
+                # `trace_reference` returns a generic `dict[str, object]`
+                # diagnostic payload, but this key is always the
+                # `tuple[dict[str, str], ...]` it builds internally (see
+                # `trace_reference`'s own construction above).
+                cast("tuple[dict[str, str], ...]", trace["shadowed_contextual_candidates"]),
             ))
 
     def _resolve_dependencies(self, mods: Iterable[ModInfo]) -> None:
@@ -274,7 +306,7 @@ class Registry:
                 if dependency not in available:
                     self.missing_dependencies.append(MissingDependency(mod.mod_id, dependency))
 
-    def weapons_matching(self, size: str | None = None, mount_type: str | None = None) -> tuple[Entity, ...]:
+    def weapons_matching(self, size: str | None = None, mount_type: str | None = None) -> tuple[Weapon, ...]:
         """Return only unambiguous indexed weapons matching explicit fields."""
         normalized_size = size.upper() if size else None
         normalized_type = mount_type.upper() if mount_type else None
@@ -284,7 +316,7 @@ class Registry:
             and (normalized_type is None or (getattr(weapon, "mount_type", "") or "").upper() == normalized_type)
         )
 
-    def fighters_matching(self, role: str | None = None) -> tuple[Entity, ...]:
+    def fighters_matching(self, role: str | None = None) -> tuple[FighterWing, ...]:
         """Return only unambiguous indexed fighter wings matching explicit fields."""
         normalized_role = role.upper() if role else None
         return tuple(
@@ -292,14 +324,14 @@ class Registry:
             if normalized_role is None or (getattr(fighter, "role", "") or "").upper() == normalized_role
         )
 
-    def hullmods_matching(self, hidden: bool | None = None) -> tuple[Entity, ...]:
+    def hullmods_matching(self, hidden: bool | None = None) -> tuple[Hullmod, ...]:
         """Return only unambiguous indexed hullmods matching explicit fields."""
         return tuple(
             hullmod for hullmod in sorted(self.hullmods.by_id.values(), key=lambda item: item.id)
             if hidden is None or bool(getattr(hullmod, "hidden", False)) == hidden
         )
 
-    def hulls_matching(self, hull_size: str | None = None) -> tuple[Entity, ...]:
+    def hulls_matching(self, hull_size: str | None = None) -> tuple[Hull, ...]:
         """Return only unambiguous indexed hulls matching explicit fields."""
         normalized_size = hull_size.upper() if hull_size else None
         return tuple(

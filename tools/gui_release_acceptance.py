@@ -10,7 +10,6 @@ import argparse
 import hashlib
 import os
 import shutil
-import sys
 from pathlib import Path
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")

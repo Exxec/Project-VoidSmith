@@ -36,27 +36,56 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import asdict, dataclass, replace as dataclass_replace, field
+from dataclasses import asdict, dataclass, field
+from dataclasses import replace as dataclass_replace
 from enum import StrEnum
 from typing import Any
 
+from starsector_variant_generator.analysis.build_archetypes import (
+    BuildArchetypeProfile,
+    infer_build_archetypes,
+    profile_id_for_build,
+)
+from starsector_variant_generator.analysis.capability_vector import (
+    CapabilityVector,
+    infer_hull_capability_vector,
+)
 from starsector_variant_generator.analysis.classification import classify_hull
-from starsector_variant_generator.analysis.combat_entity import recommendation_eligibility
-from starsector_variant_generator.analysis.capability_vector import CapabilityVector, infer_hull_capability_vector
-from starsector_variant_generator.analysis.equipment_affinity import classify_equipment_affinity
-from starsector_variant_generator.analysis.faction_capability import FactionCapabilityProfile, analyze_faction_capability
-from starsector_variant_generator.analysis.mechanical_archetypes import MechanicalArchetypeProfile, infer_mechanical_archetypes
-from starsector_variant_generator.analysis.build_archetypes import BuildArchetypeProfile, infer_build_archetypes, profile_id_for_build
+from starsector_variant_generator.analysis.combat_entity import (
+    recommendation_eligibility,
+)
+from starsector_variant_generator.analysis.equipment_affinity import (
+    classify_equipment_affinity,
+)
+from starsector_variant_generator.analysis.faction_capability import (
+    FactionCapabilityProfile,
+    analyze_faction_capability,
+)
+from starsector_variant_generator.analysis.mechanical_archetypes import (
+    MechanicalArchetypeProfile,
+    infer_mechanical_archetypes,
+)
+from starsector_variant_generator.core.evidence import EvidenceClass
 from starsector_variant_generator.core.heuristics import get_heuristic_set
 from starsector_variant_generator.core.knowledge_packs import (
-    ResolvedKnowledgePack, build_archetype_preference, capability_gap_guidance,
-    officer_guidance, progression_guidance_confidence, progression_hull_ids, retrofit_template_ids,
+    ResolvedKnowledgePack,
+    build_archetype_preference,
+    capability_gap_guidance,
+    officer_guidance,
+    progression_guidance_confidence,
+    progression_hull_ids,
+    retrofit_template_ids,
 )
 from starsector_variant_generator.core.models import Faction, Variant
 from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.core.evidence import EvidenceClass
-from starsector_variant_generator.core.result_cache import AnalysisContextFingerprint, CacheReadiness
-from starsector_variant_generator.generation.refit import improve_quality
+from starsector_variant_generator.core.result_cache import (
+    AnalysisContextFingerprint,
+    CacheReadiness,
+)
+from starsector_variant_generator.generation.refit import (
+    QualityRefitResult,
+    improve_quality,
+)
 
 
 @dataclass(frozen=True)
@@ -130,8 +159,8 @@ class RecommendationAudit:
     role: str
     hull_id: str
     build_archetype_id: str | None
-    own_score: float | None  # this candidate's own real ranking score (composite where build-aware)
-    rank: int | None  # 1-based rank among every real candidate considered for this (leg, role)
+    own_score: float  # this candidate's own real ranking score (composite where build-aware); every construction site below always supplies a real float, never None
+    rank: int  # 1-based rank among every real candidate considered for this (leg, role); every construction site below always supplies `index + 1`, never None
     total_candidates: int
     best_score: float | None
     cutoff_score: float | None  # lowest score among the real selected shortlist, when one was chosen
@@ -139,6 +168,28 @@ class RecommendationAudit:
     selection_order: int | None  # 1-based position within the real returned shortlist -- only set when recommended
     selection_reason: str | None
     extra: dict[str, Any] = field(default_factory=dict)
+
+
+def _require_selection_order(audit: RecommendationAudit) -> int:
+    """Type-narrowing accessor for `audit.selection_order` (`int | None`).
+
+    Every `_native_audit_trail`/`_retrofit_audit_trail`/
+    `_acquisition_audit_trail` construction site builds `selection_reasons`
+    and `selection_order` from the very same `selected` shortlist in the
+    same pass (see each trail builder's own code), so `recommended=True`
+    and `selection_order is not None` are always set together -- an audit
+    can never be `recommended` with no `selection_order`. Every call site
+    below already filters to `audit.recommended` before calling this, so
+    the `ValueError` should be unreachable in practice; it exists to fail
+    loudly on an invariant violation rather than let a `None` silently
+    become an arbitrary sort position or a fabricated `rank`.
+    """
+    if audit.selection_order is None:
+        raise ValueError(
+            f"RecommendationAudit for hull {audit.hull_id!r} ({audit.leg} leg, role {audit.role!r}) is "
+            "marked recommended=True but carries no selection_order -- audit-trail invariant violated."
+        )
+    return audit.selection_order
 
 
 @dataclass(frozen=True)
@@ -167,8 +218,8 @@ class GapRecommendationResult:
     gaps: tuple[CapabilityGap, ...]
     native_recommendations: dict[str, tuple[NativeRecommendation, ...]]
     unaddressed_gaps: tuple[str, ...]  # no NATIVE solution for this gap -- retrofit/acquisition may still exist
-    retrofit_recommendations: dict[str, tuple["RetrofitRecommendation", ...]] = field(default_factory=dict)
-    acquisition_recommendations: dict[str, tuple["AcquisitionRecommendation", ...]] = field(default_factory=dict)
+    retrofit_recommendations: dict[str, tuple[RetrofitRecommendation, ...]] = field(default_factory=dict)
+    acquisition_recommendations: dict[str, tuple[AcquisitionRecommendation, ...]] = field(default_factory=dict)
     fully_unaddressed_gaps: tuple[str, ...] = ()  # no solution across ALL THREE legs -- GAP_RECOMMENDATION_ENGINE.md section 15
     officer_guidance: tuple[dict[str, object], ...] = ()  # advisory pack data, never a score input
     # Real, inspectable per-call cache decision (Phase 33, ROADMAP.md) --
@@ -344,7 +395,7 @@ def _diverse_hull_shortlist(ranked: list[tuple[float, str]], registry: Registry,
         competitive = [item for item in remaining if item[0] >= best_score * (1.0 - tolerance)]
         pool = competitive or remaining
         selected_ids = [hull_id for _, hull_id, _ in selected]
-        def diversity_key(item: tuple[float, str]) -> tuple[float, float, str]:
+        def diversity_key(item: tuple[float, str], selected_ids: list[str] = selected_ids) -> tuple[float, float, str]:
             similarities = []
             for selected_id in selected_ids:
                 role_similarity = _jaccard(role_sets[item[1]], role_sets[selected_id])
@@ -417,18 +468,18 @@ def _native_audit_trail(
                 },
             )
     else:
-        ranked = _rank_candidates_for_role(role, resolved_hulls)
-        total_candidates = len(ranked)
-        best_score = ranked[0][0] if ranked else None
-        selected = _diverse_hull_shortlist(ranked, registry, max_recommendations, heuristic_set)
-        selection_reasons = {hull_id: reason for _, hull_id, reason in selected}
-        selection_order = {hull_id: index + 1 for index, (_, hull_id, _) in enumerate(selected)}
-        cutoff_score = ranked[max_recommendations - 1][0] if len(ranked) >= max_recommendations else None
-        for index, (score, hull_id) in enumerate(ranked):
+        ranked_hulls = _rank_candidates_for_role(role, resolved_hulls)
+        total_candidates = len(ranked_hulls)
+        best_score = ranked_hulls[0][0] if ranked_hulls else None
+        selected_hulls = _diverse_hull_shortlist(ranked_hulls, registry, max_recommendations, heuristic_set)
+        hull_selection_reasons = {hull_id: reason for _, hull_id, reason in selected_hulls}
+        hull_selection_order = {hull_id: index + 1 for index, (_, hull_id, _) in enumerate(selected_hulls)}
+        cutoff_score = ranked_hulls[max_recommendations - 1][0] if len(ranked_hulls) >= max_recommendations else None
+        for index, (score, hull_id) in enumerate(ranked_hulls):
             audits[(hull_id, None)] = RecommendationAudit(
                 "NATIVE", role, hull_id, None, score, index + 1, total_candidates,
-                best_score, cutoff_score, hull_id in selection_reasons, selection_order.get(hull_id),
-                selection_reasons.get(hull_id),
+                best_score, cutoff_score, hull_id in hull_selection_reasons, hull_selection_order.get(hull_id),
+                hull_selection_reasons.get(hull_id),
                 extra={"capability_score": score, "build": None},
             )
     return audits
@@ -493,7 +544,7 @@ def recommend_native_solutions(
     unaddressed: list[str] = []
     for gap in gaps:
         audits = _native_audit_trail(faction, registry, gap.role, heuristic_set, knowledge_pack, constraints)
-        selected_audits = sorted((audit for audit in audits.values() if audit.recommended), key=lambda audit: audit.selection_order)
+        selected_audits = sorted((audit for audit in audits.values() if audit.recommended), key=_require_selection_order)
         if not selected_audits:
             unaddressed.append(gap.role)
             continue
@@ -508,7 +559,7 @@ def recommend_native_solutions(
             # same raw value already.
             NativeRecommendation(gap.role, audit.hull_id,
                                  audit.extra["capability_score"],
-                                 rank=audit.selection_order, confidence=_recommendation_confidence(gap, audit.extra["build"]),
+                                 rank=_require_selection_order(audit), confidence=_recommendation_confidence(gap, audit.extra["build"]),
                                  archetype_scores=infer_mechanical_archetypes(registry.hulls.by_id[audit.hull_id], registry).compatibility_scores,
                                  archetype_evidence=infer_mechanical_archetypes(registry.hulls.by_id[audit.hull_id], registry).evidence_by_archetype,
                                  diversity_reason=audit.selection_reason,
@@ -685,7 +736,31 @@ def _variants_for_hull(hull_id: str, registry: Registry) -> list[Variant]:
     return sorted((variant for variant in registry.variants.by_id.values() if variant.hull_id == hull_id), key=lambda variant: variant.id)
 
 
-def _best_retrofit_for_hull(hull_id: str, profile_id: str, registry: Registry, faction: Faction, heuristic_set: str, min_gain: float):
+@dataclass(frozen=True)
+class _RetrofitOpportunity:
+    """`_best_retrofit_for_hull`'s real return payload for one hull's most
+    improvable real variant.
+
+    `before_score`/`after_score` are copied out of `result` narrowed to
+    plain `float`: `_best_retrofit_for_hull`'s own loop below already only
+    ever keeps a candidate once both are confirmed real (`continue`d past
+    otherwise, so `gain = after - before` is always a real subtraction),
+    so every caller downstream needs the guaranteed-non-None value here --
+    not `QualityRefitResult`'s own honestly `float | None` field type,
+    which correctly stays Optional there because a *different*,
+    not-yet-evaluated variant can genuinely have no score at all.
+    """
+
+    gain: float
+    variant: Variant
+    result: QualityRefitResult
+    before_score: float
+    after_score: float
+
+
+def _best_retrofit_for_hull(
+    hull_id: str, profile_id: str, registry: Registry, faction: Faction, heuristic_set: str, min_gain: float,
+) -> _RetrofitOpportunity | None:
     """The most-improvable of this hull's real, existing variants, if any
     genuinely improves by at least `min_gain` under `IMPROVE_ROLE_MATCH`.
 
@@ -696,7 +771,7 @@ def _best_retrofit_for_hull(hull_id: str, profile_id: str, registry: Registry, f
     scoreable starting points, or none genuinely improve -- never
     fabricates a retrofit opportunity that isn't real.
     """
-    best = None  # (gain, variant, QualityRefitResult)
+    best: _RetrofitOpportunity | None = None
     for variant in _variants_for_hull(hull_id, registry):
         result = improve_quality(variant, registry, "IMPROVE_ROLE_MATCH", profile_id, heuristic_set, faction=faction)
         if result.before_score is None or result.after_score is None:
@@ -704,8 +779,8 @@ def _best_retrofit_for_hull(hull_id: str, profile_id: str, registry: Registry, f
         gain = result.after_score - result.before_score
         if gain < min_gain:
             continue
-        if best is None or gain > best[0]:
-            best = (gain, variant, result)
+        if best is None or gain > best.gain:
+            best = _RetrofitOpportunity(gain, variant, result, result.before_score, result.after_score)
     return best
 
 
@@ -747,17 +822,16 @@ def _retrofit_audit_trail(
     audits: dict[tuple[str, str | None], RecommendationAudit] = {}
     considered: set[tuple[str, str | None]] = set()
     if build_aware:
-        found_builds: list[tuple[float, str, BuildArchetypeProfile, Variant, object, float]] = []
+        found_builds: list[tuple[float, str, BuildArchetypeProfile, Variant, QualityRefitResult, float]] = []
         for _structural_score, hull_id, build in _rank_build_candidates_for_role(role, resolved_hulls, registry, heuristic_set, include_experimental_builds=constraints.include_experimental_builds):
             considered.add((hull_id, build.build_id))
-            best = _best_retrofit_for_hull(hull_id, profile_id_for_build(build.build_id), registry, faction, heuristic_set, min_gain)
-            if best is None:
+            opportunity = _best_retrofit_for_hull(hull_id, profile_id_for_build(build.build_id), registry, faction, heuristic_set, min_gain)
+            if opportunity is None:
                 continue
-            gain, variant, result = best
             reference_cost = heuristics.get("retrofit_disruption_reference_cost")
-            disruption = min(1.0, result.total_change_cost / reference_cost) if reference_cost else 0.0
-            score = result.after_score * build.compatibility * (1.0 - heuristics.get("retrofit_disruption_penalty_weight", 0.0) * disruption)
-            found_builds.append((round(score, 6), hull_id, build, variant, result, gain))
+            disruption = min(1.0, opportunity.result.total_change_cost / reference_cost) if reference_cost else 0.0
+            score = opportunity.after_score * build.compatibility * (1.0 - heuristics.get("retrofit_disruption_penalty_weight", 0.0) * disruption)
+            found_builds.append((round(score, 6), hull_id, build, opportunity.variant, opportunity.result, opportunity.gain))
         found_builds.sort(key=lambda item: (-item[0], item[1], item[2].build_id, item[3].id))
         total_candidates = len(found_builds)
         best_score = found_builds[0][0] if found_builds else None
@@ -778,28 +852,33 @@ def _retrofit_audit_trail(
             )
     else:
         profile_id = _ROLE_TO_PROFILE.get(role)
-        ranked = _rank_candidates_for_role(role, resolved_hulls)[:max_recommendations]
-        considered.update((hull_id, None) for _, hull_id in ranked)
+        ranked_hulls = _rank_candidates_for_role(role, resolved_hulls)[:max_recommendations]
+        considered.update((hull_id, None) for _, hull_id in ranked_hulls)
         if profile_id is not None:
-            found: list[tuple[float, str, Variant, object, float]] = []  # (capability_score, hull_id, variant, result, gain)
-            for capability_score, hull_id in ranked:
-                best = _best_retrofit_for_hull(hull_id, profile_id, registry, faction, heuristic_set, min_gain)
-                if best is None:
+            # (capability_score, hull_id, variant, result, gain, after_score) --
+            # after_score is carried alongside `result` (rather than read back
+            # off it every time) since it is the one already-narrowed-non-None
+            # float `_best_retrofit_for_hull` guarantees; `result.after_score`
+            # itself stays honestly `float | None` (QualityRefitResult's own
+            # field type) for any OTHER variant this trail did not select.
+            found: list[tuple[float, str, Variant, QualityRefitResult, float, float]] = []
+            for capability_score, hull_id in ranked_hulls:
+                opportunity = _best_retrofit_for_hull(hull_id, profile_id, registry, faction, heuristic_set, min_gain)
+                if opportunity is None:
                     continue
-                gain, variant, result = best
-                found.append((capability_score, hull_id, variant, result, gain))
-            found.sort(key=lambda item: (-item[3].after_score, item[1], item[2].id))
+                found.append((capability_score, hull_id, opportunity.variant, opportunity.result, opportunity.gain, opportunity.after_score))
+            found.sort(key=lambda item: (-item[5], item[1], item[2].id))
             total_candidates = len(found)
-            best_score = found[0][3].after_score if found else None
-            selected = _diverse_hull_shortlist([(result.after_score, hull_id) for _, hull_id, _, result, _ in found], registry, max_recommendations, heuristic_set)
-            selection_reasons = {hull_id: reason for _, hull_id, reason in selected}
-            selection_order = {hull_id: index + 1 for index, (_, hull_id, _) in enumerate(selected)}
-            cutoff_score = min((score for score, _, _ in selected), default=None)
-            for index, (capability_score, hull_id, variant, result, gain) in enumerate(found):
+            best_score = found[0][5] if found else None
+            selected_hulls = _diverse_hull_shortlist([(after_score, hull_id) for _, hull_id, _, _, _, after_score in found], registry, max_recommendations, heuristic_set)
+            hull_selection_reasons = {hull_id: reason for _, hull_id, reason in selected_hulls}
+            hull_selection_order = {hull_id: index + 1 for index, (_, hull_id, _) in enumerate(selected_hulls)}
+            cutoff_score = min((score for score, _, _ in selected_hulls), default=None)
+            for index, (capability_score, hull_id, variant, result, gain, after_score) in enumerate(found):
                 audits[(hull_id, None)] = RecommendationAudit(
-                    "RETROFIT", role, hull_id, None, result.after_score, index + 1, total_candidates,
-                    best_score, cutoff_score, hull_id in selection_reasons, selection_order.get(hull_id),
-                    selection_reasons.get(hull_id),
+                    "RETROFIT", role, hull_id, None, after_score, index + 1, total_candidates,
+                    best_score, cutoff_score, hull_id in hull_selection_reasons, hull_selection_order.get(hull_id),
+                    hull_selection_reasons.get(hull_id),
                     extra={"build": None, "variant": variant, "result": result, "gain": gain, "capability_score": capability_score},
                 )
     return audits, considered
@@ -830,12 +909,12 @@ def recommend_retrofit_solutions(
         if not build_aware and _ROLE_TO_PROFILE.get(gap.role) is None:
             continue
         audits, _considered = _retrofit_audit_trail(faction, registry, gap.role, heuristic_set, constraints)
-        selected_audits = sorted((audit for audit in audits.values() if audit.recommended), key=lambda audit: audit.selection_order)
+        selected_audits = sorted((audit for audit in audits.values() if audit.recommended), key=_require_selection_order)
         retrofits[gap.role] = tuple(
             RetrofitRecommendation(
                 gap.role, audit.hull_id, audit.extra["variant"].id, audit.extra["capability_score"],
                 audit.extra["result"].before_score, audit.extra["result"].after_score, audit.extra["gain"],
-                len(audit.extra["result"].changes), audit.extra["result"].total_change_cost, audit.selection_order,
+                len(audit.extra["result"].changes), audit.extra["result"].total_change_cost, _require_selection_order(audit),
                 confidence=(_recommendation_confidence(gap, audit.extra["build"]) if audit.extra["build"] is not None else gap.evidence_confidence),
                 archetype_scores=infer_mechanical_archetypes(registry.hulls.by_id[audit.hull_id], registry).compatibility_scores,
                 archetype_evidence=infer_mechanical_archetypes(registry.hulls.by_id[audit.hull_id], registry).evidence_by_archetype,
@@ -955,15 +1034,15 @@ def _acquisition_audit_trail(
         candidates_sorted = sorted(candidates, key=lambda item: (-item[0], item[3]))
         total_candidates = len(candidates_sorted)
         best_score = candidates_sorted[0][0] if candidates_sorted else None
-        selected = _diverse_hull_shortlist([(composite, hull_id) for composite, _, _, hull_id, _ in candidates_sorted], registry, max_recommendations, heuristic_set)
-        selection_reasons = {hull_id: reason for _, hull_id, reason in selected}
-        selection_order = {hull_id: index + 1 for index, (_, hull_id, _) in enumerate(selected)}
+        selected_hulls = _diverse_hull_shortlist([(composite, hull_id) for composite, _, _, hull_id, _ in candidates_sorted], registry, max_recommendations, heuristic_set)
+        hull_selection_reasons = {hull_id: reason for _, hull_id, reason in selected_hulls}
+        hull_selection_order = {hull_id: index + 1 for index, (_, hull_id, _) in enumerate(selected_hulls)}
         cutoff_score = candidates_sorted[max_recommendations - 1][0] if len(candidates_sorted) >= max_recommendations else None
         for index, (composite, score, weight, hull_id, affinity) in enumerate(candidates_sorted):
             audits[(hull_id, None)] = RecommendationAudit(
                 "ACQUISITION", role, hull_id, None, composite, index + 1, total_candidates,
-                best_score, cutoff_score, hull_id in selection_reasons, selection_order.get(hull_id),
-                selection_reasons.get(hull_id),
+                best_score, cutoff_score, hull_id in hull_selection_reasons, hull_selection_order.get(hull_id),
+                hull_selection_reasons.get(hull_id),
                 extra={"build": None, "score": score, "weight": weight, "affinity": affinity},
             )
     return audits
@@ -1051,11 +1130,11 @@ def recommend_acquisition_solutions(
     acquisitions: dict[str, tuple[AcquisitionRecommendation, ...]] = {}
     for gap in gaps:
         audits = _acquisition_audit_trail(faction, registry, gap.role, heuristic_set, knowledge_pack, constraints, per_role_candidates.get(gap.role, []))
-        selected_audits = sorted((audit for audit in audits.values() if audit.recommended), key=lambda audit: audit.selection_order)
+        selected_audits = sorted((audit for audit in audits.values() if audit.recommended), key=_require_selection_order)
         acquisitions[gap.role] = tuple(
             AcquisitionRecommendation(
                 gap.role, audit.hull_id, audit.extra["score"], audit.extra["affinity"].affinity, audit.extra["affinity"].owning_faction_ids,
-                audit.extra["weight"], audit.selection_order,
+                audit.extra["weight"], _require_selection_order(audit),
                 # The faction's resolved-hull coverage is the universal
                 # evidence limit.  Pack approval adds no invented certainty:
                 # it can only reduce confidence when its freshness/evidence
@@ -1864,7 +1943,7 @@ def _capability_dim(capability: CapabilityVector | None, name: str) -> tuple[flo
     return evidence.score, f"capability_vector[{name}]: score={evidence.score:.6f}, confidence={evidence.confidence:.3f}, availability={evidence.availability}."
 
 
-def _op_scale(value: float | int | None, reference: float = 200.0) -> float:
+def _op_scale(value: float | None, reference: float = 200.0) -> float:
     # Mirrors `analysis/mechanical_archetypes.py::infer_mechanical_archetypes`'s
     # own `op = _scale(f.ordnance_points, 200.0)` normalization exactly, so
     # this module's OP-based term uses the same reference the rest of the
@@ -1902,11 +1981,19 @@ def _scenario_fit_score(
     survivability = build.survivability_posture
     flux = build.flux_posture
     priorities = set(build.equipment_priorities)
-    evidence = (
+    # Explicitly `tuple[str, ...]`, not the 2-element shape inferred from
+    # this literal alone: every scenario branch below appends further
+    # evidence lines onto this same name (`evidence = evidence + (...)`,
+    # 1 to 2 more strings depending on the category), which is a real,
+    # deliberate variable-length accumulation matching this function's
+    # `tuple[str, ...]` return type -- not an inconsistent shape.
+    evidence: tuple[str, ...] = (
         f"tactical_style={style}; target_range={target_range}; survivability_posture={survivability}; flux_posture={flux}; equipment_priorities={build.equipment_priorities!r}",
-        f"mechanical_archetype_scores: STRIKER={scores['STRIKER']:.3f}, SKIRMISHER={scores['SKIRMISHER']:.3f}, "
-        f"ARMOR_BRAWLER={scores['ARMOR_BRAWLER']:.3f}, SHIELD_BRAWLER={scores['SHIELD_BRAWLER']:.3f}, "
-        f"LINE_SHIP={scores['LINE_SHIP']:.3f}, PD_ESCORT={scores['PD_ESCORT']:.3f}",
+        (
+            f"mechanical_archetype_scores: STRIKER={scores['STRIKER']:.3f}, SKIRMISHER={scores['SKIRMISHER']:.3f}, "
+            f"ARMOR_BRAWLER={scores['ARMOR_BRAWLER']:.3f}, SHIELD_BRAWLER={scores['SHIELD_BRAWLER']:.3f}, "
+            f"LINE_SHIP={scores['LINE_SHIP']:.3f}, PD_ESCORT={scores['PD_ESCORT']:.3f}"
+        ),
     )
     if scenario == ScenarioCategory.RAIDING:
         # Mobility/strike-oriented, short-range, willing to forgo maximum
@@ -2066,8 +2153,10 @@ def _scenario_fit_score(
             + 0.20 * _bucket(flux, {"CONSERVATIVE": 1.0, "BALANCED": 0.5})
         )
         evidence = evidence + (
-            f"ordnance_points={mechanical.feature_vector.ordnance_points!r} (inverted op_value={op_value:.6f}); "
-            f"existing_variant_count={mechanical.feature_vector.existing_variant_count!r} (variant_availability={variant_availability:.6f}).",
+            (
+                f"ordnance_points={mechanical.feature_vector.ordnance_points!r} (inverted op_value={op_value:.6f}); "
+                f"existing_variant_count={mechanical.feature_vector.existing_variant_count!r} (variant_availability={variant_availability:.6f})."
+            ),
         )
     return round(max(0.0, min(1.0, score)), 6), evidence
 

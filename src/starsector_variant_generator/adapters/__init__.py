@@ -12,7 +12,16 @@ guarantee.
 from __future__ import annotations
 
 from starsector_variant_generator.adapters import vanilla
-from starsector_variant_generator.adapters.vanilla import FluxUnitCost, HullmodCombatEffect, HullmodDefenseEffect, HullmodFluxEffect, HullmodIncompatibility, HullmodLogisticsEffect, HullmodMobilityEffect, HullmodPercentReductionEffect
+from starsector_variant_generator.adapters.vanilla import (
+    FluxUnitCost,
+    HullmodCombatEffect,
+    HullmodDefenseEffect,
+    HullmodFluxEffect,
+    HullmodIncompatibility,
+    HullmodLogisticsEffect,
+    HullmodMobilityEffect,
+    HullmodPercentReductionEffect,
+)
 
 # Starsector's own data uses "core" as the source_mod for base-game entities
 # (see core/models.py SourceType.CORE); "vanilla" is the human name for that

@@ -32,11 +32,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from starsector_variant_generator.analysis.classification import classify_weapon
-from starsector_variant_generator.analysis.equipment_affinity import classify_equipment_affinity
+from starsector_variant_generator.analysis.equipment_affinity import (
+    classify_equipment_affinity,
+)
 from starsector_variant_generator.core.heuristics import get_heuristic_set
+from starsector_variant_generator.core.knowledge_packs import ResolvedKnowledgePack
 from starsector_variant_generator.core.models import Weapon
 from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.core.knowledge_packs import ResolvedKnowledgePack
 
 _AFFINITY_HEURISTIC_KEYS = {
     "NATIVE": "affinity_preference_native",

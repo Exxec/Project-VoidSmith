@@ -4,13 +4,24 @@ import unittest
 from pathlib import Path
 
 from starsector_variant_generator.analysis.combat_entity import (
-    CombatEntityKind, DeploymentModel, StructuralSupport, classify_combat_entity_kind,
-    classify_fighter_wing_entity, recommendation_eligibility,
+    CombatEntityKind,
+    DeploymentModel,
+    StructuralSupport,
+    classify_combat_entity_kind,
+    classify_fighter_wing_entity,
+    recommendation_eligibility,
 )
-from starsector_variant_generator.analysis.gap_recommendation import CapabilityGap, recommend_acquisition_solutions
-from starsector_variant_generator.core.models import Faction, FighterWing, Hull, ScanResult
+from starsector_variant_generator.analysis.gap_recommendation import (
+    CapabilityGap,
+    recommend_acquisition_solutions,
+)
+from starsector_variant_generator.core.models import (
+    Faction,
+    FighterWing,
+    Hull,
+    ScanResult,
+)
 from starsector_variant_generator.core.registry import Registry
-
 
 SOURCE = Path("fixture")
 

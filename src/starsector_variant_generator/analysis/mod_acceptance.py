@@ -42,7 +42,7 @@ from typing import Any
 from starsector_variant_generator.analysis.complex_hull_audit import audit_complex_hulls
 from starsector_variant_generator.analysis.derived_ship_state import derive_ship_state
 from starsector_variant_generator.core.models import ModInfo, ScanResult, SourceType
-from starsector_variant_generator.core.registry import Registry
+from starsector_variant_generator.core.registry import EntityIndex, Registry
 
 SCHEMA_VERSION = "mod-acceptance-audit-0.1"
 
@@ -107,8 +107,12 @@ def _adapter_modeled_hullmod_ids(source_mod: str) -> frozenset[str]:
     # time; these are the same six public lookup functions every real
     # consumer already uses (see this module's docstring).
     from starsector_variant_generator.adapters import (
-        combat_hullmod_effects, defense_hullmod_effects, efficiency_hullmod_effects,
-        flux_hullmod_effects, logistics_hullmod_effects, mobility_hullmod_effects,
+        combat_hullmod_effects,
+        defense_hullmod_effects,
+        efficiency_hullmod_effects,
+        flux_hullmod_effects,
+        logistics_hullmod_effects,
+        mobility_hullmod_effects,
     )
     ids: set[str] = set()
     ids.update(effect.hullmod_id for effect in logistics_hullmod_effects(source_mod))
@@ -140,7 +144,12 @@ def audit_mod_acceptance(scan: ScanResult, registry: Registry) -> dict[str, Any]
             counts_by_mod[entity.source_mod][kind] += 1
 
     duplicates_by_mod: dict[str, dict[str, set[str]]] = defaultdict(lambda: defaultdict(set))
-    index_by_kind = {
+    # `EntityIndex[Any]`: the six real indices below are each parametrized
+    # differently (`EntityIndex[Hull]`, `EntityIndex[Weapon]`, ...) -- an
+    # invariant generic, so a plain dict literal has no common non-`object`
+    # value type. Only `.duplicates`/`.by_id` (both present on every
+    # instantiation regardless of `T`) are read below.
+    index_by_kind: dict[str, EntityIndex[Any]] = {
         "hulls": registry.hulls, "weapons": registry.weapons, "fighters": registry.fighters,
         "hullmods": registry.hullmods, "variants": registry.variants, "factions": registry.factions,
     }
@@ -206,14 +215,18 @@ def audit_mod_acceptance(scan: ScanResult, registry: Registry) -> dict[str, Any]
     for variant in scan.variants:
         if not variant.hull_id:
             continue
-        hull = registry.hulls.by_id.get(variant.hull_id)
-        if hull is None:
+        # Named distinctly from the `hull` loop variable used above (line
+        # 181's fighter-anomaly sweep): that binding's non-Optional `Hull`
+        # type otherwise gets attributed to this, unrelated, genuinely
+        # Optional lookup, since both share one function scope.
+        variant_hull = registry.hulls.by_id.get(variant.hull_id)
+        if variant_hull is None:
             continue
-        modeled_ids = adapter_ids_cache.setdefault(hull.source_mod, _adapter_modeled_hullmod_ids(hull.source_mod))
+        modeled_ids = adapter_ids_cache.setdefault(variant_hull.source_mod, _adapter_modeled_hullmod_ids(variant_hull.source_mod))
         used = set(variant.hullmods) & modeled_ids
         if used:
             adapter_usage_by_mod[variant.source_mod] |= used
-        state = derive_ship_state(variant, hull, registry)
+        state = derive_ship_state(variant, variant_hull, registry)
         if state.unapplied_unknown_hullmod_ids:
             unknown_effects_by_mod[variant.source_mod] |= set(state.unapplied_unknown_hullmod_ids)
 
@@ -327,7 +340,11 @@ def audit_mod_acceptance(scan: ScanResult, registry: Registry) -> dict[str, Any]
             classification = PASS
 
         adapters_applied = sorted({
-            _ADAPTER_HUMAN_NAME_BY_SOURCE_MOD.get(hull_source_mod)
+            # Indexed rather than `.get()`: the `if` clause below already
+            # guarantees membership, so this is never a KeyError -- and
+            # indexing (unlike `.get()`) gives the element a real `str`
+            # type instead of `str | None`.
+            _ADAPTER_HUMAN_NAME_BY_SOURCE_MOD[hull_source_mod]
             for variant in scan.variants if variant.source_mod == source.mod_id and variant.hull_id
             for hull_source_mod in [getattr(registry.hulls.by_id.get(variant.hull_id), "source_mod", None)]
             if hull_source_mod in _ADAPTER_HUMAN_NAME_BY_SOURCE_MOD and set(variant.hullmods) & adapter_ids_cache.get(hull_source_mod, frozenset())

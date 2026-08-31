@@ -5,7 +5,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from starsector_variant_generator.core.overrides import apply_role_tag_override, load_overrides
+from starsector_variant_generator.core.overrides import (
+    apply_role_tag_override,
+    load_overrides,
+)
 
 
 class OverridesTests(unittest.TestCase):

@@ -1,20 +1,50 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 
-from starsector_variant_generator.analysis.civilian import DerivedCivilianStats, compute_derived_civilian_stats
+from starsector_variant_generator.analysis.civilian import (
+    DerivedCivilianStats,
+    compute_derived_civilian_stats,
+)
 from starsector_variant_generator.analysis.classification import classify_civilian_role
-from starsector_variant_generator.analysis.combat_stats import DerivedDefenseStats, compute_derived_defense_stats
-from starsector_variant_generator.analysis.control_suitability import StaticControlSuitability, compute_static_control_suitability
-from starsector_variant_generator.analysis.flux_stats import DerivedFluxStats, compute_derived_flux_stats
-from starsector_variant_generator.analysis.mobility_stats import DerivedMobilityStats, compute_derived_mobility_stats
-from starsector_variant_generator.analysis.weapon_range_stats import DerivedWeaponRangeStats, compute_derived_combat_stats
-from starsector_variant_generator.analysis.derived_ship_state import DerivedShipState, derive_ship_state
+from starsector_variant_generator.analysis.combat_stats import (
+    DerivedDefenseStats,
+    compute_derived_defense_stats,
+)
+from starsector_variant_generator.analysis.control_suitability import (
+    StaticControlSuitability,
+    compute_static_control_suitability,
+)
+from starsector_variant_generator.analysis.derived_ship_state import (
+    DerivedShipState,
+    derive_ship_state,
+)
+from starsector_variant_generator.analysis.flux_stats import (
+    DerivedFluxStats,
+    compute_derived_flux_stats,
+)
+from starsector_variant_generator.analysis.mobility_stats import (
+    DerivedMobilityStats,
+    compute_derived_mobility_stats,
+)
+from starsector_variant_generator.analysis.weapon_range_stats import (
+    DerivedWeaponRangeStats,
+    compute_derived_combat_stats,
+)
 from starsector_variant_generator.core.models import Faction, Variant
-from starsector_variant_generator.core.overrides import EntityOverride, apply_role_tag_override
+from starsector_variant_generator.core.overrides import (
+    EntityOverride,
+    apply_role_tag_override,
+)
 from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.scoring.candidate_score import QualityAssessment, score_candidate
-from starsector_variant_generator.validation.legality import LegalityAssessment, validate_variant
+from starsector_variant_generator.scoring.candidate_score import (
+    QualityAssessment,
+    score_candidate,
+)
+from starsector_variant_generator.validation.legality import (
+    LegalityAssessment,
+    validate_variant,
+)
 
 
 @dataclass(frozen=True)

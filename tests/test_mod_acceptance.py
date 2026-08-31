@@ -4,10 +4,20 @@ import unittest
 from pathlib import Path
 
 from starsector_variant_generator.analysis.mod_acceptance import (
-    FAIL, PARTIAL, PASS, PASS_WITH_UNKNOWNS, audit_mod_acceptance,
+    FAIL,
+    PARTIAL,
+    PASS,
+    PASS_WITH_UNKNOWNS,
+    audit_mod_acceptance,
 )
 from starsector_variant_generator.core.models import (
-    FighterWing, Hull, Hullmod, ModInfo, ScanResult, SourceType, Variant, Weapon,
+    Hull,
+    Hullmod,
+    ModInfo,
+    ScanResult,
+    SourceType,
+    Variant,
+    Weapon,
 )
 from starsector_variant_generator.core.registry import Registry
 

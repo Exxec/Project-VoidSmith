@@ -6,12 +6,16 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from starsector_variant_generator import api
-from starsector_variant_generator.analysis.fleet_advisory_boundaries import fleet_advisory_boundaries
+from starsector_variant_generator.analysis.fleet_advisory_boundaries import (
+    fleet_advisory_boundaries,
+)
 from starsector_variant_generator.analysis.fleet_support import FleetSelection
-from starsector_variant_generator.core.knowledge_packs import load_knowledge_pack, resolve_knowledge_pack
+from starsector_variant_generator.core.knowledge_packs import (
+    load_knowledge_pack,
+    resolve_knowledge_pack,
+)
 from starsector_variant_generator.core.models import Faction, ScanResult
 from starsector_variant_generator.core.registry import Registry
-
 
 SOURCE = Path("fixture")
 

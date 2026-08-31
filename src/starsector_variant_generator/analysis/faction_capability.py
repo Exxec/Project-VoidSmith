@@ -21,8 +21,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from starsector_variant_generator.analysis.capability_vector import CapabilityEvidence, infer_hull_capability_vector
-from starsector_variant_generator.analysis.classification import classify_civilian_role, classify_hull
+from starsector_variant_generator.analysis.capability_vector import (
+    CapabilityEvidence,
+    infer_hull_capability_vector,
+)
+from starsector_variant_generator.analysis.classification import (
+    classify_civilian_role,
+    classify_hull,
+)
 from starsector_variant_generator.core.heuristics import get_heuristic_set
 from starsector_variant_generator.core.models import Faction, Hull
 from starsector_variant_generator.core.registry import Registry

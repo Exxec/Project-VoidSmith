@@ -6,9 +6,12 @@ accepted. Source-mentioned equipment remains separately represented from legal
 """
 from __future__ import annotations
 
-import argparse, json, re
+import argparse
+import json
+import re
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from starsector_variant_generator import api
 from starsector_variant_generator.core.registry import Registry

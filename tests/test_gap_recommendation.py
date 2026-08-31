@@ -1,12 +1,19 @@
 from __future__ import annotations
 
+import json
+import tempfile
 import unittest
 from pathlib import Path
 
-from starsector_variant_generator.analysis.faction_capability import analyze_faction_capability
+from starsector_variant_generator.analysis.faction_capability import (
+    analyze_faction_capability,
+)
 from starsector_variant_generator.analysis.gap_recommendation import (
     CapabilityGap,
+    RecommendationAudit,
     RecommendationConstraints,
+    _rank_build_candidates_for_role,
+    _require_selection_order,
     detect_capability_gaps,
     explain_acquisition_candidate,
     explain_build_candidate,
@@ -17,12 +24,18 @@ from starsector_variant_generator.analysis.gap_recommendation import (
     recommend_gap_solutions,
     recommend_native_solutions,
     recommend_retrofit_solutions,
-    _rank_build_candidates_for_role,
 )
-from starsector_variant_generator.core.knowledge_packs import load_knowledge_pack, resolve_knowledge_pack
-import json
-import tempfile
-from starsector_variant_generator.core.models import Faction, Hull, ScanResult, Variant, Weapon
+from starsector_variant_generator.core.knowledge_packs import (
+    load_knowledge_pack,
+    resolve_knowledge_pack,
+)
+from starsector_variant_generator.core.models import (
+    Faction,
+    Hull,
+    ScanResult,
+    Variant,
+    Weapon,
+)
 from starsector_variant_generator.core.registry import Registry
 
 SOURCE = Path("fixture")
@@ -114,7 +127,7 @@ class NativeRecommendationTests(unittest.TestCase):
         registry = Registry.from_scan(ScanResult(hulls=[bare_hull], factions=[faction]))
         result = recommend_native_solutions(faction, registry)
         self.assertTrue(result.gaps)
-        self.assertEqual(set(gap.role for gap in result.gaps), set(result.unaddressed_gaps))
+        self.assertEqual({gap.role for gap in result.gaps}, set(result.unaddressed_gaps))
         self.assertEqual({}, result.native_recommendations)
 
     def test_native_recommendations_are_ranked_by_capability_score_descending(self) -> None:
@@ -391,7 +404,7 @@ class GapSolutionsIntegrationTests(unittest.TestCase):
         registry = Registry.from_scan(ScanResult(hulls=[bare], factions=[faction]))
         result = recommend_gap_solutions(faction, registry)
         self.assertTrue(result.gaps)
-        self.assertEqual(set(gap.role for gap in result.gaps), set(result.fully_unaddressed_gaps))
+        self.assertEqual({gap.role for gap in result.gaps}, set(result.fully_unaddressed_gaps))
 
 
 class BuildAwareWhyNotConsistencyTests(unittest.TestCase):
@@ -767,6 +780,58 @@ class CombinedWhyNotExplanationTests(unittest.TestCase):
         self.assertFalse(combined.retrofit.considered)  # only native shortlist hulls are considered for retrofit
         self.assertTrue(combined.acquisition.resolved)
         self.assertTrue(combined.acquisition.recommended)
+
+
+class RecommendationAuditSelectionOrderInvariantTests(unittest.TestCase):
+    """`_require_selection_order` (analysis/gap_recommendation.py) is the
+    type-narrowing accessor `recommend_native_solutions`/
+    `recommend_retrofit_solutions`/`recommend_acquisition_solutions` use to
+    turn a `RecommendationAudit.selection_order` (`int | None`) into the
+    plain `int` their public `*Recommendation.rank` field requires, instead
+    of sorting/constructing with a `None`-tolerant key that mypy correctly
+    flags as a real `TypeError` risk if the `recommended=True implies
+    selection_order is not None` invariant every real audit-trail builder
+    upholds were ever violated. These construct `RecommendationAudit`
+    directly (bypassing the real audit-trail builders, which never violate
+    the invariant in practice) to prove the helper itself is safe on both
+    sides of that invariant, independent of whether real production data
+    ever exercises the failure path.
+    """
+
+    def _audit(self, *, recommended: bool, selection_order: int | None) -> RecommendationAudit:
+        return RecommendationAudit(
+            leg="NATIVE", role="LINE_BRAWLER", hull_id="h", build_archetype_id=None,
+            own_score=0.5, rank=1, total_candidates=1, best_score=0.5, cutoff_score=0.5,
+            recommended=recommended, selection_order=selection_order, selection_reason=None,
+        )
+
+    def test_a_recommended_audits_real_selection_order_is_returned(self) -> None:
+        audit = self._audit(recommended=True, selection_order=3)
+        self.assertEqual(3, _require_selection_order(audit))
+
+    def test_several_recommended_audits_sort_by_selection_order_without_crashing(self) -> None:
+        # Mirrors the real `sorted(..., key=_require_selection_order)` call
+        # in recommend_native_solutions/recommend_retrofit_solutions/
+        # recommend_acquisition_solutions -- proves the narrowed key works
+        # as a real sort key across several real, well-formed audits.
+        audits = [self._audit(recommended=True, selection_order=order) for order in (2, 1, 3)]
+        ordered = sorted(audits, key=_require_selection_order)
+        self.assertEqual([1, 2, 3], [audit.selection_order for audit in ordered])
+
+    def test_a_recommended_audit_with_no_selection_order_raises_a_clear_error_not_a_bare_typeerror(self) -> None:
+        # This combination never occurs from a real audit-trail builder
+        # (selection_reasons/selection_order are always populated together
+        # from the same `selected` shortlist) -- constructed directly here
+        # to prove that if the invariant were ever violated, the failure is
+        # an explicit, diagnosable ValueError naming the offending hull/leg/
+        # role, not a `TypeError: '<' not supported between instances of
+        # 'NoneType' and 'int'` surfacing from deep inside `sorted()`/`min()`.
+        broken = self._audit(recommended=True, selection_order=None)
+        with self.assertRaises(ValueError) as context:
+            _require_selection_order(broken)
+        self.assertIn("h", str(context.exception))
+        self.assertIn("NATIVE", str(context.exception))
+        self.assertIn("LINE_BRAWLER", str(context.exception))
 
 
 if __name__ == "__main__":

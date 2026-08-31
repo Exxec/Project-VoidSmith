@@ -1,20 +1,34 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Mapping
 
-from starsector_variant_generator.analysis.civilian import compute_derived_civilian_stats
-from starsector_variant_generator.analysis.classification import classify_civilian_role, classify_weapon
-from starsector_variant_generator.analysis.combat_stats import compute_derived_defense_stats
-from starsector_variant_generator.analysis.doctrine import analyze_faction_doctrine, doctrine_match
+from starsector_variant_generator.analysis.civilian import (
+    compute_derived_civilian_stats,
+)
+from starsector_variant_generator.analysis.classification import (
+    classify_civilian_role,
+    classify_weapon,
+)
+from starsector_variant_generator.analysis.combat_stats import (
+    compute_derived_defense_stats,
+)
+from starsector_variant_generator.analysis.doctrine import (
+    analyze_faction_doctrine,
+    doctrine_match,
+)
 from starsector_variant_generator.analysis.flux_stats import compute_derived_flux_stats
-from starsector_variant_generator.analysis.weapon_range_stats import compute_derived_combat_stats
+from starsector_variant_generator.analysis.weapon_range_stats import (
+    compute_derived_combat_stats,
+)
 from starsector_variant_generator.core.heuristics import get_heuristic_set
 from starsector_variant_generator.core.models import Faction, Hull, Variant, Weapon
 from starsector_variant_generator.core.registry import Registry
 from starsector_variant_generator.profiles.catalog import get_profile
-from starsector_variant_generator.validation.legality import LegalityResult, validate_variant
-
+from starsector_variant_generator.validation.legality import (
+    LegalityResult,
+    validate_variant,
+)
 
 _FLUX_TARGET_KEY = {"SAFE": "beginner_flux_target", "BALANCED": "balanced_flux_target", "AGGRESSIVE": "aggressive_flux_target"}
 
@@ -137,10 +151,15 @@ def _flux_component(
         # untouched -- the hull's raw, unmodified stats are used exactly as
         # before.
         derived = compute_derived_flux_stats(hull, hullmod_ids, registry)
-        flux_dissipation, fd_note = _hullmod_adjusted_stat(
+        adjusted_dissipation, fd_note = _hullmod_adjusted_stat(
             "flux_dissipation", hull.flux_dissipation, derived.effective_flux_dissipation,
             derived.applied_effects, derived.stacking_notes,
         )
+        # `_hullmod_adjusted_stat` only returns `None` when its `base_value`
+        # argument (here `hull.flux_dissipation`) is itself `None` -- already
+        # ruled out by the completeness guard at the top of this function.
+        assert adjusted_dissipation is not None
+        flux_dissipation = adjusted_dissipation
         if fd_note:
             adjustment_notes.append(fd_note)
         if hull.shield_upkeep is not None:

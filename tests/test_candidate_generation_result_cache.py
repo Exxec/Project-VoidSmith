@@ -19,14 +19,17 @@ from types import SimpleNamespace
 from unittest import mock
 
 from starsector_variant_generator import api
+from starsector_variant_generator.core.models import Hull, ScanResult, Weapon
+from starsector_variant_generator.core.registry import Registry
+from starsector_variant_generator.core.result_cache import (
+    AnalysisResultCache,
+    CacheReadiness,
+)
 from starsector_variant_generator.generation import candidate as candidate_module
 from starsector_variant_generator.generation.candidate import (
     build_archetype_candidates_fingerprint,
     candidate_alternatives_fingerprint,
 )
-from starsector_variant_generator.core.models import Hull, ScanResult, Weapon
-from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.core.result_cache import AnalysisResultCache, CacheReadiness
 
 SOURCE = Path("fixture")
 

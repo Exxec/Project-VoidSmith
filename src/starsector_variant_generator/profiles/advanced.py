@@ -6,7 +6,6 @@ from pathlib import Path
 
 from starsector_variant_generator.profiles.catalog import get_profile
 
-
 _ALLOWED_FIELDS = frozenset({
     "profile", "faction_mode", "allowed_weapon_ids", "denied_weapon_ids",
     "locked_weapons_by_mount", "empty_mount_ids", "scoring_weight_overrides",

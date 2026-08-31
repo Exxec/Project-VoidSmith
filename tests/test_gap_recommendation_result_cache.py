@@ -16,7 +16,9 @@ from pathlib import Path
 from unittest import mock
 
 from starsector_variant_generator import api
-from starsector_variant_generator.analysis import gap_recommendation as gap_recommendation_module
+from starsector_variant_generator.analysis import (
+    gap_recommendation as gap_recommendation_module,
+)
 from starsector_variant_generator.analysis.gap_recommendation import (
     CacheReadiness,
     gap_recommendation_fingerprint,

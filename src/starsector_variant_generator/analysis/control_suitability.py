@@ -87,8 +87,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from starsector_variant_generator.analysis.combat_stats import compute_derived_defense_stats
-from starsector_variant_generator.analysis.mobility_stats import compute_derived_mobility_stats
+from starsector_variant_generator.analysis.combat_stats import (
+    compute_derived_defense_stats,
+)
+from starsector_variant_generator.analysis.mobility_stats import (
+    compute_derived_mobility_stats,
+)
 from starsector_variant_generator.core.evidence import EvidenceClass
 from starsector_variant_generator.core.models import Hull, Variant, Weapon
 from starsector_variant_generator.core.registry import Registry

@@ -3,12 +3,33 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from starsector_variant_generator.analysis.fleet_support import FleetSelection, FleetSupportConstraints, SupportFocus, _rank_fleet_support, analyze_player_fleet, explain_fleet_support_candidate, fleet_support_request_from_payload, fleet_support_request_to_payload, parse_fleet_selections, recommend_fleet_support
 from starsector_variant_generator import api
-from starsector_variant_generator.analysis.scenario_advisor import ScenarioCapabilityTarget, scenario_advisor_request_from_payload, scenario_advisor_request_to_payload, user_defined_scenario
-from starsector_variant_generator.core.models import Faction, Hull, ScanResult, Variant, Weapon
+from starsector_variant_generator.analysis.fleet_support import (
+    FleetSelection,
+    FleetSupportConstraints,
+    SupportFocus,
+    _rank_fleet_support,
+    analyze_player_fleet,
+    explain_fleet_support_candidate,
+    fleet_support_request_from_payload,
+    fleet_support_request_to_payload,
+    parse_fleet_selections,
+    recommend_fleet_support,
+)
+from starsector_variant_generator.analysis.scenario_advisor import (
+    ScenarioCapabilityTarget,
+    scenario_advisor_request_from_payload,
+    scenario_advisor_request_to_payload,
+    user_defined_scenario,
+)
+from starsector_variant_generator.core.models import (
+    Faction,
+    Hull,
+    ScanResult,
+    Variant,
+    Weapon,
+)
 from starsector_variant_generator.core.registry import Registry
-
 
 SOURCE = Path("fixture")
 
@@ -98,6 +119,18 @@ class FleetSupportAdvisorTests(unittest.TestCase):
         self.assertEqual(("missing",), profile.unresolved_hull_ids)
         self.assertEqual(("fighter",), profile.excluded_selection_hull_ids)
         self.assertEqual(("normal",), profile.resolved_hull_ids)
+
+    def test_structurally_ineligible_variant_selection_is_recorded_by_its_own_label_not_none(self) -> None:
+        # Regression for docs/BUGS.md SVG-022: a variant-only selection has
+        # no hull_id of its own, so recording exclusions by selection.hull_id
+        # silently recorded None for this case instead of an identifying label.
+        fighter = Hull("fighter", "fighter", "core", SOURCE, hull_size="FIGHTER")
+        loadout = Variant("fighter_loadout", "fighter_loadout", "core", SOURCE, hull_id="fighter")
+        registry = Registry.from_scan(ScanResult(hulls=[fighter], variants=[loadout]))
+
+        profile = analyze_player_fleet((FleetSelection(variant_id="fighter_loadout"),), registry)
+
+        self.assertEqual(("fighter_loadout",), profile.excluded_selection_hull_ids)
 
     def test_stealth_focus_is_explicitly_unavailable_without_sensor_or_phase_evidence(self) -> None:
         selected = hull("selected")

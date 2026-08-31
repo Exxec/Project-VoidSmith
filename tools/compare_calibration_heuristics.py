@@ -26,7 +26,9 @@ from starsector_variant_generator.analysis.calibration import (
     evaluate_calibration,
     load_calibration_labels,
 )
-from starsector_variant_generator.analysis.calibration_runner import collect_all_observations
+from starsector_variant_generator.analysis.calibration_runner import (
+    collect_all_observations,
+)
 from starsector_variant_generator.core.registry import Registry
 from starsector_variant_generator.core.scanner import Scanner
 

@@ -3,8 +3,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from starsector_variant_generator.analysis.fleet_support import FleetSupportRecommendation, FleetSupportResult, FleetSupportWhyNotExplanation
-from starsector_variant_generator.analysis.scenario_advisor import ScenarioFleetAssessment
+from starsector_variant_generator.analysis.fleet_support import (
+    FleetSupportRecommendation,
+    FleetSupportResult,
+    FleetSupportWhyNotExplanation,
+)
+from starsector_variant_generator.analysis.scenario_advisor import (
+    ScenarioFleetAssessment,
+)
 
 
 def format_generation_results(assessed_candidates: list[dict[str, Any]], profile: str, flux_mode: str) -> str:

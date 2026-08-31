@@ -9,7 +9,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from starsector_variant_generator.analysis.fleet_support import FleetSelection
-from starsector_variant_generator.core.knowledge_packs import ResolvedKnowledgePack, officer_guidance
+from starsector_variant_generator.core.knowledge_packs import (
+    ResolvedKnowledgePack,
+    officer_guidance,
+)
 from starsector_variant_generator.core.registry import Registry
 
 

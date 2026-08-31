@@ -47,7 +47,9 @@ class ResolveCacheStatusUnitTests(unittest.TestCase):
             self.assertEqual(CacheReadiness.CACHE_DISABLED, resolve_cache_status(cache, None))
 
     def test_cache_present_mirrors_fingerprint_readiness(self) -> None:
-        from starsector_variant_generator.core.result_cache import AnalysisContextFingerprint
+        from starsector_variant_generator.core.result_cache import (
+            AnalysisContextFingerprint,
+        )
         with tempfile.TemporaryDirectory() as temp:
             cache = AnalysisResultCache(Path(temp) / "cache.sqlite")
             safe = AnalysisContextFingerprint("op", ("h",), "baseline_0.2", readiness=CacheReadiness.CACHE_SAFE)

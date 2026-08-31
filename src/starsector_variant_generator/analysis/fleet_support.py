@@ -9,15 +9,30 @@ recommendation eligibility and access policy are separate gates.
 """
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from enum import StrEnum
 
-from starsector_variant_generator.analysis.capability_vector import CapabilityEvidence, CapabilityVector, infer_hull_capability_vector
-from starsector_variant_generator.analysis.combat_doctrine import CombatDoctrineProfile, DoctrineAxisProfile, infer_combat_doctrine
-from starsector_variant_generator.analysis.combat_entity import recommendation_eligibility
-from starsector_variant_generator.analysis.equipment_affinity import classify_equipment_affinity
-from starsector_variant_generator.analysis.mechanical_archetypes import infer_hull_feature_vector
-from starsector_variant_generator.analysis.mechanical_archetypes import infer_mechanical_archetypes
+from starsector_variant_generator.analysis.capability_vector import (
+    CapabilityEvidence,
+    CapabilityVector,
+    infer_hull_capability_vector,
+)
+from starsector_variant_generator.analysis.combat_doctrine import (
+    CombatDoctrineProfile,
+    DoctrineAxisProfile,
+    infer_combat_doctrine,
+)
+from starsector_variant_generator.analysis.combat_entity import (
+    recommendation_eligibility,
+)
+from starsector_variant_generator.analysis.equipment_affinity import (
+    classify_equipment_affinity,
+)
+from starsector_variant_generator.analysis.mechanical_archetypes import (
+    infer_hull_feature_vector,
+    infer_mechanical_archetypes,
+)
 from starsector_variant_generator.core.heuristics import get_heuristic_set
 from starsector_variant_generator.core.models import Faction, Hull, Variant
 from starsector_variant_generator.core.registry import Registry
@@ -94,7 +109,8 @@ def fleet_support_request_to_payload(selections: tuple[FleetSelection, ...], con
 def fleet_support_request_from_payload(payload: dict[str, object]) -> tuple[tuple[FleetSelection, ...], FleetSupportConstraints]:
     if payload.get("schema_version") != "fleet_support_request_1":
         raise ValueError("Unsupported Fleet Support Advisor request snapshot schema")
-    selections = tuple(FleetSelection(item.get("hull_id") if isinstance(item.get("hull_id"), str) else None, int(item.get("count", 1)), item.get("variant_id") if isinstance(item.get("variant_id"), str) else None) for item in payload.get("selections", []) if isinstance(item, dict))
+    raw_selections = payload.get("selections", [])
+    selections = tuple(FleetSelection(item.get("hull_id") if isinstance(item.get("hull_id"), str) else None, int(item.get("count", 1)), item.get("variant_id") if isinstance(item.get("variant_id"), str) else None) for item in (raw_selections if isinstance(raw_selections, list) else []) if isinstance(item, dict))
     data = payload.get("constraints")
     if not isinstance(data, dict):
         raise ValueError("Fleet Support Advisor request snapshot lacks constraints")
@@ -220,7 +236,7 @@ class PlayerFleetProfile:
 class FleetSupportResult:
     profile: PlayerFleetProfile
     recommendations: tuple[FleetSupportRecommendation, ...]
-    category_shortlists: tuple["FleetSupportCategoryShortlist", ...]
+    category_shortlists: tuple[FleetSupportCategoryShortlist, ...]
     unaddressed_support_needs: tuple[FleetSupportNeed, ...]
     excluded_candidates: tuple[tuple[str, str], ...]
     heuristic_set: str
@@ -272,7 +288,7 @@ def analyze_player_fleet(selections: tuple[FleetSelection, ...], registry: Regis
             observed = (variant,) if selection.variant_id and variant is not None else None
             resolved.extend([(hull, observed)] * selection.count)
         else:
-            excluded.append(selection.hull_id)
+            excluded.append(label)
     vectors = [infer_hull_capability_vector(hull, registry, variants) for hull, variants in resolved]
     doctrines = [infer_combat_doctrine(hull, registry, variants) for hull, variants in resolved]
     capabilities = _aggregate_capabilities(vectors)
@@ -309,7 +325,7 @@ def explain_fleet_support_candidate(
     heuristic_set: str = "baseline_0.14", constraints: FleetSupportConstraints = FleetSupportConstraints(),
 ) -> FleetSupportWhyNotExplanation:
     """Explain one possible addition from the exact advisor ranking path."""
-    profile, ranked, excluded = _rank_fleet_support(selections, registry, faction, heuristic_set, constraints)
+    _profile, ranked, excluded = _rank_fleet_support(selections, registry, faction, heuristic_set, constraints)
     candidate = registry.hulls.by_id.get(hull_id)
     if candidate is None:
         return FleetSupportWhyNotExplanation(hull_id, False, False, None, len(ranked), None, None, "Hull is not a resolved, unambiguous indexed hull.")
@@ -414,7 +430,7 @@ def _diverse_fleet_support_shortlist(
             competitive = [item for item in remaining if item.recommendation_score >= best_score * (1 - tolerance)]
             pool = competitive or remaining
             selected_ids = [item.hull_id for item, _ in selected]
-            def key(item: FleetSupportRecommendation) -> tuple[float, float, str]:
+            def key(item: FleetSupportRecommendation, selected_ids: list[str] = selected_ids) -> tuple[float, float, str]:
                 similarity = max((_jaccard(profiles[item.hull_id], profiles[other]) for other in selected_ids), default=0.0)
                 return (item.recommendation_score - penalty * similarity * best_score, 1 - similarity, item.hull_id)
             choice = max(pool, key=key)
@@ -444,7 +460,7 @@ def _jaccard(left: set[str], right: set[str]) -> float:
     return len(left & right) / len(left | right) if left or right else 1.0
 
 
-def _score_candidate(hull: Hull, registry: Registry, profile: PlayerFleetProfile, affinity: str, constraints: FleetSupportConstraints, values: dict[str, float]) -> FleetSupportRecommendation | None:
+def _score_candidate(hull: Hull, registry: Registry, profile: PlayerFleetProfile, affinity: str, constraints: FleetSupportConstraints, values: Mapping[str, float]) -> FleetSupportRecommendation | None:
     vector = infer_hull_capability_vector(hull, registry)
     doctrine = infer_combat_doctrine(hull, registry)
     relevant_needs = list(profile.support_needs)
@@ -494,7 +510,7 @@ def _score_candidate(hull: Hull, registry: Registry, profile: PlayerFleetProfile
     supported_categories = {need.category for need, _ in satisfactions if need.capability in supports}
     category = "COMBAT_AND_LOGISTICS_SUPPORT" if supported_categories == {"COMBAT", "LOGISTICS"} else "LOGISTICS_SUPPORT" if supported_categories == {"LOGISTICS"} else "COMBAT_SUPPORT"
     kind = RecommendationReason.SYNERGY_AND_GAP_FILL if max(cohesion, composition.score) >= .5 and complement >= .35 else RecommendationReason.SYNERGY if max(cohesion, composition.score) > complement else RecommendationReason.GAP_FILL
-    confidence = _mean([need.confidence * evidence.confidence for need, evidence in satisfactions] + [composition.confidence], 0.0)
+    confidence = _mean([need.confidence * evidence.confidence for need, evidence in satisfactions] + [composition.confidence], 0.0) or 0.0
     purposes = _support_purposes(supports)
     components = FleetSupportScoreComponents(round(complement, 6), round(cohesion, 6), round(composition.score, 6), round(static_friction, 6), round(affinity_score, 6), round(score, 6))
     return FleetSupportRecommendation(hull.id, kind, category, round(score, 6), round(confidence, 6), supports, compatibility, friction, affinity,
@@ -529,6 +545,7 @@ def _aggregate_doctrine(doctrines: list[CombatDoctrineProfile]) -> dict[str, Doc
 
 def _support_needs(capabilities: dict[str, CapabilityEvidence], focus: SupportFocus, heuristic_set: str) -> tuple[FleetSupportNeed, ...]:
     threshold = get_heuristic_set(heuristic_set).values.get("fleet_support_need_threshold", .35)
+    names: tuple[str, ...]
     if focus is SupportFocus.LOGISTICS:
         names = _LOGISTICS_NEEDS
     elif focus is SupportFocus.SURVIVABILITY:
@@ -559,7 +576,7 @@ def _support_needs(capabilities: dict[str, CapabilityEvidence], focus: SupportFo
 
 def _cohesion(fleet: dict[str, DoctrineAxisProfile], candidate: CombatDoctrineProfile) -> float:
     matches = [_axis_match(fleet.get("engagement_position"), candidate.engagement_position), _axis_match(fleet.get("tactical_style"), candidate.tactical_style), _axis_match(fleet.get("tempo"), candidate.tempo)]
-    return _mean([item for item in matches if item is not None], 0.0)
+    return _mean([item for item in matches if item is not None], 0.0) or 0.0
 
 
 def _axis_match(fleet: DoctrineAxisProfile | None, candidate: DoctrineAxisProfile) -> float | None:
@@ -570,8 +587,8 @@ def _axis_match(fleet: DoctrineAxisProfile | None, candidate: DoctrineAxisProfil
 
 
 def _defensive_match(profile: PlayerFleetProfile, candidate: CapabilityVector) -> float:
-    fleet_defense = _mean([(profile.capability_vector.get(name).score or 0.0) for name in ("ARMOR_TANKING", "SHIELD_TANKING") if profile.capability_vector.get(name) is not None], 0.0)
-    candidate_defense = _mean([(candidate.dimensions[name].score or 0.0) for name in ("ARMOR_TANKING", "SHIELD_TANKING")], 0.0)
+    fleet_defense = _mean([(evidence.score or 0.0) for name in ("ARMOR_TANKING", "SHIELD_TANKING") if (evidence := profile.capability_vector.get(name)) is not None], 0.0) or 0.0
+    candidate_defense = _mean([(candidate.dimensions[name].score or 0.0) for name in ("ARMOR_TANKING", "SHIELD_TANKING")], 0.0) or 0.0
     return _clamp(1 - abs(candidate_defense - fleet_defense))
 
 
@@ -586,7 +603,7 @@ def _fleet_min_burn(selections: tuple[FleetSelection, ...], registry: Registry) 
 
 
 def _variant_weapon_range(hull: Hull, registry: Registry) -> float | None:
-    ranges = [registry.weapons.by_id[weapon_id].range for variant in registry.variants_for_hull(hull.id) for weapon_id in variant.weapons_by_mount.values() if weapon_id in registry.weapons.by_id and registry.weapons.by_id[weapon_id].range is not None]
+    ranges = [weapon_range for variant in registry.variants_for_hull(hull.id) for weapon_id in variant.weapons_by_mount.values() if (weapon := registry.weapons.by_id.get(weapon_id)) is not None and (weapon_range := weapon.range) is not None]
     return _mean(ranges)
 
 
@@ -605,7 +622,7 @@ def _selection_hull(selection: FleetSelection, registry: Registry) -> Hull | Non
 def _selection_weapon_range(selection: FleetSelection, registry: Registry) -> float | None:
     if selection.variant_id:
         variant = registry.variants.by_id.get(selection.variant_id)
-        ranges = [registry.weapons.by_id[weapon_id].range for weapon_id in variant.weapons_by_mount.values() if weapon_id in registry.weapons.by_id and registry.weapons.by_id[weapon_id].range is not None] if variant else []
+        ranges = [weapon_range for weapon_id in variant.weapons_by_mount.values() if (weapon := registry.weapons.by_id.get(weapon_id)) is not None and (weapon_range := weapon.range) is not None] if variant else []
         return _mean(ranges)
     hull = _selection_hull(selection, registry)
     return _variant_weapon_range(hull, registry) if hull else None
@@ -649,12 +666,12 @@ def _composition_traits(resolved: list[tuple[Hull, tuple[Variant, ...] | None]],
         if values:
             traits.append(FleetCompositionTrait({"CARRIER_PROJECTION": "CARRIER_ORIENTED", "MISSILE_PROJECTION": "MISSILE_ORIENTED", "MOBILITY": "HIGH_MOBILITY"}[name], round(_mean([item.score or 0.0 for item in values], 0.0) or 0.0, 6), round(_mean([item.confidence for item in values], 0.0) or 0.0, 6), (f"Derived from normalized {name} capability across selected locked instances.",)))
     for label, name in (("LINE_ANCHOR", "HEAVY_LINE"), ("ARTILLERY", "LONG_RANGE"), ("STRIKE", "SHORT_RANGE_ASSAULT")):
-        values = [doctrine.battlefield_function.scores.get(label, 0.0) for doctrine in doctrines]
-        traits.append(FleetCompositionTrait(name, round(_mean(values, 0.0) or 0.0, 6), round(_mean([doctrine.battlefield_function.confidence for doctrine in doctrines], 0.0) or 0.0, 6), (f"Derived from normalized battlefield-function evidence for {label}.",)))
+        axis_values = [doctrine.battlefield_function.scores.get(label, 0.0) for doctrine in doctrines]
+        traits.append(FleetCompositionTrait(name, round(_mean(axis_values, 0.0) or 0.0, 6), round(_mean([doctrine.battlefield_function.confidence for doctrine in doctrines], 0.0) or 0.0, 6), (f"Derived from normalized battlefield-function evidence for {label}.",)))
     return tuple(traits)
 
 
-def _composition_synergy(traits: tuple[FleetCompositionTrait, ...], phase_match: float | None, sensor_match: float | None, burn_match: float | None, vector: CapabilityVector, values: dict[str, float]) -> CompositionSynergyProfile:
+def _composition_synergy(traits: tuple[FleetCompositionTrait, ...], phase_match: float | None, sensor_match: float | None, burn_match: float | None, vector: CapabilityVector, values: Mapping[str, float]) -> CompositionSynergyProfile:
     lookup = {trait.name: trait for trait in traits}
     mobility = lookup.get("HIGH_MOBILITY")
     candidate_mobility = vector.dimensions["MOBILITY"]

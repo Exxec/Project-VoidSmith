@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import unittest
 from pathlib import Path
+from typing import ClassVar
 
 from starsector_variant_generator.analysis.gap_recommendation import (
     SCENARIO_RECOMMENDATION_KIND,
@@ -23,7 +24,13 @@ from starsector_variant_generator.analysis.gap_recommendation import (
     recommend_scenario_solutions,
     scenario_fits_for_hull,
 )
-from starsector_variant_generator.core.models import Faction, Hull, ScanResult, Variant, Weapon
+from starsector_variant_generator.core.models import (
+    Faction,
+    Hull,
+    ScanResult,
+    Variant,
+    Weapon,
+)
 from starsector_variant_generator.core.registry import Registry
 
 SOURCE = Path("fixture")
@@ -288,7 +295,7 @@ class ScenarioCategoryFitScoreTests(unittest.TestCase):
     the real running function before being written here.
     """
 
-    EXPECTED = {
+    EXPECTED: ClassVar[dict[tuple[ScenarioCategory, str], tuple[float, bool]]] = {
         # (scenario, build_archetype_id): (scenario_fit_score, recommended)
         (ScenarioCategory.ANTI_ARMOR, "LINE_ANCHOR"): (0.114, False),
         (ScenarioCategory.ANTI_ARMOR, "TANK"): (0.114, False),
@@ -360,8 +367,8 @@ class ScenarioCategoryFitScoreTests(unittest.TestCase):
         line_holding = {rec.build_archetype_id: rec.scenario_fit_score for rec in recommend_scenario_solutions(faction, registry, gap_result, ScenarioCategory.LINE_HOLDING, "baseline_0.4")["LINE_BRAWLER"]}
         self.assertEqual({"LINE_ANCHOR", "TANK"}, set(defense))
         self.assertEqual({"LINE_ANCHOR", "TANK"}, set(line_holding))
-        for build_id in defense:
-            self.assertNotAlmostEqual(defense[build_id], line_holding[build_id], places=3)
+        for build_id, score in defense.items():
+            self.assertNotAlmostEqual(score, line_holding[build_id], places=3)
 
 
 class WeaponMountedEvidenceCategoryTests(unittest.TestCase):

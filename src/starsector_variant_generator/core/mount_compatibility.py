@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from types import MappingProxyType
-from typing import Mapping
 
 # Weapon-mount-type compatibility matrix. Previously both validation/legality.py
 # and generation/candidate.py only did an exact string match (mount type ==

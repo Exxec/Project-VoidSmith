@@ -3,7 +3,14 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from starsector_variant_generator.core.models import FighterWing, Hull, Hullmod, ScanResult, Variant, Weapon
+from starsector_variant_generator.core.models import (
+    FighterWing,
+    Hull,
+    Hullmod,
+    ScanResult,
+    Variant,
+    Weapon,
+)
 from starsector_variant_generator.core.registry import Registry
 from starsector_variant_generator.generation.refit import fix_legality, improve_quality
 from starsector_variant_generator.validation.legality import LegalityResult

@@ -5,10 +5,20 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from starsector_variant_generator.core.models import Faction, Hull, Hullmod, ModInfo, ScanResult, SourceType, Variant, Weapon
+from starsector_variant_generator.core.models import (
+    Faction,
+    Hull,
+    Hullmod,
+    ModInfo,
+    ScanResult,
+    SourceType,
+    Variant,
+    Weapon,
+)
 from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.output.analysis_reports import write_scan_analysis_reports
-
+from starsector_variant_generator.output.analysis_reports import (
+    write_scan_analysis_reports,
+)
 
 SOURCE = Path("fixture")
 

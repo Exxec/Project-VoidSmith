@@ -1,20 +1,26 @@
 """User-owned editable retrofit copies; scanned game/mod variants stay read-only."""
 from __future__ import annotations
 
+import hashlib
 import json
 import re
-import hashlib
-from pathlib import Path
 from dataclasses import dataclass
+from pathlib import Path
 
+from starsector_variant_generator.analysis.mechanical_archetypes import (
+    infer_mechanical_archetypes,
+)
 from starsector_variant_generator.core.models import Variant
 from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.analysis.mechanical_archetypes import infer_mechanical_archetypes
-from starsector_variant_generator.generation.candidate import generate_conservative_candidate
+from starsector_variant_generator.generation.candidate import (
+    generate_conservative_candidate,
+)
 from starsector_variant_generator.output.writer import _weapon_groups, write_variant
 from starsector_variant_generator.parsers.entities import variant_from_file
-from starsector_variant_generator.validation.legality import LegalityResult
-from starsector_variant_generator.validation.legality import validate_variant
+from starsector_variant_generator.validation.legality import (
+    LegalityResult,
+    validate_variant,
+)
 
 _SAFE_ID = re.compile(r"^[A-Za-z0-9_.-]+$")
 

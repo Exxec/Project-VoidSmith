@@ -6,17 +6,58 @@ from dataclasses import asdict
 from pathlib import Path
 
 from starsector_variant_generator import api
+from starsector_variant_generator.analysis.fleet_support import (
+    FleetSupportConstraints,
+    SupportFocus,
+    fleet_support_request_from_payload,
+    fleet_support_request_to_payload,
+    parse_fleet_selections,
+)
+from starsector_variant_generator.analysis.gap_recommendation import (
+    BuildWhyNotExplanation,
+    CombinedWhyNotExplanation,
+    RecommendationConstraints,
+)
+from starsector_variant_generator.analysis.scenario_advisor import (
+    generic_scenario_profiles,
+    scenario_advisor_request_from_payload,
+    scenario_advisor_request_to_payload,
+)
 from starsector_variant_generator.core.config import AppConfig
 from starsector_variant_generator.core.logging import configure_logging
-from starsector_variant_generator.output.analysis_reports import write_scan_analysis_reports
-from starsector_variant_generator.output.change_impact_report import compact_change_impact, write_change_impact_report, write_compact_change_impact_report
-from starsector_variant_generator.output.diagnostic_summary import summarize_scan_issues
-from starsector_variant_generator.analysis.gap_recommendation import RecommendationConstraints
-from starsector_variant_generator.analysis.fleet_support import FleetSupportConstraints, SupportFocus, fleet_support_request_from_payload, fleet_support_request_to_payload, parse_fleet_selections
-from starsector_variant_generator.analysis.scenario_advisor import generic_scenario_profiles, scenario_advisor_request_from_payload, scenario_advisor_request_to_payload
 from starsector_variant_generator.core.result_cache import AnalysisResultCache
+from starsector_variant_generator.output.analysis_reports import (
+    write_scan_analysis_reports,
+)
+from starsector_variant_generator.output.change_impact_report import (
+    compact_change_impact,
+    write_change_impact_report,
+    write_compact_change_impact_report,
+)
+from starsector_variant_generator.output.diagnostic_summary import summarize_scan_issues
+from starsector_variant_generator.profiles.catalog import (
+    available_profiles,
+    get_profile,
+)
 from starsector_variant_generator.profiles.modes import UserMode
-from starsector_variant_generator.profiles.catalog import available_profiles, get_profile
+
+
+def _why_not_report_lines(explanation: CombinedWhyNotExplanation | BuildWhyNotExplanation) -> tuple[str, ...]:
+    """Real bug fixed here (docs/BUGS.md SVG-019): `api.run_why_not` returns
+    `BuildWhyNotExplanation` (a flat `.reason`) when the caller passes
+    `--build-archetype`, and only returns the legacy hull-level
+    `CombinedWhyNotExplanation` (with `.native`/`.retrofit`/`.acquisition`,
+    each carrying their own `.reason`) otherwise. The previous unconditional
+    `explanation.native.reason` etc. raised `AttributeError` for every real
+    `why-not --build-archetype` invocation.
+    """
+    if isinstance(explanation, BuildWhyNotExplanation):
+        return (f"build: {explanation.reason}",)
+    return (
+        f"native: {explanation.native.reason}",
+        f"retrofit: {explanation.retrofit.reason}",
+        f"acquisition: {explanation.acquisition.reason}",
+    )
 
 
 def main() -> int:
@@ -28,7 +69,7 @@ def main() -> int:
     scan.add_argument("--output-dir", type=Path, default=Path("generated"))
     scan.add_argument("--all-installed-mods", action="store_true", help="Diagnostic scan of disabled as well as enabled installed mods; still read-only")
     scan.add_argument("--summary-only", action="store_true", help="Diagnostic mode: write scan/cache/impact summaries but skip optional per-entity analysis reports")
-    list_profiles = subparsers.add_parser("list-profiles", help="List deterministic quality profiles")
+    subparsers.add_parser("list-profiles", help="List deterministic quality profiles")
     query = subparsers.add_parser("query", help="Query unambiguous normalized entities from a fresh read-only scan")
     query.add_argument("entity", choices=["weapons", "variants", "faction-equipment", "hulls", "fighters", "hullmods"])
     query.add_argument("--size")
@@ -167,6 +208,12 @@ def main() -> int:
         logger = configure_logging(config.log_dir)
         registry = api.build_registry(config, logger)
         try:
+            # Every branch feeds the same generic `{"entity": ..., "records": records}`
+            # JSON dump below; `run_query_faction_equipment` genuinely returns a
+            # dict (per-known-category id tuples) rather than a per-entity record
+            # list like the other 5 branches, so this is a real, documented union
+            # rather than a loosened/`Any` annotation.
+            records: list[dict] | dict[str, tuple[str, ...]]
             if args.entity == "weapons":
                 records = api.run_query_weapons(registry, args.size, args.mount_type, args.overrides_dir, args.faction_id)
             elif args.entity == "hulls":
@@ -280,13 +327,13 @@ def main() -> int:
         logger = configure_logging(config.log_dir)
         registry = api.build_registry(config, logger)
         try:
-            profile = api.run_faction_capability(registry, args.faction_id, args.source_mod, config.heuristic_set)
+            capability_profile = api.run_faction_capability(registry, args.faction_id, args.source_mod, config.heuristic_set)
         except ValueError as exc:
             parser.error(str(exc))
         report_dir = config.output_dir / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
         report_path = report_dir / f"faction_capability_{args.faction_id}.json"
-        report_path.write_text(json.dumps(asdict(profile), indent=2, default=str), encoding="utf-8")
+        report_path.write_text(json.dumps(asdict(capability_profile), indent=2, default=str), encoding="utf-8")
         print(f"Faction capability profile: {report_path}")
         return 0
     if args.command == "recommend":
@@ -313,18 +360,18 @@ def main() -> int:
         try:
             if not args.request_snapshot and not args.hull_id:
                 parser.error("fleet-support requires locked hull IDs or --request-snapshot")
-            selections, constraints = fleet_support_request_from_payload(json.loads(args.request_snapshot.read_text(encoding="utf-8"))) if args.request_snapshot else (parse_fleet_selections(tuple(args.hull_id)), FleetSupportConstraints(args.access_mode, not args.no_foreign_hulls, args.include_hidden_hulls, SupportFocus(args.focus), args.count))
+            selections, support_constraints = fleet_support_request_from_payload(json.loads(args.request_snapshot.read_text(encoding="utf-8"))) if args.request_snapshot else (parse_fleet_selections(tuple(args.hull_id)), FleetSupportConstraints(args.access_mode, not args.no_foreign_hulls, args.include_hidden_hulls, SupportFocus(args.focus), args.count))
             if args.save_request_snapshot:
                 args.save_request_snapshot.parent.mkdir(parents=True, exist_ok=True)
-                args.save_request_snapshot.write_text(json.dumps(fleet_support_request_to_payload(selections, constraints), indent=2), encoding="utf-8")
-            result = api.run_fleet_support_advisor(registry, selections, args.faction_id, args.source_mod, config.heuristic_set, constraints)
+                args.save_request_snapshot.write_text(json.dumps(fleet_support_request_to_payload(selections, support_constraints), indent=2), encoding="utf-8")
+            fleet_result = api.run_fleet_support_advisor(registry, selections, args.faction_id, args.source_mod, config.heuristic_set, support_constraints)
         except ValueError as exc:
             parser.error(str(exc))
         report_dir = config.output_dir / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
         report_path = report_dir / "fleet_support.json"
-        report_path.write_text(json.dumps(asdict(result), indent=2, default=str), encoding="utf-8")
-        print(f"{len(result.profile.support_needs)} advisory support need(s), {len(result.recommendations)} individually ranked addition(s): {report_path}")
+        report_path.write_text(json.dumps(asdict(fleet_result), indent=2, default=str), encoding="utf-8")
+        print(f"{len(fleet_result.profile.support_needs)} advisory support need(s), {len(fleet_result.recommendations)} individually ranked addition(s): {report_path}")
         return 0
     if args.command == "fleet-support-why-not":
         config = AppConfig(args.starsector_path, args.output_dir, args.output_dir / "logs")
@@ -332,36 +379,36 @@ def main() -> int:
         registry = api.build_registry(config, logger)
         try:
             selections = parse_fleet_selections(tuple(args.locked_hull_id))
-            constraints = FleetSupportConstraints(args.access_mode, not args.no_foreign_hulls, args.include_hidden_hulls, SupportFocus(args.focus), args.count)
-            result = api.run_fleet_support_why_not(registry, selections, args.candidate_hull_id, args.faction_id, args.source_mod, config.heuristic_set, constraints)
+            support_constraints = FleetSupportConstraints(args.access_mode, not args.no_foreign_hulls, args.include_hidden_hulls, SupportFocus(args.focus), args.count)
+            fleet_why_not_result = api.run_fleet_support_why_not(registry, selections, args.candidate_hull_id, args.faction_id, args.source_mod, config.heuristic_set, support_constraints)
         except ValueError as exc:
             parser.error(str(exc))
         report_dir = config.output_dir / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
         report_path = report_dir / f"fleet_support_why_not_{args.candidate_hull_id}.json"
-        report_path.write_text(json.dumps(asdict(result), indent=2, default=str), encoding="utf-8")
-        print(f"{result.reason}: {report_path}")
+        report_path.write_text(json.dumps(asdict(fleet_why_not_result), indent=2, default=str), encoding="utf-8")
+        print(f"{fleet_why_not_result.reason}: {report_path}")
         return 0
     if args.command == "scenario-advisor":
         config = AppConfig(args.starsector_path, args.output_dir, args.output_dir / "logs")
         registry = api.build_registry(config, configure_logging(config.log_dir))
         try:
             if args.request_snapshot:
-                selections, scenario, constraints = scenario_advisor_request_from_payload(json.loads(args.request_snapshot.read_text(encoding="utf-8")))
+                selections, scenario, support_constraints = scenario_advisor_request_from_payload(json.loads(args.request_snapshot.read_text(encoding="utf-8")))
             else:
                 if not args.hull_id or not args.scenario:
                     parser.error("scenario-advisor requires locked hull IDs and --scenario, or --request-snapshot")
                 selections = parse_fleet_selections(tuple(args.hull_id)); scenario = next(item for item in generic_scenario_profiles() if item.scenario_id == args.scenario)
-                constraints = FleetSupportConstraints(args.access_mode, True, False, SupportFocus(args.focus), args.count)
+                support_constraints = FleetSupportConstraints(args.access_mode, True, False, SupportFocus(args.focus), args.count)
             if args.save_request_snapshot:
                 args.save_request_snapshot.parent.mkdir(parents=True, exist_ok=True)
-                args.save_request_snapshot.write_text(json.dumps(scenario_advisor_request_to_payload(selections, scenario, constraints), indent=2), encoding="utf-8")
-            result = api.run_scenario_fleet_advisor(registry, selections, scenario, args.faction_id, args.source_mod, config.heuristic_set, constraints)
+                args.save_request_snapshot.write_text(json.dumps(scenario_advisor_request_to_payload(selections, scenario, support_constraints), indent=2), encoding="utf-8")
+            scenario_result = api.run_scenario_fleet_advisor(registry, selections, scenario, args.faction_id, args.source_mod, config.heuristic_set, support_constraints)
         except ValueError as exc:
             parser.error(str(exc))
         report_dir = config.output_dir / "reports"; report_dir.mkdir(parents=True, exist_ok=True)
-        report_path = report_dir / "scenario_advisor.json"; report_path.write_text(json.dumps(asdict(result), indent=2, default=str), encoding="utf-8")
-        print(f"{result.readiness} mechanical alignment, {len(result.recommendations)} individual addition(s): {report_path}")
+        report_path = report_dir / "scenario_advisor.json"; report_path.write_text(json.dumps(asdict(scenario_result), indent=2, default=str), encoding="utf-8")
+        print(f"{scenario_result.readiness} mechanical alignment, {len(scenario_result.recommendations)} individual addition(s): {report_path}")
         return 0
     if args.command == "why-not":
         config = AppConfig(args.starsector_path, args.output_dir, args.output_dir / "logs")
@@ -378,9 +425,8 @@ def main() -> int:
         report_dir.mkdir(parents=True, exist_ok=True)
         report_path = report_dir / f"why_not_{args.faction_id}_{args.role}_{args.hull_id}.json"
         report_path.write_text(json.dumps(asdict(explanation), indent=2, default=str), encoding="utf-8")
-        print(f"native: {explanation.native.reason}")
-        print(f"retrofit: {explanation.retrofit.reason}")
-        print(f"acquisition: {explanation.acquisition.reason}")
+        for line in _why_not_report_lines(explanation):
+            print(line)
         print(f"report: {report_path}")
         return 0
     if args.command == "analyze-variant":
@@ -419,30 +465,30 @@ def main() -> int:
         report_path = report_dir / f"refit_{args.variant_id}.json"
         if args.mode == "FIX_LEGALITY":
             try:
-                result = api.run_fix_legality(
+                fix_result = api.run_fix_legality(
                     registry, args.variant_id, config.heuristic_set,
                     frozenset(args.lock_mount), frozenset(args.lock_hullmod), frozenset(args.lock_wing),
                     args.substitution_mode, args.faction_id,
                 )
             except ValueError as exc:
                 parser.error(str(exc))
-            report_path.write_text(json.dumps(asdict(result), indent=2, default=str), encoding="utf-8")
-            status = "already LEGAL" if not result.changes and result.final_legality.result == "LEGAL" else f"{len(result.changes)} change(s), now {result.final_legality.result}"
+            report_path.write_text(json.dumps(asdict(fix_result), indent=2, default=str), encoding="utf-8")
+            status = "already LEGAL" if not fix_result.changes and fix_result.final_legality.result == "LEGAL" else f"{len(fix_result.changes)} change(s), now {fix_result.final_legality.result}"
             print(f"{status}: {report_path}")
-            return 0 if result.final_legality.result == "LEGAL" else 1
+            return 0 if fix_result.final_legality.result == "LEGAL" else 1
         try:
-            result = api.run_improve_quality(
+            quality_result = api.run_improve_quality(
                 registry, args.variant_id, args.mode, args.profile, config.heuristic_set,
                 frozenset(args.lock_mount), frozenset(args.lock_hullmod), frozenset(args.lock_wing),
                 args.flux_mode, args.faction_id, args.source_mod,
             )
         except ValueError as exc:
             parser.error(str(exc))
-        report_path.write_text(json.dumps(asdict(result), indent=2, default=str), encoding="utf-8")
-        if result.note:
-            status = result.note
+        report_path.write_text(json.dumps(asdict(quality_result), indent=2, default=str), encoding="utf-8")
+        if quality_result.note:
+            status = quality_result.note
         else:
-            status = f"{len(result.changes)} change(s), {result.metric_name} {result.before_score:.1f} -> {result.after_score:.1f}"
+            status = f"{len(quality_result.changes)} change(s), {quality_result.metric_name} {quality_result.before_score:.1f} -> {quality_result.after_score:.1f}"
         print(f"{status}: {report_path}")
         return 0
     if args.command != "scan":
@@ -454,35 +500,35 @@ def main() -> int:
     else:
         parser.error("scan requires --config or --starsector-path")
     logger = configure_logging(config.log_dir)
-    outcome = api.run_scan(
+    scan_outcome = api.run_scan(
         config, logger, include_disabled_mods=args.all_installed_mods,
         include_entities=not args.summary_only,
     )
     report_dir = config.output_dir / "reports"
     report_dir.mkdir(parents=True, exist_ok=True)
     if args.summary_only:
-        outcome.report["analysis_reports"] = {"status": "SKIPPED", "reason": "summary-only diagnostic scan"}
-        outcome.report["change_impact"] = compact_change_impact(outcome.change_impact)
-        outcome.report["registry"] = {
-            "unresolved_reference_count": len(outcome.registry.unresolved_references),
-            "missing_dependency_count": len(outcome.registry.missing_dependencies),
+        scan_outcome.report["analysis_reports"] = {"status": "SKIPPED", "reason": "summary-only diagnostic scan"}
+        scan_outcome.report["change_impact"] = compact_change_impact(scan_outcome.change_impact)
+        scan_outcome.report["registry"] = {
+            "unresolved_reference_count": len(scan_outcome.registry.unresolved_references),
+            "missing_dependency_count": len(scan_outcome.registry.missing_dependencies),
         }
-        outcome.report["diagnostics"] = summarize_scan_issues(outcome.result)
+        scan_outcome.report["diagnostics"] = summarize_scan_issues(scan_outcome.result)
     else:
-        outcome.report["analysis_reports"] = write_scan_analysis_reports(
-            outcome.result, outcome.registry, report_dir, config.heuristic_set,
-            reuse_if_unchanged=outcome.cache_result.status == "UNCHANGED",
+        scan_outcome.report["analysis_reports"] = write_scan_analysis_reports(
+            scan_outcome.result, scan_outcome.registry, report_dir, config.heuristic_set,
+            reuse_if_unchanged=scan_outcome.cache_result.status == "UNCHANGED",
         )
     impact_path = config.output_dir / "reports" / "change_impact.json"
     if args.summary_only:
-        write_compact_change_impact_report(outcome.change_impact, impact_path)
+        write_compact_change_impact_report(scan_outcome.change_impact, impact_path)
     else:
-        write_change_impact_report(outcome.change_impact, impact_path)
-    outcome.report["change_impact_report"] = str(impact_path)
+        write_change_impact_report(scan_outcome.change_impact, impact_path)
+    scan_outcome.report["change_impact_report"] = str(impact_path)
     report_path = report_dir / "scan_summary.json"
-    report_path.write_text(json.dumps(outcome.report, indent=2, default=str), encoding="utf-8")
+    report_path.write_text(json.dumps(scan_outcome.report, indent=2, default=str), encoding="utf-8")
     print(f"Read-only scan complete: {report_path}")
-    return 0 if not outcome.result.errors else 1
+    return 0 if not scan_outcome.result.errors else 1
 
 
 if __name__ == "__main__":

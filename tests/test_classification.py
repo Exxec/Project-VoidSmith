@@ -3,7 +3,13 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from starsector_variant_generator.analysis.classification import classify_civilian_role, classify_fighter, classify_hull, classify_hullmod, classify_weapon
+from starsector_variant_generator.analysis.classification import (
+    classify_civilian_role,
+    classify_fighter,
+    classify_hull,
+    classify_hullmod,
+    classify_weapon,
+)
 from starsector_variant_generator.core.models import FighterWing, Hull, Hullmod, Weapon
 
 

@@ -18,8 +18,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from starsector_variant_generator.analysis.classification import classify_weapon
-from starsector_variant_generator.core.models import Hull, Variant
 from starsector_variant_generator.core.evidence import EvidenceClass
+from starsector_variant_generator.core.models import Hull, Variant
 from starsector_variant_generator.parsers.common import parse_float
 
 if TYPE_CHECKING:
@@ -115,7 +115,14 @@ def infer_hull_feature_vector(
     fighter_fractions: list[float] = []
     for variant in variants:
         weapons = tuple(variant.weapons_by_mount.values())
-        if weapons:
+        # `variants` can be non-empty here even when `registry` is `None` --
+        # a caller may supply an explicit `variants` tuple (line 111 above
+        # only fills `variants` from `registry` when the caller omitted it)
+        # without also supplying a registry. Weapon-level evidence needs a
+        # registry to resolve weapon ids; without one this variant simply
+        # contributes no missile/PD/range evidence, the same as a variant
+        # with no weapons at all (see docs/BUGS.md SVG-020).
+        if weapons and registry is not None:
             missile_fractions.append(sum(
                 registry.weapons.by_id.get(weapon_id) is not None and registry.weapons.by_id[weapon_id].mount_type == "MISSILE"
                 for weapon_id in weapons) / len(weapons))
@@ -267,7 +274,7 @@ def _mean(values: tuple[float | None, ...] | list[float]) -> float | None:
     return sum(known) / len(known) if known else None
 
 
-def _scale(value: float | int | None, reference: float) -> float:
+def _scale(value: float | None, reference: float) -> float:
     return _clamp(float(value) / reference) if value is not None else 0.0
 
 

@@ -1,9 +1,8 @@
 from __future__ import annotations
 
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
-import tomllib
-
 
 # The single source of truth for "what heuristic set applies when nothing
 # more specific was configured" -- every front end (CLI config loading, the
@@ -31,7 +30,7 @@ class AppConfig:
     include_disabled_mods: bool = False
 
     @classmethod
-    def from_toml(cls, path: Path) -> "AppConfig":
+    def from_toml(cls, path: Path) -> AppConfig:
         with path.open("rb") as handle:
             data = tomllib.load(handle)
         root = path.parent

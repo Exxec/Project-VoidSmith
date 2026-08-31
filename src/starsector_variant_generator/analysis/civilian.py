@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
-from starsector_variant_generator.adapters import efficiency_hullmod_effects, logistics_hullmod_effects
+from starsector_variant_generator.adapters import (
+    efficiency_hullmod_effects,
+    logistics_hullmod_effects,
+)
 from starsector_variant_generator.core.evidence import EvidenceClass
 from starsector_variant_generator.core.models import Hull
 from starsector_variant_generator.core.registry import Registry
@@ -92,7 +95,10 @@ class DerivedCivilianStats:
         `applied_reduction_effects` more than once.
         """
         seen: dict[str, None] = {}
-        for effect in (*self.applied_effects, *self.applied_reduction_effects):
+        effects: tuple[AppliedLogisticsEffect | AppliedReductionEffect, ...] = (
+            *self.applied_effects, *self.applied_reduction_effects,
+        )
+        for effect in effects:
             seen.setdefault(effect.hullmod_id, None)
         return tuple(seen)
 

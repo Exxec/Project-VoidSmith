@@ -7,7 +7,6 @@ from starsector_variant_generator.analysis.combat_doctrine import infer_combat_d
 from starsector_variant_generator.core.models import Hull, ScanResult, Variant, Weapon
 from starsector_variant_generator.core.registry import Registry
 
-
 SOURCE = Path("fixture")
 
 

@@ -3,11 +3,18 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from starsector_variant_generator.analysis.control_suitability import compute_static_control_suitability
+from starsector_variant_generator.analysis.control_suitability import (
+    compute_static_control_suitability,
+)
 from starsector_variant_generator.core.evidence import EvidenceClass
-from starsector_variant_generator.core.models import Hull, Hullmod, ScanResult, Variant, Weapon
+from starsector_variant_generator.core.models import (
+    Hull,
+    Hullmod,
+    ScanResult,
+    Variant,
+    Weapon,
+)
 from starsector_variant_generator.core.registry import Registry
-
 
 SOURCE = Path("fixture")
 
@@ -266,7 +273,9 @@ class ModuleBoundaryTests(unittest.TestCase):
         self.assertNotIn("LegalityResult", source)
 
     def test_field_name_is_explicitly_labeled_static_control_suitability(self) -> None:
-        from starsector_variant_generator.analysis.control_suitability import StaticControlSuitability
+        from starsector_variant_generator.analysis.control_suitability import (
+            StaticControlSuitability,
+        )
 
         self.assertEqual("StaticControlSuitability", StaticControlSuitability.__name__)
         self.assertIn("STATIC_CONTROL_SUITABILITY", StaticControlSuitability.__doc__ or "")

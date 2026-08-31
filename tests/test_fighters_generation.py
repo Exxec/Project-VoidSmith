@@ -7,7 +7,6 @@ from starsector_variant_generator.core.models import FighterWing, Hull, ScanResu
 from starsector_variant_generator.core.registry import Registry
 from starsector_variant_generator.generation.fighters import select_fighter_wings
 
-
 SOURCE = Path("fixture")
 
 

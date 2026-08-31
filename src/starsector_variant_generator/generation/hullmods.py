@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from starsector_variant_generator.analysis.combat_stats import compute_derived_defense_stats
+from starsector_variant_generator.analysis.combat_stats import (
+    compute_derived_defense_stats,
+)
 from starsector_variant_generator.core.models import Hull, Hullmod
 from starsector_variant_generator.core.registry import Registry
 
@@ -72,7 +74,6 @@ def select_hullmods(
     """
     from starsector_variant_generator.adapters import max_logistics_hullmods
 
-    allowed_hullmod_ids = allowed_hullmod_ids
     denied_hullmod_ids = denied_hullmod_ids or set()
     preferred_hullmod_ids = preferred_hullmod_ids or set()
 

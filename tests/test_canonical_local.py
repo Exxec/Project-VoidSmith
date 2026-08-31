@@ -21,7 +21,11 @@ from __future__ import annotations
 import json
 import unittest
 
-from tests.benchmark_support import LOCAL_RESULTS_DIR, load_canonical_manifest, load_local_fixture
+from tests.benchmark_support import (
+    LOCAL_RESULTS_DIR,
+    load_canonical_manifest,
+    load_local_fixture,
+)
 
 
 def _mount_classes_from_fixture(fixture: dict) -> set[str]:

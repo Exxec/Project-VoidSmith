@@ -4,10 +4,19 @@ import unittest
 import unittest.mock
 from pathlib import Path
 
-from starsector_variant_generator.core.models import FighterWing, Hull, Hullmod, ScanResult, Variant, Weapon
+from starsector_variant_generator.core.models import (
+    FighterWing,
+    Hull,
+    Hullmod,
+    ScanResult,
+    Variant,
+    Weapon,
+)
 from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.validation.legality import LegalityResult, validate_variant
-
+from starsector_variant_generator.validation.legality import (
+    LegalityResult,
+    validate_variant,
+)
 
 SOURCE = Path("fixture")
 

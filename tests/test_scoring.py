@@ -3,7 +3,14 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from starsector_variant_generator.core.models import Faction, Hull, Hullmod, ScanResult, Variant, Weapon
+from starsector_variant_generator.core.models import (
+    Faction,
+    Hull,
+    Hullmod,
+    ScanResult,
+    Variant,
+    Weapon,
+)
 from starsector_variant_generator.core.registry import Registry
 from starsector_variant_generator.scoring.candidate_score import score_candidate
 

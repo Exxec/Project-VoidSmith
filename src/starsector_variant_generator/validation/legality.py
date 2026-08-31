@@ -1,11 +1,17 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum
 
-from starsector_variant_generator.adapters import flux_unit_cost, hullmod_incompatibility_pairs, max_logistics_hullmods
+from starsector_variant_generator.adapters import (
+    flux_unit_cost,
+    hullmod_incompatibility_pairs,
+    max_logistics_hullmods,
+)
 from starsector_variant_generator.core.models import Variant
-from starsector_variant_generator.core.mount_compatibility import MOUNT_TYPE_COMPATIBILITY
+from starsector_variant_generator.core.mount_compatibility import (
+    MOUNT_TYPE_COMPATIBILITY,
+)
 from starsector_variant_generator.core.registry import Registry
 
 

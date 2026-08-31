@@ -1,9 +1,12 @@
 from __future__ import annotations
+
 import unittest
 from pathlib import Path
+
 from starsector_variant_generator.analysis.derived_ship_state import derive_ship_state
 from starsector_variant_generator.core.models import Hull, Hullmod, ScanResult, Variant
 from starsector_variant_generator.core.registry import Registry
+
 
 class DerivedShipStateTests(unittest.TestCase):
     def test_aggregate_preserves_verified_and_unknown_effect_boundaries(self) -> None:

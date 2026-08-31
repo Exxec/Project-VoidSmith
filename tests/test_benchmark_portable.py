@@ -17,9 +17,18 @@ import unittest
 from starsector_variant_generator.analysis.classification import classify_hull
 from starsector_variant_generator.core.models import ScanResult, Variant
 from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.generation.candidate import generate_conservative_candidate
-from starsector_variant_generator.validation.legality import LegalityResult, validate_variant
-from tests.benchmark_support import load_synthetic_archetype, mount_classes, registry_for
+from starsector_variant_generator.generation.candidate import (
+    generate_conservative_candidate,
+)
+from starsector_variant_generator.validation.legality import (
+    LegalityResult,
+    validate_variant,
+)
+from tests.benchmark_support import (
+    load_synthetic_archetype,
+    mount_classes,
+    registry_for,
+)
 
 ARCHETYPES = (
     "frigate_ballistic_aggressive",

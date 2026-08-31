@@ -12,7 +12,6 @@ from typing import Any
 
 from starsector_variant_generator.analysis.complex_hulls import (
     COMPLEX_HULL_ACCEPTANCE_MATRIX,
-    ComplexHullAcceptance,
 )
 from starsector_variant_generator.analysis.composite_hulls import (
     build_composite_hull_definitions,

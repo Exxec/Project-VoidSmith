@@ -5,8 +5,9 @@ analysis, and cannot write game/mod sources.
 """
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 from starsector_variant_generator.adapters import (
     combat_hullmod_effects,

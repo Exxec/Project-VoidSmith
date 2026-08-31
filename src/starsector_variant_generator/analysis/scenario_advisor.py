@@ -10,8 +10,18 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 
-from starsector_variant_generator.analysis.capability_vector import CAPABILITY_DIMENSIONS, CapabilityEvidence
-from starsector_variant_generator.analysis.fleet_support import FleetSelection, FleetSupportConstraints, FleetSupportNeed, FleetSupportRecommendation, analyze_player_fleet, recommend_fleet_support
+from starsector_variant_generator.analysis.capability_vector import (
+    CAPABILITY_DIMENSIONS,
+    CapabilityEvidence,
+)
+from starsector_variant_generator.analysis.fleet_support import (
+    FleetSelection,
+    FleetSupportConstraints,
+    FleetSupportNeed,
+    FleetSupportRecommendation,
+    analyze_player_fleet,
+    recommend_fleet_support,
+)
 from starsector_variant_generator.core.models import Faction
 from starsector_variant_generator.core.registry import Registry
 

@@ -55,7 +55,7 @@ class DoctrineEvidence:
 # ~26s observed for one small faction) even though the faction and registry
 # never change across that search -- this cache removes that pure, repeated
 # recomputation without altering any result.
-_DOCTRINE_CACHE: dict[int, tuple["weakref.ReferenceType[Registry]", dict[tuple[str, str | None], DoctrineEvidence]]] = {}
+_DOCTRINE_CACHE: dict[int, tuple[weakref.ReferenceType[Registry], dict[tuple[str, str | None], DoctrineEvidence]]] = {}
 
 
 def _doctrine_cache_for_registry(registry: Registry) -> dict[tuple[str, str | None], DoctrineEvidence]:
@@ -65,7 +65,7 @@ def _doctrine_cache_for_registry(registry: Registry) -> dict[tuple[str, str | No
         return entry[1]
     inner: dict[tuple[str, str | None], DoctrineEvidence] = {}
 
-    def _cleanup(_ref: "weakref.ReferenceType[Registry]", _key: int = key) -> None:
+    def _cleanup(_ref: weakref.ReferenceType[Registry], _key: int = key) -> None:
         _DOCTRINE_CACHE.pop(_key, None)
 
     _DOCTRINE_CACHE[key] = (weakref.ref(registry, _cleanup), inner)

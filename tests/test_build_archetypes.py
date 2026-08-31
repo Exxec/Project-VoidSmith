@@ -3,12 +3,16 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from starsector_variant_generator.analysis.build_archetypes import infer_build_archetypes
+from starsector_variant_generator.analysis.build_archetypes import (
+    infer_build_archetypes,
+)
 from starsector_variant_generator.api import run_generate
 from starsector_variant_generator.core.models import Hull, ScanResult, Weapon
 from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.generation.candidate import generate_build_archetype_candidates, variant_distance
-
+from starsector_variant_generator.generation.candidate import (
+    generate_build_archetype_candidates,
+    variant_distance,
+)
 
 SOURCE = Path("fixture")
 

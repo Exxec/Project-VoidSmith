@@ -6,22 +6,38 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+from starsector_variant_generator.analysis.build_archetypes import (
+    BuildArchetypeProfile,
+    infer_build_archetypes,
+    profile_id_for_build,
+)
 from starsector_variant_generator.analysis.classification import classify_weapon
-from starsector_variant_generator.analysis.build_archetypes import BuildArchetypeProfile, infer_build_archetypes, profile_id_for_build
 from starsector_variant_generator.analysis.scenario_objectives import ScenarioObjective
 from starsector_variant_generator.core.evidence import EvidenceClass
 from starsector_variant_generator.core.heuristics import get_heuristic_set
 from starsector_variant_generator.core.models import Variant, Weapon
-from starsector_variant_generator.core.mount_compatibility import MOUNT_TYPE_COMPATIBILITY
-from starsector_variant_generator.core.overrides import EntityOverride, apply_role_tag_override
+from starsector_variant_generator.core.mount_compatibility import (
+    MOUNT_TYPE_COMPATIBILITY,
+)
+from starsector_variant_generator.core.overrides import (
+    EntityOverride,
+    apply_role_tag_override,
+)
 from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.core.result_cache import AnalysisContextFingerprint, CacheReadiness
+from starsector_variant_generator.core.result_cache import (
+    AnalysisContextFingerprint,
+    CacheReadiness,
+)
 from starsector_variant_generator.generation.fighters import select_fighter_wings
 from starsector_variant_generator.generation.hullmods import select_hullmods
-from starsector_variant_generator.generation.vent_cap import allocate_vents_and_capacitors
+from starsector_variant_generator.generation.vent_cap import (
+    allocate_vents_and_capacitors,
+)
 from starsector_variant_generator.profiles.catalog import get_profile
-from starsector_variant_generator.validation.legality import LegalityResult, validate_variant
-
+from starsector_variant_generator.validation.legality import (
+    LegalityResult,
+    validate_variant,
+)
 
 _SIZE_ORDER = {"SMALL": 1, "MEDIUM": 2, "LARGE": 3}
 
@@ -31,7 +47,7 @@ class CandidateResult:
     variant: Variant
     legality: LegalityResult
     omissions: tuple[str, ...]
-    omission_records: tuple["CandidateOmission", ...] = ()
+    omission_records: tuple[CandidateOmission, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -88,7 +104,7 @@ def generate_conservative_candidate(
     identical output.
     """
     hull = registry.hulls.by_id.get(hull_id)
-    profile = get_profile(profile_id)
+    get_profile(profile_id)  # Fail fast on an unknown profile before any further work.
     if hull is None:
         variant = Variant(f"{hull_id}_{profile_id}_svg", "Unknown Hull", "generated", Path("generated"), hull_id=hull_id)
         return CandidateResult(variant, LegalityResult.ILLEGAL, ("Hull not indexed.",))
@@ -200,7 +216,11 @@ def generate_build_archetype_candidates(
     max_candidates: int = 8,
     alternatives_per_build: int = 2,
     search_depth: int = 1,
-    **generation_options: object,
+    # Forwarded verbatim to `generate_candidate_alternatives` below, whose
+    # own optional keyword parameters span several distinct types (sets,
+    # dicts, str, int) -- `Any` here reflects that this is a genuine,
+    # per-key-heterogeneous passthrough, not an unmodeled type.
+    **generation_options: Any,
 ) -> tuple[BuildCandidateResult, ...]:
     """Generate one conservative fit per viable Hull + BuildArchetype path.
 
@@ -411,13 +431,18 @@ def _build_candidate(
             eligible.sort(key=lambda weapon: (native_sort(weapon), weapon.ordnance_points or 0, weapon.id))
         affordable = [item for item in eligible if spent + (item.ordnance_points or 0) <= op_limit]
         offset = rank_offsets.get(mount_id, 0)
-        weapon = affordable[offset] if offset < len(affordable) else None
-        if weapon is None:
+        # Named distinctly from the `weapon` loop variable used above (line
+        # 343) to build `weapons_by_mount_type`: that binding's non-Optional
+        # `Weapon` type otherwise gets attributed to this, unrelated,
+        # genuinely-Optional selection below since both share one function
+        # scope.
+        selected_weapon = affordable[offset] if offset < len(affordable) else None
+        if selected_weapon is None:
             suffix = " at requested bounded-search rank" if offset else ""
             omissions.append(f"{mount_id}: no documented compatible weapon within OP limit{suffix}")
             continue
-        selected[mount_id] = weapon.id
-        spent += weapon.ordnance_points or 0
+        selected[mount_id] = selected_weapon.id
+        spent += selected_weapon.ordnance_points or 0
     # Hullmods, fighter wings, vents, and capacitors are additive to the
     # weapon-only baseline above, not something that can leave a mount
     # unfilled -- reported via the variant's own fields, not `omissions`

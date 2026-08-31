@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from starsector_variant_generator.analysis.classification import classify_weapon
+from starsector_variant_generator.core.heuristics import get_heuristic_set
 from starsector_variant_generator.core.models import Variant
 from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.core.heuristics import get_heuristic_set
-from starsector_variant_generator.validation.legality import LegalityResult, validate_variant
+from starsector_variant_generator.validation.legality import (
+    LegalityResult,
+    validate_variant,
+)
 
 
 def _weapon_groups(variant: Variant, registry: Registry) -> list[dict[str, object]]:
@@ -77,7 +80,7 @@ def write_variant(variant: Variant, registry: Registry, output_dir: Path) -> Pat
     if assessment.result != LegalityResult.LEGAL:
         raise ValueError(f"Refusing export: candidate legality is {assessment.result}.")
     path = output_dir / f"{variant.id}.variant"
-    payload = {
+    payload: dict[str, object] = {
         "variantId": variant.id,
         "displayName": variant.name,
         "hullId": variant.hull_id,
@@ -125,11 +128,11 @@ def write_compatibility_mod(
         for entity in ([hull] if hull else []) + list(referenced_weapons.values())
     }, key=lambda item: (item[0], item[1] or ""))
     metadata_dir = mod_root / "data" / "metadata"
-    manifest = {
+    manifest: dict[str, object] = {
         "generated_by": "starsector_variant_generator",
         "generator_version": "0.1.0",
         "variant_id": variant.id,
-        "generated_timestamp": datetime.now(timezone.utc).isoformat(),
+        "generated_timestamp": datetime.now(UTC).isoformat(),
         "hull_id": variant.hull_id,
         "profile_id": profile_id,
         "faction_mode": faction_mode,

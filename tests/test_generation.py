@@ -5,7 +5,10 @@ from pathlib import Path
 
 from starsector_variant_generator.core.models import Hull, Hullmod, ScanResult, Weapon
 from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.generation.candidate import generate_candidate_alternatives, generate_conservative_candidate
+from starsector_variant_generator.generation.candidate import (
+    generate_candidate_alternatives,
+    generate_conservative_candidate,
+)
 from starsector_variant_generator.validation.legality import LegalityResult
 
 

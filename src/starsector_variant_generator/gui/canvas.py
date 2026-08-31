@@ -14,11 +14,23 @@ from collections.abc import Mapping
 from typing import Any
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QBrush, QColor, QMouseEvent, QPainter, QPen, QPixmap, QTransform, QWheelEvent
+from PySide6.QtGui import (
+    QBrush,
+    QColor,
+    QMouseEvent,
+    QPainter,
+    QPen,
+    QPixmap,
+    QTransform,
+    QWheelEvent,
+)
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsView
 
 from starsector_variant_generator.core.models import Hull, Weapon
-from starsector_variant_generator.gui.resources import HullSpriteCache, WeaponSpriteCache
+from starsector_variant_generator.gui.resources import (
+    HullSpriteCache,
+    WeaponSpriteCache,
+)
 
 # Real Starsector mount `type` values (core/mount_compatibility.py); colors
 # chosen only for visual distinction, not a data claim. HYBRID/COMPOSITE/
@@ -232,8 +244,15 @@ def _number(value: object, fallback: float) -> float:
 
 
 def _mount_scene_position(locations: list[object]) -> tuple[float, float]:
-    """Map Starsector forward/lateral coordinates onto the upright canvas."""
-    return float(locations[1]), -float(locations[0])
+    """Map Starsector forward/lateral coordinates onto the upright canvas.
+
+    Every real caller already validated `locations[:2]` as `(float, int)`
+    (see the `isinstance` guard just before this is called), so `_number`'s
+    fallback is never actually exercised -- it is used here only for the
+    same disciplined "never trust an untyped `object` blindly" narrowing
+    `_number` already provides everywhere else in this module.
+    """
+    return _number(locations[1], 0.0), -_number(locations[0], 0.0)
 
 
 def _mount_scene_rotation(angle: float) -> float:

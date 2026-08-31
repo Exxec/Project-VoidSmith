@@ -1,14 +1,20 @@
 from __future__ import annotations
 
-import unittest
 import json
 import tempfile
+import unittest
 from pathlib import Path
 
-from starsector_variant_generator.analysis.adaptive_substitution import rank_substitution_candidates, score_substitution_candidate
+from starsector_variant_generator.analysis.adaptive_substitution import (
+    rank_substitution_candidates,
+    score_substitution_candidate,
+)
+from starsector_variant_generator.core.knowledge_packs import (
+    load_knowledge_pack,
+    resolve_knowledge_pack,
+)
 from starsector_variant_generator.core.models import Faction, ScanResult, Weapon
 from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.core.knowledge_packs import load_knowledge_pack, resolve_knowledge_pack
 
 SOURCE = Path("fixture")
 

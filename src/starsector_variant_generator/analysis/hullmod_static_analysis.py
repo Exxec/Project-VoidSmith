@@ -125,10 +125,10 @@ from __future__ import annotations
 
 import ast
 import re
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Mapping
 
 from starsector_variant_generator.core.evidence import EvidenceClass, EvidenceRecord
 from starsector_variant_generator.core.models import Hullmod

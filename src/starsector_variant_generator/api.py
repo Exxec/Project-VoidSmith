@@ -26,54 +26,165 @@ and usage text; GUI: an error dialog).
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, replace
 from logging import Logger
 from pathlib import Path
 from time import perf_counter
-from typing import Callable
+from typing import Any
 
-from starsector_variant_generator.analysis.classification import classify_civilian_role, classify_fighter, classify_hullmod, classify_weapon
-from starsector_variant_generator.analysis.combat_entity import classify_fighter_wing_entity, recommendation_eligibility
-from starsector_variant_generator.analysis.combat_doctrine import infer_combat_doctrine
-from starsector_variant_generator.analysis.campaign_save_discovery import CampaignSaveDiscovery, discover_campaign_directory
-from starsector_variant_generator.analysis.change_impact import ChangeImpactReport, analyze_change_impact
-from starsector_variant_generator.analysis.doctrine import DoctrineEvidence, analyze_faction_doctrine
-from starsector_variant_generator.analysis.equipment_affinity import classify_equipment_affinity, classify_equipment_availability
-from starsector_variant_generator.core.knowledge_packs import ResolvedKnowledgePack, approved_equipment_ids, load_knowledge_pack, resolve_knowledge_pack
-from starsector_variant_generator.analysis.faction_capability import FactionCapabilityProfile, analyze_faction_capability
-from starsector_variant_generator.analysis.fleet_advisory_boundaries import FleetAdvisoryBoundaries, fleet_advisory_boundaries
-from starsector_variant_generator.analysis.fleet_support import FleetSelection, FleetSupportConstraints, FleetSupportRecommendation, FleetSupportResult, FleetSupportWhyNotExplanation, explain_fleet_support_candidate, recommend_fleet_support, support_fit_profile
-from starsector_variant_generator.analysis.scenario_advisor import ScenarioFleetAssessment, ScenarioObjectiveProfile, assess_scenario_fleet
-from starsector_variant_generator.analysis.gap_recommendation import (
-    BuildWhyNotExplanation, CombinedWhyNotExplanation, GapRecommendationResult, RecommendationConstraints,
-    explain_build_candidate, explain_candidate, gap_recommendation_fingerprint, gap_recommendation_result_from_payload,
-    gap_recommendation_result_to_payload, recommend_gap_solutions,
+from starsector_variant_generator.analysis.campaign_save_discovery import (
+    CampaignSaveDiscovery,
+    discover_campaign_directory,
 )
-from starsector_variant_generator.analysis.variant import VariantAnalysis, analyze_variant
-from starsector_variant_generator.analysis.video_review import load_video_review_transcript, resolve_control_suitability_evidence
-from starsector_variant_generator.core.cache import CacheComparison, load_manifest, update_manifest
+from starsector_variant_generator.analysis.change_impact import (
+    ChangeImpactReport,
+    analyze_change_impact,
+)
+from starsector_variant_generator.analysis.classification import (
+    classify_civilian_role,
+    classify_fighter,
+    classify_hullmod,
+    classify_weapon,
+)
+from starsector_variant_generator.analysis.combat_doctrine import infer_combat_doctrine
+from starsector_variant_generator.analysis.combat_entity import (
+    classify_fighter_wing_entity,
+    recommendation_eligibility,
+)
+from starsector_variant_generator.analysis.doctrine import (
+    DoctrineEvidence,
+    analyze_faction_doctrine,
+)
+from starsector_variant_generator.analysis.equipment_affinity import (
+    classify_equipment_affinity,
+    classify_equipment_availability,
+)
+from starsector_variant_generator.analysis.faction_capability import (
+    FactionCapabilityProfile,
+    analyze_faction_capability,
+)
+from starsector_variant_generator.analysis.fleet_advisory_boundaries import (
+    FleetAdvisoryBoundaries,
+    fleet_advisory_boundaries,
+)
+from starsector_variant_generator.analysis.fleet_support import (
+    FleetSelection,
+    FleetSupportConstraints,
+    FleetSupportRecommendation,
+    FleetSupportResult,
+    FleetSupportWhyNotExplanation,
+    explain_fleet_support_candidate,
+    recommend_fleet_support,
+    support_fit_profile,
+)
+from starsector_variant_generator.analysis.gap_recommendation import (
+    BuildWhyNotExplanation,
+    CombinedWhyNotExplanation,
+    GapRecommendationResult,
+    RecommendationConstraints,
+    explain_build_candidate,
+    explain_candidate,
+    gap_recommendation_fingerprint,
+    gap_recommendation_result_from_payload,
+    gap_recommendation_result_to_payload,
+    recommend_gap_solutions,
+)
+from starsector_variant_generator.analysis.scenario_advisor import (
+    ScenarioFleetAssessment,
+    ScenarioObjectiveProfile,
+    assess_scenario_fleet,
+)
+from starsector_variant_generator.analysis.variant import (
+    VariantAnalysis,
+    analyze_variant,
+)
+from starsector_variant_generator.analysis.video_review import (
+    load_video_review_transcript,
+    resolve_control_suitability_evidence,
+)
+from starsector_variant_generator.core.cache import (
+    CacheComparison,
+    load_manifest,
+    update_manifest,
+)
 from starsector_variant_generator.core.config import AppConfig
 from starsector_variant_generator.core.heuristics import get_heuristic_set
-from starsector_variant_generator.core.models import Faction, ScanProgress, ScanResult, Variant, Weapon
-from starsector_variant_generator.core.overrides import apply_role_tag_override, load_overrides
+from starsector_variant_generator.core.knowledge_packs import (
+    ResolvedKnowledgePack,
+    approved_equipment_ids,
+    load_knowledge_pack,
+    resolve_knowledge_pack,
+)
+from starsector_variant_generator.core.models import (
+    Faction,
+    ScanProgress,
+    ScanResult,
+    Variant,
+    Weapon,
+)
+from starsector_variant_generator.core.mount_compatibility import (
+    MOUNT_TYPE_COMPATIBILITY,
+)
+from starsector_variant_generator.core.overrides import (
+    apply_role_tag_override,
+    load_overrides,
+)
 from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.core.result_cache import AnalysisResultCache, CacheReadiness, resolve_cache_status
-from starsector_variant_generator.core.mount_compatibility import MOUNT_TYPE_COMPATIBILITY
+from starsector_variant_generator.core.result_cache import (
+    AnalysisResultCache,
+    CacheReadiness,
+    resolve_cache_status,
+)
 from starsector_variant_generator.core.scanner import Scanner
 from starsector_variant_generator.generation.candidate import (
-    BuildCandidateResult, CandidateResult, build_archetype_candidates_fingerprint, build_archetype_candidates_result_from_payload,
-    build_archetype_candidates_result_to_payload, candidate_alternatives_fingerprint, candidate_alternatives_result_from_payload,
-    candidate_alternatives_result_to_payload, generate_build_archetype_candidates, generate_candidate_alternatives, generate_conservative_candidate,
+    BuildCandidateResult,
+    CandidateResult,
+    build_archetype_candidates_fingerprint,
+    build_archetype_candidates_result_from_payload,
+    build_archetype_candidates_result_to_payload,
+    candidate_alternatives_fingerprint,
+    candidate_alternatives_result_from_payload,
+    candidate_alternatives_result_to_payload,
+    generate_build_archetype_candidates,
+    generate_candidate_alternatives,
+    generate_conservative_candidate,
 )
-from starsector_variant_generator.generation.refit import QualityRefitResult, RefitResult, fix_legality, improve_quality
-from starsector_variant_generator.output.staleness import StalenessReport, check_generation_manifest
+from starsector_variant_generator.generation.refit import (
+    QualityRefitResult,
+    RefitResult,
+    fix_legality,
+    improve_quality,
+)
+from starsector_variant_generator.output.retrofit_library import (
+    copy_existing_retrofit,
+    inspect_editable_retrofit,
+    load_editable_retrofit,
+    populate_variations_if_missing,
+    publish_editable_retrofit,
+    restore_editable_retrofit_history,
+    save_editable_variant,
+)
+from starsector_variant_generator.output.staleness import (
+    StalenessReport,
+    check_generation_manifest,
+)
 from starsector_variant_generator.output.writer import write_compatibility_mod
-from starsector_variant_generator.output.retrofit_library import copy_existing_retrofit, inspect_editable_retrofit, load_editable_retrofit, populate_variations_if_missing, publish_editable_retrofit, restore_editable_retrofit_history, save_editable_variant, variants_for_hull
-from starsector_variant_generator.profiles.advanced import AdvancedGenerationRequest, load_advanced_request
+from starsector_variant_generator.profiles.advanced import (
+    AdvancedGenerationRequest,
+    load_advanced_request,
+)
 from starsector_variant_generator.profiles.catalog import get_profile
-from starsector_variant_generator.profiles.modes import ModeDefaults, UserMode, resolve_mode
+from starsector_variant_generator.profiles.modes import (
+    ModeDefaults,
+    UserMode,
+    resolve_mode,
+)
 from starsector_variant_generator.scoring.candidate_score import score_candidate
-from starsector_variant_generator.validation.legality import LegalityAssessment, validate_variant
+from starsector_variant_generator.validation.legality import (
+    LegalityAssessment,
+    validate_variant,
+)
 
 
 def build_registry(config: AppConfig, logger: Logger) -> Registry:
@@ -331,7 +442,7 @@ def run_query_variants(registry: Registry, hull_id: str | None) -> list[dict]:
     return [asdict(variant) for variant in registry.variants_for_hull(hull_id)]
 
 
-def run_query_faction_equipment(registry: Registry, faction_id: str | None, source_mod: str | None) -> list:
+def run_query_faction_equipment(registry: Registry, faction_id: str | None, source_mod: str | None) -> dict[str, tuple[str, ...]]:
     if not faction_id:
         raise ValueError("query faction-equipment requires --faction-id")
     return registry.faction_equipment(faction_id, source_mod)
@@ -443,27 +554,58 @@ def run_generate(
     preferred_wings = set(faction.known_fighters) | set(approved_wings) if resolved_faction_mode == "FACTION_PLUS" and faction else None
     weapon_role_overrides = load_overrides(overrides_dir, "weapons") if overrides_dir else None
     build_candidates: tuple[BuildCandidateResult, ...] = ()
+    # `candidates`/`assessed_candidates` are explicitly typed up front (rather
+    # than left to be inferred from whichever branch assigns first) because
+    # the two branches below build them from genuinely different real shapes:
+    # a `list` comprehension over `build_candidates` in the build-archetype
+    # branch vs. the `tuple[CandidateResult, ...]` `generate_candidate_alternatives`
+    # (and its cached-payload counterpart) return in the plain-profile branch.
+    # `list(...)` below normalizes both to the declared `list[CandidateResult]`
+    # (matching `GenerateOutcome.candidates`) without changing order or content.
+    candidates: list[CandidateResult]
+    assessed_candidates: list[dict[str, Any]]
     if profile is None and advanced is None and "build_archetype_viable_min_compatibility" in get_heuristic_set(heuristic_set).values:
-        build_generation_kwargs = dict(
-            max_candidates=max_candidates, alternatives_per_build=build_alternatives, search_depth=search_depth,
-            allowed_weapon_ids=allowed_weapons, preferred_weapon_ids=preferred_weapons,
-            denied_weapon_ids=None, locked_weapons_by_mount=None, empty_mount_ids=None,
-            flux_mode=resolved_flux_mode, allowed_hullmod_ids=allowed_hullmods,
-            preferred_hullmod_ids=preferred_hullmods, allowed_wing_ids=allowed_wings,
-            preferred_wing_ids=preferred_wings, weapon_role_overrides=weapon_role_overrides,
-        )
+        # Passed as explicit keyword arguments below, not a `**dict` splat:
+        # mypy cannot verify a runtime dict's value-type union against each
+        # keyword parameter's own declared type even though every value here
+        # was always exactly the type its parameter expects; explicit
+        # keywords carry identical values and are checked per-argument.
         if result_cache is not None:
-            fingerprint = build_archetype_candidates_fingerprint(hull_id, registry, heuristic_set, **build_generation_kwargs)
+            fingerprint = build_archetype_candidates_fingerprint(
+                hull_id, registry, heuristic_set,
+                max_candidates=max_candidates, alternatives_per_build=build_alternatives, search_depth=search_depth,
+                allowed_weapon_ids=allowed_weapons, preferred_weapon_ids=preferred_weapons,
+                denied_weapon_ids=None, locked_weapons_by_mount=None, empty_mount_ids=None,
+                flux_mode=resolved_flux_mode, allowed_hullmod_ids=allowed_hullmods,
+                preferred_hullmod_ids=preferred_hullmods, allowed_wing_ids=allowed_wings,
+                preferred_wing_ids=preferred_wings, weapon_role_overrides=weapon_role_overrides,
+            )
             cache_readiness = resolve_cache_status(result_cache, fingerprint)
             cached = result_cache.get_fingerprint("build_archetype_candidates", hull_id, fingerprint)
             if cached is not None:
                 build_candidates = build_archetype_candidates_result_from_payload(cached)
             else:
-                build_candidates = generate_build_archetype_candidates(hull_id, registry, heuristic_set, **build_generation_kwargs)
+                build_candidates = generate_build_archetype_candidates(
+                    hull_id, registry, heuristic_set,
+                    max_candidates=max_candidates, alternatives_per_build=build_alternatives, search_depth=search_depth,
+                    allowed_weapon_ids=allowed_weapons, preferred_weapon_ids=preferred_weapons,
+                    denied_weapon_ids=None, locked_weapons_by_mount=None, empty_mount_ids=None,
+                    flux_mode=resolved_flux_mode, allowed_hullmod_ids=allowed_hullmods,
+                    preferred_hullmod_ids=preferred_hullmods, allowed_wing_ids=allowed_wings,
+                    preferred_wing_ids=preferred_wings, weapon_role_overrides=weapon_role_overrides,
+                )
                 result_cache.put_fingerprint("build_archetype_candidates", hull_id, fingerprint, build_archetype_candidates_result_to_payload(build_candidates))
         else:
             cache_readiness = resolve_cache_status(result_cache, None)
-            build_candidates = generate_build_archetype_candidates(hull_id, registry, heuristic_set, **build_generation_kwargs)
+            build_candidates = generate_build_archetype_candidates(
+                hull_id, registry, heuristic_set,
+                max_candidates=max_candidates, alternatives_per_build=build_alternatives, search_depth=search_depth,
+                allowed_weapon_ids=allowed_weapons, preferred_weapon_ids=preferred_weapons,
+                denied_weapon_ids=None, locked_weapons_by_mount=None, empty_mount_ids=None,
+                flux_mode=resolved_flux_mode, allowed_hullmod_ids=allowed_hullmods,
+                preferred_hullmod_ids=preferred_hullmods, allowed_wing_ids=allowed_wings,
+                preferred_wing_ids=preferred_wings, weapon_role_overrides=weapon_role_overrides,
+            )
         candidates = [item.candidate for item in build_candidates]
         selected_profile = "MULTI_ARCHETYPE"
         assessed_candidates = []
@@ -479,29 +621,52 @@ def run_generate(
                 "quality": asdict(quality),
             })
     else:
-        alternatives_kwargs = dict(
-            allowed_weapon_ids=allowed_weapons, preferred_weapon_ids=preferred_weapons,
-            denied_weapon_ids=set(advanced.denied_weapon_ids) if advanced else None,
-            locked_weapons_by_mount=advanced.locked_weapons_by_mount if advanced else None,
-            empty_mount_ids=set(advanced.empty_mount_ids) if advanced else None,
-            max_candidates=max_candidates, flux_mode=resolved_flux_mode,
-            allowed_hullmod_ids=allowed_hullmods, preferred_hullmod_ids=preferred_hullmods,
-            allowed_wing_ids=allowed_wings, preferred_wing_ids=preferred_wings,
-            search_depth=search_depth, weapon_role_overrides=weapon_role_overrides,
-            heuristic_set=heuristic_set,
-        )
+        # Explicit keyword arguments here too, for the same reason as above.
         if result_cache is not None:
-            fingerprint = candidate_alternatives_fingerprint(hull_id, selected_profile, registry, **alternatives_kwargs)
+            fingerprint = candidate_alternatives_fingerprint(
+                hull_id, selected_profile, registry,
+                allowed_weapon_ids=allowed_weapons, preferred_weapon_ids=preferred_weapons,
+                denied_weapon_ids=set(advanced.denied_weapon_ids) if advanced else None,
+                locked_weapons_by_mount=advanced.locked_weapons_by_mount if advanced else None,
+                empty_mount_ids=set(advanced.empty_mount_ids) if advanced else None,
+                max_candidates=max_candidates, flux_mode=resolved_flux_mode,
+                allowed_hullmod_ids=allowed_hullmods, preferred_hullmod_ids=preferred_hullmods,
+                allowed_wing_ids=allowed_wings, preferred_wing_ids=preferred_wings,
+                search_depth=search_depth, weapon_role_overrides=weapon_role_overrides,
+                heuristic_set=heuristic_set,
+            )
             cache_readiness = resolve_cache_status(result_cache, fingerprint)
             cached = result_cache.get_fingerprint("candidate_alternatives", hull_id, fingerprint)
             if cached is not None:
-                candidates = candidate_alternatives_result_from_payload(cached)
+                candidates = list(candidate_alternatives_result_from_payload(cached))
             else:
-                candidates = generate_candidate_alternatives(hull_id, selected_profile, registry, **alternatives_kwargs)
-                result_cache.put_fingerprint("candidate_alternatives", hull_id, fingerprint, candidate_alternatives_result_to_payload(candidates))
+                candidates = list(generate_candidate_alternatives(
+                    hull_id, selected_profile, registry,
+                    allowed_weapon_ids=allowed_weapons, preferred_weapon_ids=preferred_weapons,
+                    denied_weapon_ids=set(advanced.denied_weapon_ids) if advanced else None,
+                    locked_weapons_by_mount=advanced.locked_weapons_by_mount if advanced else None,
+                    empty_mount_ids=set(advanced.empty_mount_ids) if advanced else None,
+                    max_candidates=max_candidates, flux_mode=resolved_flux_mode,
+                    allowed_hullmod_ids=allowed_hullmods, preferred_hullmod_ids=preferred_hullmods,
+                    allowed_wing_ids=allowed_wings, preferred_wing_ids=preferred_wings,
+                    search_depth=search_depth, weapon_role_overrides=weapon_role_overrides,
+                    heuristic_set=heuristic_set,
+                ))
+                result_cache.put_fingerprint("candidate_alternatives", hull_id, fingerprint, candidate_alternatives_result_to_payload(tuple(candidates)))
         else:
             cache_readiness = resolve_cache_status(result_cache, None)
-            candidates = generate_candidate_alternatives(hull_id, selected_profile, registry, **alternatives_kwargs)
+            candidates = list(generate_candidate_alternatives(
+                hull_id, selected_profile, registry,
+                allowed_weapon_ids=allowed_weapons, preferred_weapon_ids=preferred_weapons,
+                denied_weapon_ids=set(advanced.denied_weapon_ids) if advanced else None,
+                locked_weapons_by_mount=advanced.locked_weapons_by_mount if advanced else None,
+                empty_mount_ids=set(advanced.empty_mount_ids) if advanced else None,
+                max_candidates=max_candidates, flux_mode=resolved_flux_mode,
+                allowed_hullmod_ids=allowed_hullmods, preferred_hullmod_ids=preferred_hullmods,
+                allowed_wing_ids=allowed_wings, preferred_wing_ids=preferred_wings,
+                search_depth=search_depth, weapon_role_overrides=weapon_role_overrides,
+                heuristic_set=heuristic_set,
+            ))
         assessed_candidates = [
             {"variant": asdict(candidate.variant), "legality": candidate.legality, "profile_id": selected_profile,
              "omissions": candidate.omissions, "omission_records": [asdict(record) for record in candidate.omission_records],

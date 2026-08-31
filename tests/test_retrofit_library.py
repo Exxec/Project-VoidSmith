@@ -1,10 +1,20 @@
+import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import unittest
 
 from starsector_variant_generator.core.models import Hull, ScanResult, Variant
 from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.output.retrofit_library import copy_existing_retrofit, inspect_editable_retrofit, load_editable_retrofit, populate_variations_if_missing, publish_editable_retrofit, restore_editable_retrofit_history, starter_profiles_for_hull, variants_for_hull, working_copy_path
+from starsector_variant_generator.output.retrofit_library import (
+    copy_existing_retrofit,
+    inspect_editable_retrofit,
+    load_editable_retrofit,
+    populate_variations_if_missing,
+    publish_editable_retrofit,
+    restore_editable_retrofit_history,
+    starter_profiles_for_hull,
+    variants_for_hull,
+    working_copy_path,
+)
 
 
 class RetrofitLibraryTests(unittest.TestCase):

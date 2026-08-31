@@ -7,15 +7,14 @@ combining rule has not been established; no combat simulation is implied.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 from starsector_variant_generator.adapters import mobility_hullmod_effects
 from starsector_variant_generator.core.evidence import EvidenceClass
 from starsector_variant_generator.core.models import Hull
 from starsector_variant_generator.core.registry import Registry
 from starsector_variant_generator.parsers.common import optional_float
-
 
 _MOBILITY_COLUMNS = {
     "max_speed": "max speed",

@@ -5,7 +5,13 @@ from pathlib import Path
 
 from starsector_variant_generator import api
 from starsector_variant_generator.analysis.variant import analyze_variant
-from starsector_variant_generator.core.models import Hull, Hullmod, ScanResult, Variant, Weapon
+from starsector_variant_generator.core.models import (
+    Hull,
+    Hullmod,
+    ScanResult,
+    Variant,
+    Weapon,
+)
 from starsector_variant_generator.core.overrides import EntityOverride
 from starsector_variant_generator.core.registry import Registry
 
