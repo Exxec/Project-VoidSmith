@@ -771,14 +771,22 @@ Required:
 - zoom
 - pan
 - display slot anchors
-- display callout lines
 - display per-slot dropdowns
 - filter by slot legality
 - filter by Strict Faction / Faction+ / Unrestricted
 - filter hidden equipment
 - render selected weapon sprites
-- synchronize Callout View and List View
 - update OP/legality display
+
+Built, then deliberately removed once real usage exposed a problem
+(`TechnicalCanvas.show_hull`, `main_window.py`): external leader-line
+callouts and a separate slot List View. On a real 25-mount capital hull the
+callout lines sprawled far enough past the ship that `fitInView` had to zoom
+out to fit them, shrinking the ship (and its clickable mount boxes) to a
+barely-visible speck; the boxes' own color/size/tooltip already carried the
+same information the callouts duplicated. Slots are now chosen by clicking
+directly on the highlighted mount box on the canvas itself, with no separate
+list to keep in sync.
 
 Not required initially:
 - weapon-group editing
@@ -792,10 +800,13 @@ Not required initially:
 ## 42. Second Ship Canvas Milestone
 
 After the first is stable:
-- automatic callout packing
-- line-crossing reduction
-- slot grouping
-- candidate preview switching
+- ~~automatic callout packing~~ / ~~line-crossing reduction~~ -- moot: leader-line
+  callouts were removed entirely (section 41)
+- candidate preview switching -- implemented (`_preview_candidate`,
+  `main_window.py`)
+- mirror-symmetric mount-pair detection and linked fitting -- implemented
+  (`_detect_mirror_mount_pairs`, "Mirror fitting" toggle), though this is
+  pair-based, not the general slot-grouping this line originally meant
 - weapon detail popovers
 - mount-arc overlays
 - optional grid/rulers

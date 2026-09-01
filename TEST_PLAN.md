@@ -181,7 +181,9 @@ Writes to approved generated-output roots must succeed.
 ## 12. GUI Contract Tests
 
 Where practical:
-- Callout/List share one fitting state
+- clicking a mount box on the canvas and updating fitting state stay
+  consistent (the separate Callout/List views this originally described were
+  removed; the canvas is the single fitting-state surface now)
 - changing a weapon updates OP and legality
 - illegal choices do not appear normally
 - missing sprite does not invalidate a legal fit
