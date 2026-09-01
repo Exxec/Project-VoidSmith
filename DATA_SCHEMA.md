@@ -72,7 +72,7 @@ Player and AI claims remain separate in `ControlSuitabilityEvidence` and are
 unresolved until a unique locally scanned hull identity and version context are
 available.
 
-The vocabulary above matches the project's nine named evidence classes. It was
+The vocabulary above matches the project's eleven named evidence classes. It was
 adopted by additional producers using additive fields only, with no existing
 return type or behavior changed: `analysis/doctrine.py`'s
 `DoctrineEvidence` (`INFERRED_MECHANICS` when variants were examined,
@@ -965,12 +965,16 @@ CapabilityEvidence
     provenance[]
 ```
 
-Initial dimension vocabulary: `ARMOR`, `SHIELDS`, `BALLISTIC`, `ENERGY`,
-`MISSILE`, `CARRIER`, `MOBILITY`, `LONG_RANGE`, `BRAWLING`, `SKIRMISHING`,
-`PD`, `LOGISTICS`, `SALVAGE`, and `SURVEY`. This is a forward-compatible
-contract: the current analyzer populates only dimensions grounded in existing
-normalized evidence. Missing dimensions must remain unavailable rather than
-being inferred from names, source mods, or scripts.
+Implemented dimension vocabulary (`analysis/capability_vector.py::
+CAPABILITY_DIMENSIONS`, 18 dimensions): `LONG_RANGE_PRESSURE`,
+`KINETIC_PRESSURE`, `ARMOR_BREAKING`, `FINISHING_POWER`,
+`SUSTAINED_PRESSURE`, `BURST_STRIKE`, `PD_SCREENING`,
+`FIGHTER_INTERCEPTION`, `MISSILE_PROJECTION`, `ARMOR_TANKING`,
+`SHIELD_TANKING`, `MOBILITY`, `PURSUIT`, `CARRIER_PROJECTION`, `FREIGHTER`,
+`TANKER`, `SALVAGE_SUPPORT`, and `SURVEY_SUPPORT`. This is a
+forward-compatible contract: the current analyzer populates only dimensions
+grounded in existing normalized evidence. Missing dimensions must remain
+unavailable rather than being inferred from names, source mods, or scripts.
 
 ---
 
@@ -1030,31 +1034,21 @@ Every Native, Retrofit, and Acquisition recommendation records both
 ```text
 FactionCapabilityProfile
     faction_id
-    dimensions:
-        armor_strength
-        shield_strength
-        ballistic_strength
-        energy_strength
-        missile_strength
-        carrier_strength
-        phase_strength
-        mobility_strength
-        long_range_strength
-        brawler_strength
-        skirmisher_strength
-        pd_strength
-        logistics_strength
-        salvage_strength
-        survey_strength
-    role_coverage[]
+    known_hulls_examined
+    unresolved_known_hull_ids[]
+    role_capabilities[]        # RoleCapability: role, best_hull_id, best_score, hulls_examined
+    civilian_role_coverage[]
+    capability_vector{}        # dimension -> CapabilityEvidence, section 21A's 18 dimensions
     strengths[]
-    adequate[]
     weaknesses[]
-    gaps[]
-    evidence_summary
-    confidence_summary
-    provenance
+    capability_gaps[]
 ```
+
+Matches `analysis/faction_capability.py::FactionCapabilityProfile` and
+`analyze_faction_capability`; `strengths`/`weaknesses`/`capability_gaps` are
+derived from `capability_vector` scores against the `gap_strong_threshold`/
+`gap_adequate_threshold`/`gap_weak_threshold` heuristics (`HEURISTICS.md`
+section 7, `core/heuristics.py`).
 
 ---
 

@@ -37,7 +37,7 @@ just unstarted work:
 | 9 (Role distortion) | Partially implemented -- build compatibility supplies an explicit structural role-distortion metric for build-aware retrofit paths. Doctrine-distance distortion remains unavailable without supported pack evidence. |
 | 10 (Recommendation score) | Partial: all legs rank `Hull + BuildArchetype` combinations where supported. Native stays raw structural/build score; acquisition includes affinity; retrofit includes real quality and bounded disruption. A single cross-leg utility score is deliberately not fabricated. |
 | 11 (Confidence) | Partial: known-hull coverage, available vector evidence, build inference confidence, and access-pack confidence propagate conservatively into build-aware recommendations. Unknown scripted effects remain unavailable rather than numerically invented. |
-| 12 (Knowledge-pack doctrine bias) | Not implemented -- requires Phase 7 (Faction Knowledge Pack Framework), which doesn't exist yet |
+| 12 (Knowledge-pack doctrine bias) | Partially implemented -- `_rank_build_candidates_for_role` applies a small, freshness-adjusted ranking bias from a resolved Faction Knowledge Pack's build preferences (`baseline_0.4`'s `knowledge_build_archetype_preference_weight`) and progression-tier guidance (`baseline_0.7`'s `knowledge_progression_preference_weight`); it cannot admit a hull/build path, alter capability evidence, or affect legality. Doctrine-strictness modes (LOOSE/BALANCED/STRICT) remain unimplemented. |
 | 13 (Why Not) | Implemented across current legs; diversity decisions must additionally preserve and report the mechanical-profile evidence and score tradeoff that led to selection or exclusion. |
 | 14 (GUI) | **Implemented for the supported recommendation workflows** -- the Faction workspace exposes faction capability, gaps, recommendations, Why-Not, Fleet Support, and Scenario Advisor controls. It remains presentation-only and relies on the API/backend service layer. |
 | 15 (No Recommendation) | **Implemented, now to full-maturity's own definition** -- `unaddressed_gaps` (no native solution, unchanged) plus a new `fully_unaddressed_gaps` (no solution across native, retrofit, AND acquisition, exactly this section's own "full maturity" framing). |
@@ -45,9 +45,10 @@ just unstarted work:
 
 **Do not read "implemented" sections as the final target shape** -- they
 are the parts of this design buildable today without guessing at
-prerequisites that don't exist. Sections 8 (partially), 9, 12, 13
-(partially), and 14 describe real future work, most now gated on Phase 7
-(knowledge packs) rather than Phases 8/9, which have landed.
+prerequisites that don't exist. Sections 8 (partially), 9, and 14
+describe real future work; Phases 8/9 and Phase 7 (knowledge packs) have
+all since landed, which is what let sections 5, 7, 12, and 13 move from
+"not implemented" to real (if still partial) coverage below.
 
 ## 3. Capability vs role
 
@@ -68,15 +69,31 @@ unavailable dimension when the available data cannot support it.
 
 ## 4. Define the gap
 
-### 4.1 Richer capability-vector direction
+### 4.1 Richer capability-vector direction -- implemented (see section 2)
 
-The current engine uses five directly evidenced structural axes. The next
-compatible extension is a non-exclusive `CapabilityVector`: armor, shields,
-ballistic, energy, missile, carrier, mobility, long-range, brawling,
-skirmishing, PD, logistics, salvage, and survey dimensions, each retaining a
-score, confidence, availability state, and supporting evidence. A missing or
-scripted-unknown dimension remains unavailable; it is never treated as zero
-or favorable evidence.
+The current engine's 5 gap-detection axes (section 3) are directly evidenced
+structural scores. A separate, already-implemented, non-exclusive
+18-dimension `CapabilityVector` (`analysis/capability_vector.py::
+infer_hull_capability_vector`, `CAPABILITY_DIMENSIONS`) aggregates
+mechanical-archetype, existing-variant weapon, carrier, and civilian
+evidence into `LONG_RANGE_PRESSURE`, `KINETIC_PRESSURE`, `ARMOR_BREAKING`,
+`FINISHING_POWER`, `SUSTAINED_PRESSURE`, `BURST_STRIKE`, `PD_SCREENING`,
+`FIGHTER_INTERCEPTION`, `MISSILE_PROJECTION`, `ARMOR_TANKING`,
+`SHIELD_TANKING`, `MOBILITY`, `PURSUIT`, `CARRIER_PROJECTION`, `FREIGHTER`,
+`TANKER`, `SALVAGE_SUPPORT`, and `SURVEY_SUPPORT` dimensions, each retaining
+a score, confidence, availability state, and supporting evidence. A missing
+or scripted-unknown dimension remains unavailable; it is never treated as
+zero or favorable evidence.
+
+`baseline_0.5+` gap detection (section 4, below) augments each of the 5
+structural axes with its unambiguous vector counterpart via
+`_ROLE_CAPABILITY_DIMENSION` (`LINE_ARTILLERY` -> `LONG_RANGE_PRESSURE`,
+`LINE_BRAWLER` -> `SUSTAINED_PRESSURE`, `MISSILE_SUPPORT` ->
+`MISSILE_PROJECTION`, `CARRIER`/`BATTLE_CARRIER` -> `CARRIER_PROJECTION`),
+taking the max of the two scores -- it does not yet extend gap detection to
+the vector's other 14 dimensions, nor to `FACTION_KNOWLEDGE_PACKS.md`
+section 3's separate, still-aspirational 15-name capability taxonomy (which
+names its dimensions differently from this vector's own).
 
 The recommendation unit is `Hull + BuildArchetype`, not hull identity. A
 single hull may therefore appear as independent Tank, Line Anchor, and
@@ -118,7 +135,7 @@ Deliberately not implemented (would be fabrication, not evidence):
 itself -- these need the fuller capability taxonomy from section 3 to
 mean anything real.
 
-## 5. Adaptive retrofit search (not implemented -- see section 2)
+## 5. Adaptive retrofit search -- implemented, narrower than the full design (see section 2)
 
 ## 6. Native search -- implemented
 
@@ -162,7 +179,7 @@ NativeRecommendation
     rank: int                 # 1-based, within this role's list
 ```
 
-## 7. Acquisition search (not implemented -- see section 2)
+## 7. Acquisition search -- implemented (see section 2)
 
 ## 8. Retrofit cost (not implemented -- see section 2)
 
@@ -230,9 +247,21 @@ answers only "how much of the faction's real hull list could we even
 look at," not "how mechanically certain is this specific
 recommendation." Both matter; only the first is implemented.
 
-## 12. Knowledge-pack doctrine bias (not implemented -- see section 2)
+## 12. Knowledge-pack doctrine bias -- partially implemented (see section 2)
 
-## 13. Why Not? -- implemented for the native leg
+`analysis/gap_recommendation.py::_rank_build_candidates_for_role` (used by
+all three legs) applies a bounded advisory `bias` multiplier to a
+candidate's rank score from a resolved Faction Knowledge Pack: a build
+preference term (`build_archetype_preference`, weighted by
+`knowledge_build_archetype_preference_weight`) and a progression-tier term
+(`progression_hull_ids`/`progression_guidance_confidence`, weighted by
+`knowledge_progression_preference_weight`). Both are freshness-adjusted,
+cannot introduce a hull/build/role the mechanical inference did not
+already admit, and never touch legality. Doctrine-strictness modes
+(LOOSE/BALANCED/STRICT, section 9 of `FACTION_KNOWLEDGE_PACKS.md`) remain
+unimplemented.
+
+## 13. Why Not? -- implemented across the native, retrofit, and acquisition legs
 
 `analysis/gap_recommendation.py::explain_native_candidate(faction,
 registry, role, hull_id)` answers "why wasn't this hull recommended for
@@ -259,9 +288,13 @@ is reported as `resolved=False` rather than silently scored as 0.0 --
 "we don't know this hull" and "we know this hull and it scores zero" are
 different claims.
 
-Not yet extended to retrofit/acquisition candidates, since those legs
-don't exist (section 5/7 above) -- this is Phase 11 wiring against what
-Phase 10 already has, not new recommendation-search work.
+Now also extended to the retrofit and acquisition legs via
+`explain_retrofit_candidate`/`explain_acquisition_candidate`, which read
+the same shared `_retrofit_audit_trail`/`_acquisition_audit_trail`
+those legs' own `recommend_*_solutions` functions build (see
+`RecommendationAudit`, above), so Why-Not can never independently
+reconstruct ranking/selection logic that could drift from the actual
+recommendation.
 
 ## 14. GUI layout (not implemented -- see section 2)
 

@@ -13,7 +13,7 @@ or entity lists here.
 
 | Platform | Package version | Desktop / display | Result | Evidence required | Status |
 | --- | --- | --- | --- | --- | --- |
-| GitHub-hosted Ubuntu x64 | tag workflow version | offscreen smoke test | archive starts with `--smoke-test` | successful tag workflow and artifact verification | Pending current tag run |
+| GitHub-hosted Ubuntu x64 | tag workflow version | offscreen smoke test | archive starts with `--smoke-test` | successful tag workflow and artifact verification | Verified — tag workflow succeeded (for example `v0.1.0RC3`) |
 | Ubuntu LTS x64 | user-local | user-local | launch, scan, generate, export | local release-verifier output plus observed smoke result | Unverified |
 | Linux Mint x64 | user-local | user-local | launch, scan, generate, export | local release-verifier output plus observed smoke result | Unverified |
 | Fedora Workstation x64 | user-local | user-local | launch, scan, generate, export | local release-verifier output plus observed smoke result | Unverified |

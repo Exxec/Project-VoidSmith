@@ -74,7 +74,9 @@ bash tools/build_portable_release_linux.sh --bootstrap-dependencies --clean
 
 The script produces `dist/VoidSmith-<version>-linux-x64.tar.gz` and its
 SHA-256 file. It runs the GUI smoke test with `QT_QPA_PLATFORM=offscreen`
-before and after archive extraction. The **Linux portable release** GitHub
-workflow runs this same script for version tags and manual dispatch, then
-uploads the archive as a workflow artifact; it does not publish a GitHub
-release automatically.
+before and after archive extraction. The **Portable release** GitHub workflow
+(`.github/workflows/linux-portable-release.yml`) runs this same script
+alongside the Windows build for version tags and manual dispatch. On a `v*`
+tag push it attaches both archives and their checksums to one GitHub release
+(prerelease when the tag contains `alpha`, `beta`, or `rc`); manual dispatch
+keeps them as workflow artifacts only and does not publish a release.

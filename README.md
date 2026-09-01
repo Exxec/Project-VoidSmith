@@ -3,7 +3,7 @@
 VoidSmith is an offline, deterministic desktop tool for read-only Starsector
 ship fitting, variant inspection, and faction-capability analysis.
 
-**Current pre-release:** [v0.1.25rc2](https://github.com/Exxec/Project-VoidSmith/releases/tag/v0.1.25rc2) · [All releases](https://github.com/Exxec/Project-VoidSmith/releases)
+**Current release:** [latest release](https://github.com/Exxec/Project-VoidSmith/releases/latest) · [All releases](https://github.com/Exxec/Project-VoidSmith/releases)
 
 ## What it does
 
