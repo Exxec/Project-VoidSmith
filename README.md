@@ -36,6 +36,8 @@ See the [Quick Start](docs/QUICK_START.md) for setup and the
 
 ## Safety and scope
 
+Optional sister-tool checks are available from source: `tools/review_spw_inventory.py INVENTORY INSTALLATION` reviews an explicit SPW inventory against current local metadata/JAR hashes without changing scans or fits. `tools/verify_portable_release.py ARCHIVE --release-evidence FILE [--downloaded-asset FILE]` reports separate source, build, native, live, rights, and publication evidence states. Matching local asset bytes alone leave publication authenticity unknown.
+
 VoidSmith reads game and mod sources as untrusted, read-only input. It does not
 overwrite source variants, alter Starsector files, execute mod scripts, or
 bundle Starsector/mod data in this repository or its packages. Unknown or

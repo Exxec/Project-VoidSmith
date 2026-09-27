@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -64,3 +65,13 @@ class ApiScanProgressTests(unittest.TestCase):
         # caller that doesn't pass a callback sees identical behavior.
         outcome = api.run_scan(self.config, self.logger)
         self.assertGreater(len(outcome.result.hulls), 0)
+
+    def test_optional_spw_inventory_only_adds_report_context(self) -> None:
+        inventory = Path(self.temp_dir.name) / "identity.json"
+        inventory.write_text(json.dumps({"schema_version": "spw-mod-inventory-1",
+            "installation_path": str(self.config.starsector_path.resolve()),
+            "enabled_mods_sha256": None, "mods": []}), encoding="utf-8")
+        baseline = api.run_scan(self.config, self.logger)
+        with_context = api.run_scan(self.config, self.logger, spw_inventory=inventory)
+        self.assertEqual(len(baseline.result.hulls), len(with_context.result.hulls))
+        self.assertIn("spw_identity_context", with_context.report)

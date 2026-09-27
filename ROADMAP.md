@@ -80,6 +80,7 @@ These gaps cannot be converted into recommendation or combat-outcome claims.
 
 ## Engineering constraints
 
+
 - See `AGENTS.md` for repository, source-safety, and distribution boundaries.
 - See `FORMAL_SPECIFICATION.md` and `DATA_SCHEMA.md` for contracts.
 - See `GAP_RECOMMENDATION_ENGINE.md` for recommendation behavior and
@@ -88,3 +89,12 @@ These gaps cannot be converted into recommendation or combat-outcome claims.
   documentation, and regression coverage.
 - Unknown scripted or runtime-dependent behavior remains unknown; it must not
   be guessed into legality or quality.
+
+## Sister repository interoperability (proposed 2026-09-27)
+
+Design and acceptance gates: [docs/SISTER_REPO_INTEROPERABILITY_DESIGN.md](docs/SISTER_REPO_INTEROPERABILITY_DESIGN.md).
+
+1. [ ] Extend existing release verification to trace exact source, build inputs, archive, native acceptance, and separately observed published asset, with per-gate evidence states. Adapt BridgeForge's evidence contract; keep VoidSmith's own implementation.
+2. [ ] Optionally ingest SPW's versioned mod identity inventory as provenance context. Match by unambiguous ID and hash, keep native scanning authoritative, and never infer fit legality or recommendation quality from inventory alone.
+
+**Implementation checkpoint 2026-09-27:** Portable builders now emit hash-bound `*.release-chain.json` sidecars, which the release workflow uploads beside archives and checksums. `tools/verify_portable_release.py` accepts optional release-chain evidence and a separately supplied asset; `tools/review_spw_inventory.py` checks SPW identity evidence against selected local metadata/JAR hashes. `api.run_scan(..., spw_inventory=PATH)` adds that context to the ordinary scan report without changing registry or fit results. Synthetic tests cover the parsers, and a direct SPW-export-to-VoidSmith synthetic round trip returned `MATCH` then `UNKNOWN` after metadata changed. A real-install round trip and independently verified remote publication remain open; publication authenticity is still `UNKNOWN` from local bytes alone.

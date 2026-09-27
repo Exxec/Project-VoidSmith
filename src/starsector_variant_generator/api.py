@@ -145,6 +145,7 @@ from starsector_variant_generator.core.result_cache import (
     resolve_cache_status,
 )
 from starsector_variant_generator.core.scanner import Scanner
+from starsector_variant_generator.core.spw_inventory import review_spw_inventory
 from starsector_variant_generator.generation.candidate import (
     BuildCandidateResult,
     CandidateResult,
@@ -216,6 +217,7 @@ def run_scan(
     include_entities: bool = True,
     progress_callback: Callable[[ScanProgress], None] | None = None,
     cancel_check: Callable[[], bool] | None = None,
+    spw_inventory: Path | None = None,
 ) -> ScanOutcome:
     """Scan enabled mods by default; diagnostics may opt into all installed mods.
 
@@ -276,6 +278,8 @@ def run_scan(
         "duplicate_identities": [asdict(item) for item in registry.duplicate_identities],
         "contextual_reference_resolutions": [asdict(item) for item in registry.contextual_reference_resolutions],
     }
+    if spw_inventory is not None:
+        report["spw_identity_context"] = review_spw_inventory(spw_inventory, config.starsector_path)
     return ScanOutcome(result, registry, cache_result, change_impact, report)
 
 

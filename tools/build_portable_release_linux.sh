@@ -34,12 +34,13 @@ release_name="VoidSmith-${version}-linux-x64"
 release_root="$project_root/dist/$release_name"
 archive_path="$project_root/dist/$release_name.tar.gz"
 checksum_path="$archive_path.sha256"
+evidence_path="$archive_path.release-chain.json"
 staging_root="$project_root/build/portable-release-linux"
 pyinstaller_dist="$staging_root/dist"
 pyinstaller_work="$staging_root/pyinstaller"
 smoke_root="$staging_root/archive-smoke"
 
-for target in "$release_root" "$archive_path" "$checksum_path"; do
+for target in "$release_root" "$archive_path" "$checksum_path" "$evidence_path"; do
     if [[ -e "$target" ]]; then
         if [[ "$clean" != true ]]; then
             echo "Release target already exists: $target (rerun with --clean after review)" >&2
@@ -119,6 +120,7 @@ sha256sum "$archive_path" > "$checksum_path"
 mkdir -p "$smoke_root"
 tar -C "$smoke_root" -xzf "$archive_path"
 QT_QPA_PLATFORM=offscreen "$smoke_root/$release_name/VoidSmith" --smoke-test
+uv run --locked --offline --no-sync python tools/build_release_evidence.py "$archive_path" --output "$evidence_path"
 
 echo "Portable Linux release built: $archive_path"
 cat "$checksum_path"

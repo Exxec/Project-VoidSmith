@@ -27,6 +27,7 @@ jobs:
           path: |
             dist/VoidSmith-*-win-x64.zip
             dist/VoidSmith-*-win-x64.zip.sha256
+            dist/VoidSmith-*-win-x64.zip.release-chain.json
           if-no-files-found: error
 
   package-linux-x64:
@@ -49,6 +50,7 @@ jobs:
           path: |
             dist/VoidSmith-*-linux-x64.tar.gz
             dist/VoidSmith-*-linux-x64.tar.gz.sha256
+            dist/VoidSmith-*-linux-x64.tar.gz.release-chain.json
           if-no-files-found: error
 
   publish-tagged-release:

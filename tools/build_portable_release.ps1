@@ -62,6 +62,7 @@ $ReleaseName = "VoidSmith-$Version-win-x64"
 $ReleaseRoot = Join-Path $OutputDirectory $ReleaseName
 $ArchivePath = Join-Path $OutputDirectory "$ReleaseName.zip"
 $ChecksumPath = "$ArchivePath.sha256"
+$EvidencePath = "$ArchivePath.release-chain.json"
 $StagingRoot = Join-Path $ProjectRoot 'build/portable-release'
 $PyInstallerWork = Join-Path $StagingRoot 'pyinstaller'
 $PyInstallerDist = Join-Path $StagingRoot 'dist'
@@ -113,7 +114,7 @@ if (-not [Environment]::Is64BitOperatingSystem) {
 & uv run --locked --offline --no-sync --extra gui --group release python -c "import struct, sys; raise SystemExit(0 if struct.calcsize('P') == 8 else 1)"
 if ($LASTEXITCODE -ne 0) { throw 'The active Python runtime is not 64-bit; refusing to label the release win-x64.' }
 
-foreach ($target in @($ReleaseRoot, $ArchivePath, $ChecksumPath)) {
+foreach ($target in @($ReleaseRoot, $ArchivePath, $ChecksumPath, $EvidencePath)) {
     if (Test-Path -LiteralPath $target) {
         if (-not $Clean) { throw "Release target already exists: $target. Re-run with -Clean after reviewing it." }
         $resolved = [IO.Path]::GetFullPath($target)
@@ -294,6 +295,9 @@ if (-not $SkipArchiveSmoke) {
     if (-not (Test-Path -LiteralPath $ExtractedExe -PathType Leaf)) { throw 'Portable ZIP did not retain the expected application layout.' }
     Invoke-PortableSmokeTest $ExtractedExe
 }
+
+& uv run --locked --offline --no-sync python tools/build_release_evidence.py $ArchivePath --output $EvidencePath
+if ($LASTEXITCODE -ne 0) { throw 'Release-chain evidence generation failed.' }
 
 Write-Host "Portable release built: $ArchivePath"
 Write-Host "SHA-256: $ArchiveHash"
