@@ -50,6 +50,7 @@ files, or make campaign-inventory or market-availability decisions.
 | 54 — Player-suitability semantics | Decision-gated | `player_suitability` is presently a compatibility placeholder. Define its evidence and vocabulary before changing behavior; do not infer player skill or combat outcomes from static data. |
 | 55 — Linux compatibility matrix | Complete with limitations | `docs/LINUX_COMPATIBILITY_MATRIX.md` records the local qualification protocol and unverified Ubuntu/Mint/Fedora boundaries. Native archive smoke evidence is distinct from broader desktop/distribution runtime qualification. |
 | 56 — Campaign-save parser preparation | Decision-gated | Keep direct metadata discovery only until a documented, read-only save format and a normalized campaign data contract exist. No content parsing or campaign inference is authorized before that gate. |
+| 57 — Save Workshop (minor edits to a save copy) | Decision-gated | Owner-approved design 2026-10-06 in `docs/SAVE_WORKSHOP_DESIGN.md`: tier 1 edits credits, cargo commodities (supplies, fuel, crew, marines, machinery) and story points on a copy written below the configured output directory. No implementation until every parser-gate input exists and the capacity-overage behavior has recorded evidence (it stays `UNKNOWN`). The original save is never modified. Implementation plan, module layout, GUI design and slices S0-S6: `docs/SAVE_WORKSHOP_IMPLEMENTATION_PLAN.md`. |
 
 ## Latest implementation note
 

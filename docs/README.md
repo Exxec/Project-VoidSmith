@@ -10,6 +10,8 @@ and are intentionally not consolidated into release documentation.
 | [User Guide](USER_GUIDE.md) | Workspaces, results, safety boundaries, and limitations. |
 | [Fleet Support Advisor](FLEET_SUPPORT_ADVISOR.md) | Locked-fleet recommendations and scenario handoff scope. |
 | [Portable packaging](WINDOWS_PACKAGING.md) | Reproducible Windows and Linux release artifacts. |
+| [Save Workshop design](SAVE_WORKSHOP_DESIGN.md) | Decision-gated plan for minor edits to a save copy; not implemented. |
+| [Save Workshop implementation plan](SAVE_WORKSHOP_IMPLEMENTATION_PLAN.md) | Module layout, GUI design, build slices and lessons ported from BridgeForge. |
 | [Developer Guide](DEVELOPER_GUIDE.md) | Architecture, verification, and contribution rules. |
 | [Calibration import notes](CALIBRATION_IMPORT_NOTES.md) | Sanitized fixture and calibration-import constraints. |
 | [Complex hull acceptance matrix](COMPLEX_HULL_ACCEPTANCE_MATRIX.md) | Acceptance evidence for composite-hull modeling. |

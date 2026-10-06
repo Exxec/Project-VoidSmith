@@ -142,7 +142,8 @@ Do not attempt all of the following in the first version:
 - Automatic combat simulation.
 - Automatic piloting.
 - Real-time game memory access.
-- Save editing.
+- Save editing. (A separate, decision-gated Save Workshop mode is designed in
+  `docs/SAVE_WORKSHOP_DESIGN.md`; it is not part of version 1 and not authorized to ship.)
 - Weapon graphical analysis.
 - Pixel-perfect firing arc reasoning from sprites.
 - Dynamic tactical simulation of every possible opponent.

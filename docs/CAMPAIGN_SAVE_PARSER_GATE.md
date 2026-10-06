@@ -20,5 +20,10 @@ Content parsing may begin only after all of these inputs exist:
 6. A scope decision for every proposed consumer. Parsed campaign facts may not
    silently change legality, recommendation score, or whole-fleet planning.
 
+Writing is a further gate. The Save Workshop (`SAVE_WORKSHOP_DESIGN.md`) may write only a new copy of a
+user-selected save below the configured output directory, after the original has been hashed, and must re-read the
+copy to confirm that only planned values changed. The original is never modified and the game's saves folder is
+never written. Capacity-overage effects are `UNKNOWN` until evidence is recorded there.
+
 Until then, `discover_campaign_directory()` remains the complete supported
 boundary and returns `CAMPAIGN_SAVE_UNINSPECTED` metadata only.

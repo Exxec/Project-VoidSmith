@@ -1,6 +1,6 @@
 # AGENTS.md
 # Starsector Variant Generator Repository Contract
-Version 0.5
+Version 0.6
 
 Read the formal specification before coding.
 
@@ -38,6 +38,11 @@ Never:
 - write outside configured output/log/cache directories
 
 Treat mod data as untrusted input and sanitize paths.
+
+Save Workshop (decision-gated, `docs/SAVE_WORKSHOP_DESIGN.md`, roadmap phase 57; not implemented): the player's
+original save is source data and is never modified. The only permitted write is a new copy of a user-selected save
+below the configured output directory, never into the game's saves folder, and never before every gate in
+`docs/CAMPAIGN_SAVE_PARSER_GATE.md` is met. Capacity-overage consequences are `UNKNOWN` and must not be computed.
 
 ## Distribution and IP Boundary
 
