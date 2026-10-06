@@ -99,3 +99,19 @@ Design and acceptance gates: [docs/SISTER_REPO_INTEROPERABILITY_DESIGN.md](docs/
 2. [ ] Optionally ingest SPW's versioned mod identity inventory as provenance context. Match by unambiguous ID and hash, keep native scanning authoritative, and never infer fit legality or recommendation quality from inventory alone.
 
 **Implementation checkpoint 2026-09-27:** Portable builders now emit hash-bound `*.release-chain.json` sidecars, which the release workflow uploads beside archives and checksums. `tools/verify_portable_release.py` accepts optional release-chain evidence and a separately supplied asset; `tools/review_spw_inventory.py` checks SPW identity evidence against selected local metadata/JAR hashes. `api.run_scan(..., spw_inventory=PATH)` adds that context to the ordinary scan report without changing registry or fit results. Synthetic tests cover the parsers, and a direct SPW-export-to-VoidSmith synthetic round trip returned `MATCH` then `UNKNOWN` after metadata changed. A real-install round trip and independently verified remote publication remain open; publication authenticity is still `UNKNOWN` from local bytes alone.
+
+## Proposed ideas (2026-10-06, owner asked for per-project ideas; proposed, not approved)
+
+1. [ ] **Save Workshop (phase 57).** Build slices S0-S6 from `docs/SAVE_WORKSHOP_IMPLEMENTATION_PLAN.md`, starting with the
+   format description (S0) and a read-only inspect (S1). Benefit: the first-ever way for players to top up supplies, fuel, crew
+   or credits in a safe copy without Console Commands or an in-game mod.
+2. [ ] **Fleet logistics summary (read-only).** From hull data, show a fleet's cargo, fuel and crew capacity and its supplies
+   per month. Benefit: it is the missing context for the capacity overage question, it cross-checks the capacity figures the
+   Workshop reads from a save, and it needs no save access.
+3. [ ] **Check a revived mod's shipped variants.** A report that validates every variant a mod ships against hull slots,
+   weapons and hullmods. BridgeForge finds a variant that names a missing weapon (a fatal at New Game); VoidSmith has the full
+   slot legality. Benefit: catches fit errors before a live run, using the existing validator unchanged.
+4. [ ] **Evidence record for edits.** A dated, per-fact record (method, game version, result) for anything the Workshop proves,
+   in the style of BridgeForge's `RC8_BEHAVIOUR.md`. Benefit: keeps unknowns, such as overage effects, honest and citable.
+5. [ ] **GUI contract update.** Add the Save Workshop workspace rules to `GUI.md` when S4 starts (opt-in flag, safety banner,
+   refuse and opt-in paths). Benefit: keeps the GUI contract and the backend gate in step.
