@@ -1268,3 +1268,23 @@ strong, weak, and unknown dimensions and individually ranked additions.
 Never label this a combat prediction or promise that a fleet will win a named
 mission. The UI must render the backend assessment and its stated limits; it
 must not calculate scenario readiness or candidate ranking locally.
+
+
+## 63. Save Workshop read-only source preview
+
+Settings / Export exposes a default-off, session-only Save Workshop preview.
+Enabling it adds a distinct top-level workspace, with explicit save-directory
+selection, a read-only overview, model/view resource requests and backend plan
+review. No save path is guessed. The GUI owns input text and presentation only;
+resource location, numeric/storage/tier/membership checks and capacity outcomes
+come exclusively from campaign backend services. Unavailable and UNKNOWN
+states remain visible. No campaign facts enter fitting/recommendation engines.
+
+SaveWorker uses the retained background-operation lifecycle; Stop Waiting
+suppresses stale result delivery without claiming safe backend interruption.
+Changed selection/input/opt-in invalidates a pending plan or stale result.
+Main-window close waits for its workers. Write edited copy stays disabled with
+the backend OPEN_WITHIN_CAPACITY gate reason (GUI write controls are not built; the CLI `save write` exists). The original-save safety banner
+is persistent. GUI writing and output-copy verification, discovery-table navigation,
+per-row reset/set-to-capacity controls and a shipping flag decision remain
+future S3/S4/S6 work; no live-game acceptance is claimed.

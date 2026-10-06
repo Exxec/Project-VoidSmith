@@ -49,8 +49,12 @@ files, or make campaign-inventory or market-availability decisions.
 | 53 — Explainability comparison | Complete with limitations | Faction compares two or more specified Hull + BuildArchetype Why-Not records using backend-generated evidence only. It does not rerank paths or make outcome claims. |
 | 54 — Player-suitability semantics | Decision-gated | `player_suitability` is presently a compatibility placeholder. Define its evidence and vocabulary before changing behavior; do not infer player skill or combat outcomes from static data. |
 | 55 — Linux compatibility matrix | Complete with limitations | `docs/LINUX_COMPATIBILITY_MATRIX.md` records the local qualification protocol and unverified Ubuntu/Mint/Fedora boundaries. Native archive smoke evidence is distinct from broader desktop/distribution runtime qualification. |
-| 56 — Campaign-save parser preparation | Decision-gated | Keep direct metadata discovery only until a documented, read-only save format and a normalized campaign data contract exist. No content parsing or campaign inference is authorized before that gate. |
-| 57 — Save Workshop (minor edits to a save copy) | Decision-gated | Owner-approved design 2026-10-06 in `docs/SAVE_WORKSHOP_DESIGN.md`: tier 1 edits credits, cargo commodities (supplies, fuel, crew, marines, machinery) and story points on a copy written below the configured output directory. No implementation until every parser-gate input exists and the capacity-overage behavior has recorded evidence (it stays `UNKNOWN`). The original save is never modified. Implementation plan, module layout, GUI design and slices S0-S6: `docs/SAVE_WORKSHOP_IMPLEMENTATION_PLAN.md`. |
+| 56 — Campaign-save parser preparation | Complete with limitations | S0/S1: explicit read-only XML inspection for game 0.98a-RC8 / save 0.6, a separate fact schema, SHA-256 evidence and bounded refusal tests. `docs/CAMPAIGN_SAVE_FORMAT.md` closes the six inputs for this inspection scope only; explicit resource interpretation is separately qualified by S2. |
+| 57 — Save Workshop (minor edits to a save copy) | S0–S3 implemented; over-capacity writes refused; GUI write controls and release readiness pending | Owner-approved design 2026-10-06 in `docs/SAVE_WORKSHOP_DESIGN.md`: tier 1 edits credits, cargo commodities (supplies, fuel, crew, marines, machinery) and story points on a copy written below the configured output directory. Read-only resource inspection and tier-1 edit planning are implemented from qualified static storage evidence. Owner decision 2026-10-06: S3 writes verified copies for changes within the saved capacity only; over-capacity changes are refused and consequences remain `UNKNOWN`. The original save is never modified. Implementation plan, module layout, GUI design and slices S0-S6: `docs/SAVE_WORKSHOP_IMPLEMENTATION_PLAN.md`. |
+
+## Save Workshop checkpoint — 2026-10-06
+
+S0/S1 now qualify a single observed save profile using 81 owner-supplied game and isolated-rig campaigns (81 READABLE, 81 hash-identical originals); synthetic tests cover unsafe inputs, limits, source changes and non-mutation. The independently supplied AC8 research has a different format and contributes verification practices only. S2 is implemented: referenced player cargo/credits and character story points, exact byte spans, float32/int32 checks, installed commodity membership, explicit capacity-uncertainty planning opt-in and `save plan`. Static alias/type evidence is documented in `docs/CAMPAIGN_SAVE_RESOURCES.md`. S3 remains blocked by the additional write gate requiring controlled capacity evidence. S4 has an independent read-only preview: an opt-in top-level Save Workshop tab, editable resource table, backend plan checks, pure presentation and retained worker. Save writing and its verification UI remain disabled and unimplemented. S5 requires controlled runtime capacity observations; effects remain UNKNOWN. Edit plans write nothing. Validation (before S3): 822 unittest tests successful (two skipped), 81/81 resource inspections READABLE with credits/story points resolved, exact spans verified and unchanged independent hashes; clean diff checks. Ruff is unavailable. Detailed limits are recorded in `docs/CAMPAIGN_SAVE_FORMAT.md` and `docs/CAMPAIGN_SAVE_RESOURCES.md`.
 
 ## Latest implementation note
 
@@ -72,9 +76,9 @@ thread is released.
 only. It does not guess locations, recurse, follow links, mutate entries, or
 interpret inventory.
 
-**Not implemented:** campaign-save content parsing. Until a documented,
-read-only save format can be supported without guessing, no save contents are
-interpreted. The normalized hull schema currently has no deployment-point
+**Implemented in source (2026-10-06):** `run_save_inspect` and `voidsmith save inspect SAVE_DIR` validate bounded XML and read direct descriptor facts for one qualified version. Default inspection reads descriptor/XML facts only; explicit `--resources` resolves qualified resources, and `save plan` validates requested numeric changes without writing files. Existing packaged binaries have not been rebuilt. See `docs/CAMPAIGN_SAVE_FORMAT.md` and `docs/CAMPAIGN_SAVE_RESOURCES.md`.
+
+**Implemented (S3, 2026-10-06):** `voidsmith save write` writes one verified new copy below the output directory when every change is ACCEPTED within the saved capacity; `campaign/verify.py` re-reads it independently; failures remove the copy; the 847-test suite passes (three skipped); ruff is clean on the new files. **Not implemented:** over-capacity writing, GUI write controls, game-load acceptance of an edited copy, and release readiness. Source builds have a default-off Save Workshop read-only preview under Settings / Export; no write action is enabled. The normalized hull schema currently has no deployment-point
 field, and the application has no parseable campaign officer/skill state.
 Existing knowledge-pack officer notes remain presentational guidance only.
 These gaps cannot be converted into recommendation or combat-outcome claims.
@@ -113,5 +117,5 @@ Design and acceptance gates: [docs/SISTER_REPO_INTEROPERABILITY_DESIGN.md](docs/
    slot legality. Benefit: catches fit errors before a live run, using the existing validator unchanged.
 4. [ ] **Evidence record for edits.** A dated, per-fact record (method, game version, result) for anything the Workshop proves,
    in the style of BridgeForge's `RC8_BEHAVIOUR.md`. Benefit: keeps unknowns, such as overage effects, honest and citable.
-5. [ ] **GUI contract update.** Add the Save Workshop workspace rules to `GUI.md` when S4 starts (opt-in flag, safety banner,
+5. [x] **GUI contract update.** Add the Save Workshop workspace rules to `GUI.md` when S4 starts (opt-in flag, safety banner,
    refuse and opt-in paths). Benefit: keeps the GUI contract and the backend gate in step.

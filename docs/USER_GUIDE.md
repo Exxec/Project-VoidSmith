@@ -248,9 +248,13 @@ Hull records include civilian tags, structural recommendation eligibility, and
 the experimental warfare profile. Fighter records include source-role and
 entity/deployment profiles.
 
+## Read-only campaign inspection (source builds)
+
+Run `voidsmith save inspect "PATH_TO_SELECTED_SAVE_FOLDER"` on a folder you explicitly choose. The inspector accepts only uncompressed game 0.98a-RC8 / save 0.6 XML, reports descriptor facts and SHA-256 hashes, and writes no files. Unsupported versions, unsafe paths/XML and malformed data are refused. Add `--resources` to inspect qualified credits, story points and existing commodity stacks. `voidsmith save plan SAVE_DIR --set credits=200000 --set story_points=10` produces a reviewable plan without writing. Commodity plans also require installed membership via `--starsector-path`; changed quantities stay NOT_DETERMINABLE unless explicitly opted into planning with `--allow-unknown-capacity`. Saved capacities may be stale and overage effects remain unknown. `voidsmith save write SAVE_DIR --set ... --output-dir DIR` writes one verified new copy below `DIR/save_workshop/` when every change is within the saved capacity; it refuses over-capacity changes, never overwrites, never touches the original, and the copy has not been loaded in the game, so try it on a throwaway first, and back up the original, because the game saves a loaded copy back to the original save's folder. See [resource and plan contracts](CAMPAIGN_SAVE_RESOURCES.md). READABLE means accepted XML structure, not proof the game can load the save. Source builds offer a default-off **Save Workshop read-only preview** checkbox in Settings / Export. Its workspace inspects explicitly selected saves and reviews plans on a worker thread; its write button stays disabled (use the CLI). The preview itself creates and edits no save copy. Existing portable builds are unchanged. See [the format contract](CAMPAIGN_SAVE_FORMAT.md).
+
 ## Unsupported / future work
 
 VoidSmith does not yet simulate combat, run scripts, model all runtime
-load-order overrides, optimize a whole fleet, read campaign saves/inventory,
+load-order overrides, optimize a whole fleet, interpret campaign inventory or edit saves,
 verify market availability, or claim full support for every mod. Treat
 unknown/partial findings as useful boundaries, not hidden assumptions.

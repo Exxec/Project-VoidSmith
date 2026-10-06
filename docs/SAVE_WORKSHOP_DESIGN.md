@@ -1,7 +1,7 @@
 # Save Workshop design (decision-gated)
 
-Status: **design approved 2026-10-06; no implementation is authorized yet.** Roadmap phase 57 holds the gates.
-Nothing in this document changes what the released application does today: it still reads no save contents.
+Status: **design approved 2026-10-06; S0–S3 implemented by owner request: read-only inspection, edit planning and a verified new-copy writer for changes within the saved capacity.** Over-capacity writing, the GUI write controls and release readiness remain unbuilt.
+The source implementation now includes S0/S1 read-only inspection under `CAMPAIGN_SAVE_FORMAT.md`. Qualified resource locators, pure planning and the S3 writer are documented in `CAMPAIGN_SAVE_RESOURCES.md`. S4 provides a default-off read-only GUI preview; existing distributed binaries are unchanged.
 
 ## Purpose
 
@@ -41,8 +41,9 @@ based) and raises the supplies consumed per day. The calculation is not known, a
 Rules:
 
 1. The Workshop never predicts or displays a speed or upkeep consequence. The effect is `UNKNOWN`.
-2. By default it refuses to write a quantity above the capacity it can read from the save. An explicit user
-   opt-in may allow it, with a visible warning that the consequences are unknown and unverified.
+2. It refuses to write a quantity above the capacity it can read from the save. The design allowed an explicit user
+   opt-in with a visible warning; S3 (owner decision 2026-10-06) does not implement that path, so over-capacity edits
+   are never written. Changes at or below the saved capacity are written.
 3. Capacity itself is read from installed data only if documented and parseable; otherwise the check returns
    `NOT_DETERMINABLE` and the user must opt in to proceed.
 4. Evidence to resolve this, in order: a controlled before/after run in a throwaway campaign, recorded with the
@@ -54,7 +55,7 @@ Rules:
 `docs/CAMPAIGN_SAVE_PARSER_GATE.md` lists six inputs before any content parsing. For the Workshop:
 
 1. **Format description:** to be written from the saves the user supplies, with version boundaries and the
-   failure behavior for malformed or newer saves. Not yet done.
+   failure behavior for malformed or newer saves. S0 is documented in `CAMPAIGN_SAVE_FORMAT.md` for one observed version; S2 resource locators and stored types are qualified in `CAMPAIGN_SAVE_RESOURCES.md`; capacity effects remain UNKNOWN.
 2. **Normalized campaign schema:** separate from the hull schema; separates parsed facts from runtime-only state.
 3. **Source-safety plan:** parser output, errors and every edited copy are written only below the configured
    output directory; the original save is opened read-only.

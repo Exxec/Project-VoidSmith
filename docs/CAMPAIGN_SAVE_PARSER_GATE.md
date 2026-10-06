@@ -1,6 +1,8 @@
 # Campaign-Save Parser Evidence Gate
 
-Current support is limited to direct, metadata-only enumeration of a directory
+The six inputs below are now met for the bounded read-only inspection scope documented in `CAMPAIGN_SAVE_FORMAT.md` (2026-10-06). S2 resource interpretation and pure planning now meet those inputs under `CAMPAIGN_SAVE_RESOURCES.md`. Writing is implemented separately (S3, within saved capacity only; see `CAMPAIGN_SAVE_RESOURCES.md`).
+
+Directory discovery remains direct, metadata-only enumeration of a directory
 explicitly selected by the user. The application does not open save contents,
 guess save locations, follow links, alter saves, infer inventory, or make
 campaign availability claims.
@@ -23,7 +25,6 @@ Content parsing may begin only after all of these inputs exist:
 Writing is a further gate. The Save Workshop (`SAVE_WORKSHOP_DESIGN.md`) may write only a new copy of a
 user-selected save below the configured output directory, after the original has been hashed, and must re-read the
 copy to confirm that only planned values changed. The original is never modified and the game's saves folder is
-never written. Capacity-overage effects are `UNKNOWN` until evidence is recorded there.
+never written. Capacity-overage effects are `UNKNOWN` until evidence is recorded there. S3 (owner decision 2026-10-06) implements that write path for changes within the saved capacity only; over-capacity changes are refused and never written.
 
-Until then, `discover_campaign_directory()` remains the complete supported
-boundary and returns `CAMPAIGN_SAVE_UNINSPECTED` metadata only.
+`discover_campaign_directory()` still returns `CAMPAIGN_SAVE_UNINSPECTED` metadata only. The separate opt-in-by-command `run_save_inspect()` boundary accepts one selected folder under `CAMPAIGN_SAVE_FORMAT.md`; basic inspection returns no editable facts. Explicit `run_save_resources()` and `run_save_edit_plan()` add separately qualified read-only resources and plans under `CAMPAIGN_SAVE_RESOURCES.md`; neither writes files.

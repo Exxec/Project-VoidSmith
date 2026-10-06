@@ -1596,3 +1596,13 @@ FleetSupportCategoryShortlist
     support_needs[]
     recommendations[]             # exact advisor records, independently score-bounded for this category
 ```
+
+
+## 42. Read-only campaign inspection
+
+`campaign-inspection-v1` is independent of normalized hulls and all recommendation engines. Frozen `SaveInspection` records contain status, facts, source hashes and notes; frozen `CampaignFact` records contain name, optional string value, `PARSED | UNAVAILABLE | UNKNOWN`, and evidence. Unavailable values are null. `READABLE` establishes accepted XML structure only. Exact fields and version boundaries: `docs/CAMPAIGN_SAVE_FORMAT.md`. The basic inspection contract introduces no edit schema. Separate S2 records are documented below.
+
+
+## 43. Save resource inspection and edit planning
+
+`campaign-resources-v1` records version-qualified resources (target, raw numeric value, typed byte locator, saved stack maximum and unit figure), optional saved capacities, source hashes, explicit unmodeled cargo state and evidence notes. `campaign-edit-plan-v1` records typed requests and immutable planned changes (old/new values, exact replacement, locator, ACCEPTED/REFUSED/NOT_DETERMINABLE, reason, explicit capacity opt-in), catalog source hashes, source directory, readiness and separate write-gate status. Readiness never grants write authorization. Stored capacity remains potentially stale; consequences are UNKNOWN. No resource fact changes fit legality or recommendations. The catalog is independently read from selected installed core/enabled sources, not inferred from existing hull/equipment registry data. Full contract: `docs/CAMPAIGN_SAVE_RESOURCES.md`.

@@ -132,3 +132,24 @@ def format_scenario_fleet_assessment(result: ScenarioFleetAssessment) -> str:
             lines.append(f"  • {item.hull_id}: {', '.join(item.support_purposes) or ', '.join(item.supports)}; score {item.recommendation_score:.3f}; confidence {item.confidence:.3f}")
     lines.extend(["", *result.evidence])
     return "\n".join(lines)
+
+
+def format_save_resources(snapshot) -> str:
+    lines = [f"SAVE STATUS: {snapshot.status}", "No files written.", ""]
+    lines.extend(f"{resource.target}: {resource.value} [PARSED]" for resource in snapshot.resources)
+    lines.extend(f"Saved {name}: {value} [PARSED; runtime meaning unverified]" for name, value in snapshot.capacities)
+    lines.extend(("", *snapshot.notes, "", "READABLE is not game-load acceptance."))
+    return "\n".join(lines)
+
+
+def format_save_plan(plan) -> str:
+    lines = [f"WRITE GATE: {plan.write_gate_status}", "No files written.", ""]
+    for change in plan.changes:
+        lines.extend((f"{change.target}: {change.old_value if change.old_value is not None else 'UNAVAILABLE'} -> {change.new_value}",
+                      f"{change.outcome}: {change.reason}",
+                      f"Capacity planning opt-in: {'yes' if change.capacity_opt_in else 'no'}"))
+        if change.locator:
+            lines.append(f"Evidence: {change.locator.evidence}")
+        lines.append("")
+    lines.extend(plan.notes)
+    return "\n".join(lines)

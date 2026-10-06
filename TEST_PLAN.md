@@ -315,3 +315,23 @@ full deterministic test list.
 - scenario deficiencies feed the existing locked-selection addition path while
   selected hulls remain excluded
 - scenario output explicitly disclaims simulation and victory prediction
+
+
+## 24. Campaign inspection tests
+
+Neutral synthetic fixtures cover direct descriptor facts, unsupported versions/compression, malformed/truncated XML, foreign roots, unknown fields, duplicate/nested descriptor scalars, UTF-16, DOCTYPE/entities, size/depth/element limits, parent traversal and links, source replacement, hash-identical originals, and API/CLI refusal behavior. Resource values remain unavailable and capacity consequences unknown. Host link-creation restrictions may skip symlink cases and must be reported. Real-save qualification reports are user-local only.
+
+
+## 25. Save edit-plan tests (S2)
+
+Neutral synthetic tests cover selected-player references vs NPC data, inline/referenced cargo and credit values, exact UTF-8 byte spans, duplicate/cyclic objects, duplicate stacks and unrecognized scalar markup, quote-aware numeric attributes, changed sources and numeric encoding limits. Pure plans test whole non-negative numbers, float32 exactness, int32 bounds, no-op byte preservation, tier gates, missing stacks, duplicate requests, installed commodity membership, source changes and disabled/unknown mod exclusion. Capacity is judged per dimension (cargo across all edited stacks, fuel, crew plus marines): at or below the saved figure is ACCEPTED, above or unprovable is NOT_DETERMINABLE; explicit planning opt-in never bypasses refusals and never lets the writer write an over-capacity change. Cargo partial state refuses commodity edits. `tests/test_campaign_writer.py` covers S3 on synthetic saves: verified copy with only the planned spans changed (including length changes and UTF-8), original hashes unchanged, target-exists refusal, source-changed refusal, output-directory and name rules, non-flat folder refusal, failed verification and unexpected errors removing the copy, a verifier that flags tampered copies, per-dimension capacity rules, and the CLI exit codes. No test writes a real save.
+
+
+## 26. Save Workshop preview tests
+
+Synthetic GUI smoke checks source hash preservation, resource model editing,
+backend refusal and capacity opt-in presentation, permanent write-gate disable,
+empty/malformed input, plan invalidation and stale-result rejection. A main-window
+test verifies default-off entry, enable/disable behavior and a real retained
+save worker that returns without loading a fitting scan. Optional PySide6
+absence skips these GUI tests; current host runs all five successfully.

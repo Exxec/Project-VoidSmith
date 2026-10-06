@@ -63,6 +63,22 @@ def _why_not_report_lines(explanation: CombinedWhyNotExplanation | BuildWhyNotEx
 def main() -> int:
     parser = argparse.ArgumentParser(prog="voidsmith")
     subparsers = parser.add_subparsers(dest="command", required=True)
+    save = subparsers.add_parser("save", help="Explicit campaign-save inspection, edit planning and verified copy writing")
+    save_commands = save.add_subparsers(dest="save_command", required=True)
+    inspect = save_commands.add_parser("inspect", help="Inspect qualified save XML without modifying it")
+    inspect.add_argument("save_dir", type=Path)
+    inspect.add_argument("--resources", action="store_true", help="Read version-qualified resource values and byte spans")
+    plan = save_commands.add_parser("plan", help="Review tier-1 edits without writing any files")
+    plan.add_argument("save_dir", type=Path)
+    plan.add_argument("--set", dest="changes", action="append", required=True, help="TARGET=INTEGER; repeat for credits, story_points or commodity:ID")
+    plan.add_argument("--starsector-path", type=Path, help="Installed core/enabled sources required for commodity membership")
+    plan.add_argument("--allow-unknown-capacity", action="store_true", help="Explicit planning opt-in; current capacity and overage effects remain unknown; over-capacity changes are never written")
+    write = save_commands.add_parser("write", help="Write a verified new copy of a save with only the planned values changed (the original is never modified)")
+    write.add_argument("save_dir", type=Path)
+    write.add_argument("--set", dest="changes", action="append", required=True, help="TARGET=INTEGER; repeat for credits, story_points or commodity:ID")
+    write.add_argument("--starsector-path", type=Path, help="Installed core/enabled sources required for commodity membership")
+    write.add_argument("--output-dir", type=Path, default=Path("generated"), help="The copy is written below OUTPUT_DIR/save_workshop/")
+    write.add_argument("--name", help="Copy folder name (default: derived from the save name and the plan)")
     scan = subparsers.add_parser("scan", help="Read core and enabled-mod data without modifying sources")
     scan.add_argument("--config", type=Path)
     scan.add_argument("--starsector-path", type=Path)
@@ -199,6 +215,29 @@ def main() -> int:
     refit.add_argument("--starsector-path", type=Path, required=True)
     refit.add_argument("--output-dir", type=Path, default=Path("generated"))
     args = parser.parse_args()
+    if args.command == "save":
+        if args.save_command == "inspect":
+            inspected = api.run_save_resources(args.save_dir) if args.resources else api.run_save_inspect(args.save_dir)
+            print(json.dumps(asdict(inspected), indent=2))
+            return 0 if inspected.status == "READABLE" else 1
+        from starsector_variant_generator.campaign.edit_plan import EditRequest
+        writing = args.save_command == "write"
+        try:
+            requests = []
+            for change in args.changes:
+                target, value = change.split("=", 1)
+                requests.append(EditRequest(target, int(value)))
+            catalog = api.run_save_commodity_catalog(args.starsector_path) if args.starsector_path else None
+            save_plan = api.run_save_edit_plan(args.save_dir, tuple(requests), catalog,
+                                               allow_unknown_capacity=False if writing else args.allow_unknown_capacity)
+        except ValueError as exc:
+            parser.error(str(exc))
+        if writing:
+            write_result = api.run_save_edit_write(save_plan, args.output_dir, name=args.name)
+            print(json.dumps({"plan": save_plan.to_payload(), "write": write_result.to_payload()}, indent=2))
+            return 0 if write_result.status == "WRITTEN" else 1
+        print(json.dumps(save_plan.to_payload(), indent=2))
+        return 0 if save_plan.ready_for_copy else 1
     if args.command == "list-profiles":
         for profile in available_profiles():
             print(f"{profile.identifier}: {profile.display_name} - {profile.description}")

@@ -1,4 +1,4 @@
-# Save Workshop implementation plan (design only)
+# Save Workshop implementation plan (S0–S3 implemented; over-capacity writing refused)
 
 Companion to [SAVE_WORKSHOP_DESIGN.md](SAVE_WORKSHOP_DESIGN.md). Nothing here is authorized to ship until the
 parser gate in [CAMPAIGN_SAVE_PARSER_GATE.md](CAMPAIGN_SAVE_PARSER_GATE.md) is met; the slices below are ordered so
@@ -60,7 +60,7 @@ user-selected save folder (read-only)
 | --- | --- |
 | Credits, story points | non-negative whole number within the format's stored type; nothing else |
 | Cargo commodity (supplies, fuel, crew, marines, heavy machinery) | non-negative whole number; the commodity id must exist in the scanned data; a missing stack is created only if the locator can prove the stack's exact shape, otherwise `REFUSED` |
-| Capacity | read from the save when the figure is present; the figure's meaning (stored at save time or derived later) is unproven, so a quantity above it returns `NOT_DETERMINABLE`, and writing it needs the explicit opt-in described in the design |
+| Capacity | read from the save when the figure is present; a quantity at or below it is `ACCEPTED` (cargo space, fuel, crew plus marines), above it or unprovable returns `NOT_DETERMINABLE` and is never written; the saved figure is not runtime-verified |
 
 Effects of an overage on fleet speed or upkeep are never computed or displayed (they are `UNKNOWN`).
 
@@ -103,6 +103,10 @@ read-only model over `EditPlan`.
 **Keyboard and clarity.** Tab order follows reading order; every disabled button carries a tooltip naming what is
 missing; no silent modifications; nothing is written until the button is pressed.
 
+## Implementation checkpoint — 2026-10-06
+
+S0/S1 are implemented for XML structure and direct descriptor facts only; see `CAMPAIGN_SAVE_FORMAT.md`. The existing metadata discovery API is unchanged. S2 resource locators and pure edit plans are implemented under `CAMPAIGN_SAVE_RESOURCES.md`; no writer is enabled. S4 offers an independent default-off read-only GUI preview for resource inspection and backend plan review; write/verify and full discovery/navigation controls remain pending. S3 is implemented (2026-10-06, owner decision): `campaign/writer.py`, `campaign/verify.py` and `voidsmith save write` write verified new copies for changes within the saved capacity; over-capacity changes are refused and the opt-in write path is not implemented. S5 requires a controlled game session and remains UNKNOWN.
+
 ## Slices, in order
 
 | Slice | Delivers | Done when |
@@ -120,7 +124,9 @@ that lack the game or saves.
 
 ## Evidence plan for capacity overages
 
-The tool is built without the answer; the answer decides only whether over-capacity edits can ever be described.
+The tool is built without the answer; the answer decides only whether over-capacity edits can ever be described. S3 no longer waits for it. The
+useful narrower question is whether the saved capacity figures match the runtime ones in the at-capacity and above-capacity states; a local pilot
+found them equal in one below-capacity state, which is not a rule.
 Run in a throwaway campaign, outside this repository (BridgeForge's test rig is one way): set cargo, fuel and crew
 below, at and above capacity; record the quantities, the fleet's observed speed and the observed daily supplies
 use for each case; repeat once with a fleet of a different size. Write the observations, the game version and the

@@ -90,6 +90,14 @@ from starsector_variant_generator.analysis.gap_recommendation import (
     gap_recommendation_result_to_payload,
     recommend_gap_solutions,
 )
+from starsector_variant_generator.analysis.recommendation_feedback import (
+    RecommendationFeedback,
+    append_feedback,
+)
+from starsector_variant_generator.analysis.release_verification import (
+    ReleaseVerification,
+    verify_portable_release,
+)
 from starsector_variant_generator.analysis.scenario_advisor import (
     ScenarioFleetAssessment,
     ScenarioObjectiveProfile,
@@ -103,14 +111,11 @@ from starsector_variant_generator.analysis.video_review import (
     load_video_review_transcript,
     resolve_control_suitability_evidence,
 )
-from starsector_variant_generator.analysis.recommendation_feedback import (
-    RecommendationFeedback,
-    append_feedback,
-)
-from starsector_variant_generator.analysis.release_verification import (
-    ReleaseVerification,
-    verify_portable_release,
-)
+from starsector_variant_generator.campaign.catalog import CommodityCatalog
+from starsector_variant_generator.campaign.edit_plan import EditPlan, EditRequest
+from starsector_variant_generator.campaign.locators import ResourceSnapshot
+from starsector_variant_generator.campaign.models import SaveInspection
+from starsector_variant_generator.campaign.writer import SaveWriteResult
 from starsector_variant_generator.core.cache import (
     CacheComparison,
     load_manifest,
@@ -810,6 +815,60 @@ def run_scenario_fleet_advisor(
     return assess_scenario_fleet(selections, registry, scenario, faction, heuristic_set, constraints)
 
 
+def run_save_inspect(save_dir: Path) -> SaveInspection:
+    """Inspect only the explicitly selected save, without writing or campaign inference."""
+    from starsector_variant_generator.campaign.format import inspect_save
+    return inspect_save(save_dir)
+
+
+def run_save_write_gate():
+    """Return the independent backend write gate; GUI does not decide permission."""
+    from starsector_variant_generator.campaign.edit_plan import SAVE_WRITE_GATE
+    return SAVE_WRITE_GATE
+
+
+def run_save_resources(save_dir: Path) -> ResourceSnapshot:
+    """Read exact, version-qualified resource facts without modifying the save."""
+    from starsector_variant_generator.campaign.locators import locate_resources
+    return locate_resources(save_dir, run_save_inspect(save_dir))
+
+
+def run_save_commodity_catalog(starsector_path: Path) -> CommodityCatalog:
+    """Read membership only from installed core and explicitly enabled native sources."""
+    from starsector_variant_generator.campaign.catalog import (
+        CommodityCatalog,
+        read_commodity_catalog,
+    )
+    from starsector_variant_generator.core.scanner import Scanner
+    scanner = Scanner(starsector_path)
+    sources = scanner.discover_sources()
+    if scanner.discovery_skipped:
+        return CommodityCatalog("UNAVAILABLE", frozenset(), notes=("Native source discovery is incomplete",))
+    return read_commodity_catalog(tuple(source.path for source in sources if source.enabled is True))
+
+
+def run_save_edit_plan(save_dir: Path, requests: tuple[EditRequest, ...], catalog: CommodityCatalog | None = None, *, allow_unknown_capacity: bool = False) -> EditPlan:
+    """Build a pure resource edit plan; it writes nothing. Only ACCEPTED (within saved capacity) changes can be written."""
+    from starsector_variant_generator.campaign.catalog import CommodityCatalog
+    from starsector_variant_generator.campaign.edit_checks import build_edit_plan
+    from starsector_variant_generator.campaign.format import _safe_path
+    snapshot = run_save_resources(save_dir)
+    selected = str(_safe_path(save_dir)) if snapshot.status == "READABLE" else str(save_dir)
+    return build_edit_plan(selected, snapshot, tuple(requests),
+                           catalog if catalog is not None else CommodityCatalog("UNAVAILABLE", frozenset()),
+                           allow_unknown_capacity=allow_unknown_capacity)
+
+
+def run_save_edit_write(plan: EditPlan, output_dir: Path, *, name: str | None = None) -> SaveWriteResult:
+    """Write one verified new copy below output_dir/save_workshop/; never touches the original save.
+
+    Refuses unless every change is ACCEPTED within the saved capacity, the source still matches the plan's
+    hashes and the target does not exist. A failed verification removes the copy.
+    """
+    from starsector_variant_generator.campaign.writer import write_save_copy
+    return write_save_copy(plan, output_dir, name=name)
+
+
 def run_campaign_save_discovery(directory: Path) -> CampaignSaveDiscovery:
     """Expose the user-selected, read-only campaign-directory boundary.
 
@@ -1034,7 +1093,9 @@ def run_local_calibration_workspace(
     # Imported only on use: calibration_runner calls this API module for
     # generation observations, so importing its workspace facade at module
     # initialization would form a circular import.
-    from starsector_variant_generator.analysis.calibration_workspace import evaluate_local_workspace
+    from starsector_variant_generator.analysis.calibration_workspace import (
+        evaluate_local_workspace,
+    )
     return evaluate_local_workspace(fixture, scan, registry, heuristic_set)
 
 

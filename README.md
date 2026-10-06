@@ -47,6 +47,8 @@ It is not a combat simulator, whole-fleet optimizer, save-state planner, or
 market/inventory availability tool. Legality, quality, confidence, and warnings
 are deliberately separate.
 
+Source builds also offer `voidsmith save inspect "PATH_TO_SELECTED_SAVE_FOLDER"` for bounded, read-only descriptor/XML inspection of game 0.98a-RC8 / save 0.6. It prints JSON and source hashes without modifying files. Add `--resources` for qualified values or use `save plan SAVE_DIR --set credits=200000` to review numeric changes without writing. Settings / Export can enable a default-off Save Workshop read-only GUI preview. `save write SAVE_DIR --set ... --output-dir DIR` writes a verified new copy of a save for changes within the saved capacity (over-capacity changes are refused, the original is never modified, the copy is untested in the game); existing portable binaries have not been rebuilt. See [the format contract](docs/CAMPAIGN_SAVE_FORMAT.md).
+
 ## Documentation
 
 - [Documentation index](docs/README.md)

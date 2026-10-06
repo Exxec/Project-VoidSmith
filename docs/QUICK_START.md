@@ -86,6 +86,8 @@ entities, doctrine, and AI/player suitability.
 manual overrides, knowledge-pack guidance, and calibration evidence. These are
 advisory and do not silently override legality.
 
+**Read-only inspection (source builds):** `voidsmith save inspect "PATH_TO_SELECTED_SAVE_FOLDER"` reports qualified descriptor facts and XML integrity only. Add `--resources` for qualified values or use `save plan SAVE_DIR --set credits=200000` for a read-only change plan. `save write SAVE_DIR --set credits=200000 --output-dir DIR` writes a verified new copy below `DIR/save_workshop/` for changes within the saved capacity (the original is never modified; over-capacity changes are refused; the copy is not loaded in the game, so try it on a throwaway first, and back up the original: the game saves a loaded copy back to the original's folder). See [the format contract](CAMPAIGN_SAVE_FORMAT.md).
+
 **Not supported:** combat simulation, save-game/inventory planning, market
 availability, whole-fleet optimization, executing/decompiling mod code, and
 runtime load-order-effective script behavior.
