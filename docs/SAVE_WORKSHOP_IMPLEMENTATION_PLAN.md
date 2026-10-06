@@ -154,6 +154,9 @@ copied here.
   object that uses it. A locator must resolve references, not assume nesting.
 - Class names are short aliases or obfuscated, and they change between game versions. Never key a locator on an
   obfuscated name alone; key it on structure plus a version row, and refuse when the version is unknown.
+- Survey of 74 saves from one game version (0.98a-RC8): the player fleet's cargo container carried the same set of
+  attributes in every one, and a credits value object was present in every one. Older or newer versions are not
+  covered, so S0 still needs saves from other versions.
 - A cargo container stores its stacks as elements holding a quantity and a commodity id, and the container also
   carries attributes that look like capacity and space-used figures (cargo, fuel, personnel). Whether those are
   stored at save time or derived later is **unproven**, so S1 must record it and S5 must test it.
