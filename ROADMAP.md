@@ -119,3 +119,19 @@ Design and acceptance gates: [docs/SISTER_REPO_INTEROPERABILITY_DESIGN.md](docs/
    in the style of BridgeForge's `RC8_BEHAVIOUR.md`. Benefit: keeps unknowns, such as overage effects, honest and citable.
 5. [x] **GUI contract update.** Add the Save Workshop workspace rules to `GUI.md` when S4 starts (opt-in flag, safety banner,
    refuse and opt-in paths). Benefit: keeps the GUI contract and the backend gate in step.
+
+## Lessons carried over from BridgeForge's hardening (item 70) and regression pass (2026-10-12; proposed, not approved)
+
+Source: BridgeForge `ROADMAP.md` item 70, `docs/HARDENING_PLAN.md`, `docs/RC8_BEHAVIOUR.md` (RC8-30 to RC8-33). Each line says what it would change here and what it buys; none is started.
+
+- **Atomic writes and guarded deletes.** Write through a temp file and `os.replace`; delete a tree only inside an allowed root and never through a junction (BridgeForge `safeio.py`, with a ratchet test whose baseline may only shrink). Benefit: an interrupted write or a wrong path cannot leave a half-written or vanished file.
+- **Bounded reads of untrusted archives.** Cap a zip or jar entry (200 MB; class files 32 MB) before reading it (`zipsafe.read_limited`); a hostile or corrupt archive then fails that entry instead of exhausting memory.
+- **Parse structured files with a real (lenient) parser, never a regex for the first field.** BridgeForge's master log took the first `"name"` and `"version"` in each `mod_info.json` and listed 17 mods as "LazyLib" with LazyLib's version, because those files list dependencies first. Benefit: wrong labels and versions stop appearing in reports.
+- **Guard the contract, not just the code.** A hash of every command's `--help` (a golden test) let agents split a 4,100-line `cli.py` and an 8,800-line `scanner.py` with the interface unchanged; a known-failure file with an expiry keeps an environmental failure from hiding new ones; baselines of accepted findings expire when the mod version changes.
+- **Check an agent's branch before merging it** (`agent-diff-check`: files deleted or cut by more than a fifth) and rerun the whole suite on the merged tree; do not edit tracked files while the suite runs (its hermeticity check reports the checkout as changed).
+- **Line endings and backups.** LF everywhere (`.gitattributes`; batch files CRLF). An append-only snapshot of the irreplaceable state is taken after each major new revision, not on a weekly clock (owner rule 2026-10-12).
+- **Say PREDICTED or OBSERVED.** BridgeForge keeps a prediction ledger: of two forecasts about a mod pair, one held live and one was refuted. Record the method, date and run id with each fact.
+- **Capacity-overage evidence run (BridgeForge item 57) is being done** for Save Workshop S5: fleet speed and daily supplies at, below and above capacity for cargo, fuel and crew on three fleets, plus whether a save's cargo container stores or derives its capacity figures. S5 should wait for those dated `RC8_BEHAVIOUR.md` rows and cite their ids; until then overage stays "unknown" in the Workshop.
+- **A missing weapon in a variant is fatal at New Game and a missing hull mod is dropped silently** (RC8, live 2026-09-27); a mission naming a missing variant is fatal when that mission starts (found 2026-10-12 in three archived mods). Benefit: the variant-fit validator idea can rank these correctly.
+- **GUI contract by hash.** Pin the Save Workshop workspace rules and flags the way BridgeForge pins `--help` (a golden hash per command); a rule change then shows up as a reviewed diff.
+- **Evidence record for edits** (idea 4 below) can reuse BridgeForge's row format: id, fact, evidence with date, and what relies on it.
