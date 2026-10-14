@@ -1,0 +1,14 @@
+# Source, docs and data are LF in the repository and in working copies on every OS.
+* text=auto eol=lf
+
+# Windows scripts need CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary assets are never normalised.
+*.png binary
+*.jpg binary
+*.ico binary
+*.zip binary
+*.jar binary

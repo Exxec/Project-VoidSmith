@@ -178,7 +178,7 @@ class Registry:
                 "hullmod", entity_id,
                 "DUPLICATE_IDENTICAL" if identical else "DUPLICATE_DIVERGENT",
                 tuple({"source_mod": candidate.source_mod, "semantic_hash": semantic_hash}
-                      for candidate, semantic_hash in sorted(zip(candidates, semantic_hashes), key=lambda pair: pair[0].source_mod)),
+                      for candidate, semantic_hash in sorted(zip(candidates, semantic_hashes, strict=False), key=lambda pair: pair[0].source_mod)),
             ))
             if not identical:
                 continue

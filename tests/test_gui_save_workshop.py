@@ -10,13 +10,12 @@ from unittest.mock import patch
 os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
 
 try:
-    from PySide6.QtCore import QSettings, Qt
+    from PySide6.QtCore import QSettings
     from PySide6.QtWidgets import QApplication
     from starsector_variant_generator.gui.save_workshop import SaveWorkshopWidget
 except ImportError:
     QApplication = None
 from starsector_variant_generator.campaign.catalog import CommodityCatalog
-from starsector_variant_generator.gui.presentation import format_save_plan
 from test_campaign_edit_plan import synthetic_save, source_hashes
 
 

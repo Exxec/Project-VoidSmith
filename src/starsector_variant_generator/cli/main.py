@@ -61,7 +61,8 @@ def _why_not_report_lines(explanation: CombinedWhyNotExplanation | BuildWhyNotEx
     )
 
 
-def main() -> int:
+def build_parser() -> argparse.ArgumentParser:
+    """The complete command-line grammar; kept separate from main() so tests can pin it."""
     parser = argparse.ArgumentParser(prog="voidsmith")
     subparsers = parser.add_subparsers(dest="command", required=True)
     save = subparsers.add_parser("save", help="Explicit campaign-save inspection, edit planning and verified copy writing")
@@ -215,6 +216,11 @@ def main() -> int:
     refit.add_argument("--source-mod", help="Disambiguates --faction-id when multiple mods declare the same faction id (quality-improvement modes)")
     refit.add_argument("--starsector-path", type=Path, required=True)
     refit.add_argument("--output-dir", type=Path, default=Path("generated"))
+    return parser
+
+
+def main() -> int:
+    parser = build_parser()
     args = parser.parse_args()
     if args.command == "save":
         if args.save_command == "inspect":

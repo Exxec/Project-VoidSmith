@@ -1,0 +1,23 @@
+{
+  "(root)": "505a783b0a71fe36",
+  "analyze-variant": "cb32516125747e54",
+  "check-export": "377d9d51e8e5c501",
+  "doctrine": "1c6d0d60e092223f",
+  "export": "46732dbac84f8616",
+  "faction-capability": "a170554d5f205212",
+  "fleet-support": "72339a546facde10",
+  "fleet-support-why-not": "848faf6d4078f0eb",
+  "generate": "ca729fdf80dff490",
+  "list-profiles": "88f705849e332077",
+  "query": "ac41117c134c9bc1",
+  "recommend": "ecdd6ad84bf2415b",
+  "refit": "0e7d9c94a5028e6d",
+  "save": "f513faa66264b449",
+  "save inspect": "ca0bd21d8ce3422a",
+  "save plan": "7d57f683b7de6207",
+  "save write": "13903619eea73284",
+  "scan": "cc909d0cee663ba3",
+  "scenario-advisor": "1fb50a26ffd11f65",
+  "validate": "365e1a2592c9ed0d",
+  "why-not": "e4fb2048ae06e6f5"
+}

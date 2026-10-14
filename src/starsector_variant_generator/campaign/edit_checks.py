@@ -66,7 +66,7 @@ def build_edit_plan(source_dir: str, snapshot: ResourceSnapshot, requests: tuple
         rows.append([request, resource, commodity, outcome, reason, replacement])
     # Capacity is judged per dimension after every request is known, so a combined edit is checked once.
     verdicts = _capacity_verdicts(snapshot, resources, rows)
-    for request, resource, commodity, outcome, reason, replacement in rows:
+    for request, resource, _commodity, outcome, reason, replacement in rows:
         if request.target in verdicts:
             outcome, reason = verdicts[request.target]
         changes.append(PlannedChange(request.target, resource.value if resource else None, request.value,

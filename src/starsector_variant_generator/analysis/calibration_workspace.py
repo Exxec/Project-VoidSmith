@@ -14,7 +14,7 @@ from starsector_variant_generator.core.registry import Registry
 class CalibrationWorkspaceResult:
     fixture: Path
     report: CalibrationReport
-    diagnostics: tuple[str, ...]
+    diagnostics: tuple[dict[str, str], ...]  # execution diagnostics from collect_all_observations (entity_key, status, reason)
 
 
 def evaluate_local_workspace(fixture: Path, scan: ScanResult, registry: Registry, heuristic_set: str) -> CalibrationWorkspaceResult:

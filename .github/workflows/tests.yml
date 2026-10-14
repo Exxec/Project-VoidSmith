@@ -55,11 +55,7 @@ jobs:
           python-version: "3.11"
       - name: Install uv
         run: pip install uv
-      - name: Lint critical syntax errors
-        run: uv run --no-project --with ruff ruff check src tests --select E9
-      - name: Type-check recent public API boundaries
-        run: >-
-          uv run --no-project --with mypy mypy
-          src/starsector_variant_generator/analysis/campaign_save_discovery.py
-          src/starsector_variant_generator/analysis/fleet_advisory_boundaries.py
-          --follow-imports=skip --no-error-summary
+      - name: Lint (E9, F, B; see [tool.ruff.lint] in pyproject.toml)
+        run: uv run --no-project --with ruff ruff check src tests tools
+      - name: Type-check the whole source tree
+        run: uv run --no-project --with mypy mypy src

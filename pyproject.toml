@@ -33,6 +33,13 @@ release = ["pyinstaller==6.22.2"]
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.ruff.lint]
+# CI gate (docs/AUTOMATION_PLAN.md V0.4): syntax errors, pyflakes and bugbear. B008 stays off on purpose: every default call is a
+# frozen dataclass or a Qt value type (docs/WORK_LOG.md 2026-08-31). TRY004 is not selected because the codebase raises ValueError
+# for malformed external documents by convention.
+select = ["E9", "F", "B"]
+ignore = ["B008"]
+
 [tool.mypy]
 ignore_missing_imports = true
 

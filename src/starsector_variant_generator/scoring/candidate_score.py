@@ -108,7 +108,7 @@ def _combat_adjusted_ranges(
     adjusted: list[float | None] = []
     adjustment_lines: dict[tuple[str, float, float], int] = {}
     stacking_notes_seen: set[str] = set()
-    for mount_id, weapon, base_range in zip(mount_ids, weapons, base_ranges):
+    for mount_id, weapon, base_range in zip(mount_ids, weapons, base_ranges, strict=False):
         if base_range is None or mount_id not in derived.effective_range_by_mount:
             adjusted.append(base_range)
             continue

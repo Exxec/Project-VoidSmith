@@ -47,10 +47,10 @@ def audit_complex_hulls(scan: ScanResult, registry: Registry) -> dict[str, Any]:
     # classification per hull, computed once and reused for every grouping
     # below -- see analysis/composite_hulls.py's module docstring.
     hull_definitions = [classify_hull_definition(hull) for hull in scan.hulls]
-    parents = [hull for hull, definition in zip(scan.hulls, hull_definitions) if definition.is_parent]
-    modules = [hull for hull, definition in zip(scan.hulls, hull_definitions) if definition.is_module]
-    under_parent = [hull for hull, definition in zip(scan.hulls, hull_definitions) if definition.is_under_parent]
-    stations = [hull for hull, definition in zip(scan.hulls, hull_definitions) if definition.is_station]
+    parents = [hull for hull, definition in zip(scan.hulls, hull_definitions, strict=True) if definition.is_parent]
+    modules = [hull for hull, definition in zip(scan.hulls, hull_definitions, strict=True) if definition.is_module]
+    under_parent = [hull for hull, definition in zip(scan.hulls, hull_definitions, strict=True) if definition.is_under_parent]
+    stations = [hull for hull, definition in zip(scan.hulls, hull_definitions, strict=True) if definition.is_station]
 
     for hull in parents:
         if hull.id in registry.hulls.duplicates:

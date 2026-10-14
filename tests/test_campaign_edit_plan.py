@@ -5,14 +5,12 @@ import io
 import json
 import unittest
 from contextlib import redirect_stdout
-from dataclasses import replace
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from starsector_variant_generator import api
 from starsector_variant_generator.campaign.catalog import CommodityCatalog, read_commodity_catalog
-from starsector_variant_generator.campaign.edit_checks import build_edit_plan
 from starsector_variant_generator.campaign.edit_plan import EditRequest
 from starsector_variant_generator.campaign.format import inspect_save
 from starsector_variant_generator.campaign.locators import locate_resources
@@ -228,7 +226,7 @@ class CampaignEditPlanTests(unittest.TestCase):
             csv_file.parent.mkdir(parents=True)
             csv_file.write_text(f'id,name\n{name}_commodity,Neutral\n')
             roots.append(root)
-        sources = [ModInfo(name, name, None, root, flag) for name, root, flag in zip(('core','enabled','disabled','unknown'), roots, (True, True, False, None))]
+        sources = [ModInfo(name, name, None, root, flag) for name, root, flag in zip(('core','enabled','disabled','unknown'), roots, (True, True, False, None), strict=False)]
         with patch('starsector_variant_generator.core.scanner.Scanner.discover_sources', return_value=sources):
             catalog = api.run_save_commodity_catalog(self.root)
         self.assertEqual(catalog.identifiers, frozenset({'core_commodity', 'enabled_commodity'}))

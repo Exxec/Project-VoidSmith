@@ -139,7 +139,7 @@ def write_scan_analysis_reports(
         worker_count = min(8, max(1, os.cpu_count() or 1), len(pending_hulls))
         with ThreadPoolExecutor(max_workers=worker_count, thread_name_prefix="voidsmith-reports") as executor:
             records = list(executor.map(lambda item: _hull_profile_record(item[0], registry, heuristic_set, item[2]), pending_hulls))
-        for (_, path, _), record in zip(pending_hulls, records):
+        for (_, path, _), record in zip(pending_hulls, records, strict=False):
             _write_json(path, record)
             hull_paths.append(str(path))
 

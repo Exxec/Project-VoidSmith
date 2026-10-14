@@ -320,7 +320,7 @@ def csv_rows(path: Path) -> Iterator[dict[str, str]]:
             continue
         if values[0].lstrip().startswith("#"):
             continue
-        row = dict(zip(headers, values))
+        row = dict(zip(headers, values, strict=False))
         # Some legacy wing tables spell an empty optional field as two literal
         # single quotes. Normalize only that unambiguous empty sentinel; do not
         # reinterpret arbitrary quoted source text.

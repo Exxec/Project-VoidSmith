@@ -415,7 +415,7 @@ class Scanner:
                 # remaining source, only the one already in flight.
                 executor.shutdown(wait=True, cancel_futures=True)
         timings["source_parsing"] = perf_counter() - source_parsing_started
-        for index, source in [(index, source) for index, source in enumerate(sources)
+        for index, _source in [(index, source) for index, source in enumerate(sources)
                               if not (source.source_type is SourceType.MOD and source.enabled is False and not self.include_disabled_mods)]:
             fragment = reusable_fragments.get(index) or parsed_fragments[index]
             self._merge_fragment(result, fragment)
