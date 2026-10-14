@@ -49,6 +49,10 @@ from starsector_variant_generator.analysis.fleet_support import (
     fleet_support_request_to_payload,
     parse_fleet_selections,
 )
+from starsector_variant_generator.analysis.recommendation_feedback import (
+    FeedbackKind,
+    RecommendationFeedback,
+)
 from starsector_variant_generator.analysis.scenario_advisor import (
     ScenarioCapabilityTarget,
     generic_scenario_profiles,
@@ -56,16 +60,13 @@ from starsector_variant_generator.analysis.scenario_advisor import (
     scenario_advisor_request_to_payload,
     user_defined_scenario,
 )
-from starsector_variant_generator.analysis.recommendation_feedback import (
-    FeedbackKind,
-    RecommendationFeedback,
-)
 from starsector_variant_generator.core.config import DEFAULT_HEURISTIC_SET, AppConfig
 from starsector_variant_generator.core.mod_import import (
     ModImportResult,
     resolve_dropped_mod,
 )
 from starsector_variant_generator.core.models import Hull, Variant
+from starsector_variant_generator.core.safeio import atomic_write_text
 from starsector_variant_generator.gui.canvas import (
     MOUNT_TYPE_COLORS,
     TechnicalCanvas,
@@ -82,10 +83,10 @@ from starsector_variant_generator.gui.presentation import (
     format_generation_results,
     format_scenario_fleet_assessment,
 )
+from starsector_variant_generator.gui.save_workshop import SaveWorkshopWidget
 from starsector_variant_generator.gui.session import HullCatalog
 from starsector_variant_generator.gui.workers.analysis_worker import AnalysisWorker
 from starsector_variant_generator.gui.workers.save_worker import SaveWorker
-from starsector_variant_generator.gui.save_workshop import SaveWorkshopWidget
 from starsector_variant_generator.gui.workers.scan_worker import ScanWorker
 from starsector_variant_generator.profiles.catalog import available_profiles
 
@@ -1574,7 +1575,7 @@ class MainWindow(QMainWindow):
         if not path:
             return
         try:
-            Path(path).write_text(json.dumps(scenario_advisor_request_to_payload(selections, scenario, self._fleet_support_constraints_from_controls()), indent=2), encoding="utf-8")
+            atomic_write_text(Path(path), json.dumps(scenario_advisor_request_to_payload(selections, scenario, self._fleet_support_constraints_from_controls()), indent=2))
         except OSError as exc:
             QMessageBox.warning(self, "Request not saved", str(exc)); return
         self.statusBar().showMessage("Scenario Advisor request saved; it contains only declared selections, targets, and constraints.")
@@ -1672,7 +1673,7 @@ class MainWindow(QMainWindow):
         if not path:
             return
         try:
-            Path(path).write_text(json.dumps(fleet_support_request_to_payload(selections, self._fleet_support_constraints_from_controls()), indent=2), encoding="utf-8")
+            atomic_write_text(Path(path), json.dumps(fleet_support_request_to_payload(selections, self._fleet_support_constraints_from_controls()), indent=2))
         except OSError as exc:
             QMessageBox.warning(self, "Request not saved", str(exc)); return
         self.statusBar().showMessage("Fleet Support Advisor request saved.")

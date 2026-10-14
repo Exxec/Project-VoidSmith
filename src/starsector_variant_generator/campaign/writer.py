@@ -15,6 +15,8 @@ import stat
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from starsector_variant_generator.core.safeio import UnsafePathError, safe_rmtree
+
 from .edit_plan import SAVE_WRITE_GATE, EditPlan
 from .format import MAX_CAMPAIGN_BYTES, _safe_path, inspect_save
 from .verify import VerificationReport, file_hashes, planned_spans, verify_copy
@@ -70,6 +72,14 @@ def _output_target(output_dir: Path, name: str, source: Path) -> Path:
     if not _NAME.fullmatch(name):
         raise ValueError("Copy name must be 1-120 characters of letters, digits, '_', '.' or '-'")
     return root / OUTPUT_SUBDIRECTORY / name
+
+
+def _discard_copy(target: Path) -> None:
+    """Remove a copy this run created; never raises, never follows a link, only deletes inside the output directory."""
+    try:
+        safe_rmtree(target, [target.parent])
+    except (OSError, UnsafePathError):
+        pass
 
 
 def write_save_copy(plan: EditPlan, output_dir: Path, *, name: str | None = None) -> SaveWriteResult:
@@ -137,11 +147,11 @@ def write_save_copy(plan: EditPlan, output_dir: Path, *, name: str | None = None
                         shutil.copyfileobj(stream, out)
         report = verify_copy(source, target, plan, original_hashes)
     except Exception as exc:  # noqa: BLE001 - any failure must remove the copy; the original is never touched
-        shutil.rmtree(target, ignore_errors=True)
+        _discard_copy(target)
         return SaveWriteResult("FAILED", f"{type(exc).__name__}: {exc}", None, None,
                                ("The partial copy was removed.", "The original save was not modified."))
     if report.status != "VERIFIED":
-        shutil.rmtree(target, ignore_errors=True)
+        _discard_copy(target)
         return SaveWriteResult("FAILED_VERIFICATION", "; ".join(report.problems), None, report,
                                ("The copy was removed.", "The original save was not modified."))
     return SaveWriteResult("WRITTEN", "Verified copy written", str(target), report,

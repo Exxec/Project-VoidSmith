@@ -27,6 +27,7 @@ from starsector_variant_generator.core.models import (
     Variant,
     Weapon,
 )
+from starsector_variant_generator.core.safeio import atomic_write_bytes
 from starsector_variant_generator.parsers.common import csv_rows, json_file
 from starsector_variant_generator.parsers.entities import (
     faction_from_file,
@@ -589,9 +590,7 @@ class Scanner:
                 "source_fingerprint": fingerprint,
                 "fragment": _fragment_to_json(fragment),
             }
-            temporary = path.with_suffix(".tmp")
-            temporary.write_bytes(marshal.dumps(payload))
-            temporary.replace(path)
+            atomic_write_bytes(path, marshal.dumps(payload))
         except (OSError, TypeError, ValueError) as exc:
             self.logger.warning("Unable to persist source snapshot %s: %s", path, exc)
 

@@ -26,6 +26,7 @@ from starsector_variant_generator.analysis.scenario_advisor import (
 from starsector_variant_generator.core.config import AppConfig
 from starsector_variant_generator.core.logging import configure_logging
 from starsector_variant_generator.core.result_cache import AnalysisResultCache
+from starsector_variant_generator.core.safeio import atomic_write_text
 from starsector_variant_generator.output.analysis_reports import (
     write_scan_analysis_reports,
 )
@@ -270,7 +271,7 @@ def main() -> int:
         report_dir = config.output_dir / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
         report_path = report_dir / f"query_{args.entity}.json"
-        report_path.write_text(json.dumps({"entity": args.entity, "records": records}, indent=2, default=str), encoding="utf-8")
+        atomic_write_text(report_path, json.dumps({"entity": args.entity, "records": records}, indent=2, default=str))
         print(f"Query report: {report_path}")
         return 0
     if args.command == "validate":
@@ -284,7 +285,7 @@ def main() -> int:
         report_dir = config.output_dir / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
         report_path = report_dir / f"validation_{args.variant_id}.json"
-        report_path.write_text(json.dumps(asdict(assessment), indent=2, default=str), encoding="utf-8")
+        atomic_write_text(report_path, json.dumps(asdict(assessment), indent=2, default=str))
         print(f"{assessment.result}: {report_path}")
         return 0 if assessment.result == "LEGAL" else 1
     if args.command == "generate":
@@ -316,7 +317,7 @@ def main() -> int:
             "empty_mount_ids": sorted(advanced.empty_mount_ids),
             "scoring_weight_overrides": advanced.scoring_weight_overrides,
         }
-        report_path.write_text(json.dumps({
+        atomic_write_text(report_path, json.dumps({
             "mode_preset": asdict(outcome.defaults), "effective_profile_id": outcome.selected_profile,
             "effective_flux_mode": outcome.flux_mode, "advanced_request": advanced_report,
             "faction_id": args.faction_id, "faction_mode": outcome.faction_mode,
@@ -328,7 +329,7 @@ def main() -> int:
                 "strategy": "baseline plus up to search_depth next-ranked documented weapons per mount, one mount changed at a time",
             },
             "candidates": outcome.assessed_candidates,
-        }, indent=2, default=str), encoding="utf-8")
+        }, indent=2, default=str))
         legal_count = sum(item["legality"] == "LEGAL" for item in outcome.assessed_candidates)
         print(f"{legal_count} LEGAL candidate(s): {report_path}")
         return 0 if legal_count else 1
@@ -358,7 +359,7 @@ def main() -> int:
         report_dir = config.output_dir / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
         report_path = report_dir / f"doctrine_{args.faction_id}.json"
-        report_path.write_text(json.dumps(asdict(evidence), indent=2, default=str), encoding="utf-8")
+        atomic_write_text(report_path, json.dumps(asdict(evidence), indent=2, default=str))
         print(f"Doctrine evidence: {report_path}")
         return 0
     if args.command == "faction-capability":
@@ -372,7 +373,7 @@ def main() -> int:
         report_dir = config.output_dir / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
         report_path = report_dir / f"faction_capability_{args.faction_id}.json"
-        report_path.write_text(json.dumps(asdict(capability_profile), indent=2, default=str), encoding="utf-8")
+        atomic_write_text(report_path, json.dumps(asdict(capability_profile), indent=2, default=str))
         print(f"Faction capability profile: {report_path}")
         return 0
     if args.command == "recommend":
@@ -389,7 +390,7 @@ def main() -> int:
         report_dir = config.output_dir / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
         report_path = report_dir / f"recommend_{args.faction_id}.json"
-        report_path.write_text(json.dumps(asdict(result), indent=2, default=str), encoding="utf-8")
+        atomic_write_text(report_path, json.dumps(asdict(result), indent=2, default=str))
         print(f"{len(result.gaps)} capability gap(s), {len(result.unaddressed_gaps)} without a native solution, {len(result.fully_unaddressed_gaps)} unaddressed by any leg: {report_path}")
         return 0
     if args.command == "fleet-support":
@@ -402,14 +403,14 @@ def main() -> int:
             selections, support_constraints = fleet_support_request_from_payload(json.loads(args.request_snapshot.read_text(encoding="utf-8"))) if args.request_snapshot else (parse_fleet_selections(tuple(args.hull_id)), FleetSupportConstraints(args.access_mode, not args.no_foreign_hulls, args.include_hidden_hulls, SupportFocus(args.focus), args.count))
             if args.save_request_snapshot:
                 args.save_request_snapshot.parent.mkdir(parents=True, exist_ok=True)
-                args.save_request_snapshot.write_text(json.dumps(fleet_support_request_to_payload(selections, support_constraints), indent=2), encoding="utf-8")
+                atomic_write_text(args.save_request_snapshot, json.dumps(fleet_support_request_to_payload(selections, support_constraints), indent=2))
             fleet_result = api.run_fleet_support_advisor(registry, selections, args.faction_id, args.source_mod, config.heuristic_set, support_constraints)
         except ValueError as exc:
             parser.error(str(exc))
         report_dir = config.output_dir / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
         report_path = report_dir / "fleet_support.json"
-        report_path.write_text(json.dumps(asdict(fleet_result), indent=2, default=str), encoding="utf-8")
+        atomic_write_text(report_path, json.dumps(asdict(fleet_result), indent=2, default=str))
         print(f"{len(fleet_result.profile.support_needs)} advisory support need(s), {len(fleet_result.recommendations)} individually ranked addition(s): {report_path}")
         return 0
     if args.command == "fleet-support-why-not":
@@ -425,7 +426,7 @@ def main() -> int:
         report_dir = config.output_dir / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
         report_path = report_dir / f"fleet_support_why_not_{args.candidate_hull_id}.json"
-        report_path.write_text(json.dumps(asdict(fleet_why_not_result), indent=2, default=str), encoding="utf-8")
+        atomic_write_text(report_path, json.dumps(asdict(fleet_why_not_result), indent=2, default=str))
         print(f"{fleet_why_not_result.reason}: {report_path}")
         return 0
     if args.command == "scenario-advisor":
@@ -441,12 +442,12 @@ def main() -> int:
                 support_constraints = FleetSupportConstraints(args.access_mode, True, False, SupportFocus(args.focus), args.count)
             if args.save_request_snapshot:
                 args.save_request_snapshot.parent.mkdir(parents=True, exist_ok=True)
-                args.save_request_snapshot.write_text(json.dumps(scenario_advisor_request_to_payload(selections, scenario, support_constraints), indent=2), encoding="utf-8")
+                atomic_write_text(args.save_request_snapshot, json.dumps(scenario_advisor_request_to_payload(selections, scenario, support_constraints), indent=2))
             scenario_result = api.run_scenario_fleet_advisor(registry, selections, scenario, args.faction_id, args.source_mod, config.heuristic_set, support_constraints)
         except ValueError as exc:
             parser.error(str(exc))
         report_dir = config.output_dir / "reports"; report_dir.mkdir(parents=True, exist_ok=True)
-        report_path = report_dir / "scenario_advisor.json"; report_path.write_text(json.dumps(asdict(scenario_result), indent=2, default=str), encoding="utf-8")
+        report_path = report_dir / "scenario_advisor.json"; atomic_write_text(report_path, json.dumps(asdict(scenario_result), indent=2, default=str))
         print(f"{scenario_result.readiness} mechanical alignment, {len(scenario_result.recommendations)} individual addition(s): {report_path}")
         return 0
     if args.command == "why-not":
@@ -463,7 +464,7 @@ def main() -> int:
         report_dir = config.output_dir / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
         report_path = report_dir / f"why_not_{args.faction_id}_{args.role}_{args.hull_id}.json"
-        report_path.write_text(json.dumps(asdict(explanation), indent=2, default=str), encoding="utf-8")
+        atomic_write_text(report_path, json.dumps(asdict(explanation), indent=2, default=str))
         for line in _why_not_report_lines(explanation):
             print(line)
         print(f"report: {report_path}")
@@ -479,7 +480,7 @@ def main() -> int:
         report_dir = config.output_dir / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
         report_path = report_dir / f"analysis_{args.variant_id}.json"
-        report_path.write_text(json.dumps(asdict(analysis), indent=2, default=str), encoding="utf-8")
+        atomic_write_text(report_path, json.dumps(asdict(analysis), indent=2, default=str))
         print(f"Variant analysis: {report_path}")
         return 0
     if args.command == "check-export":
@@ -490,7 +491,7 @@ def main() -> int:
         report_dir = config.output_dir / "reports"
         report_dir.mkdir(parents=True, exist_ok=True)
         report_path = report_dir / "export_staleness.json"
-        report_path.write_text(json.dumps(asdict(staleness), indent=2), encoding="utf-8")
+        atomic_write_text(report_path, json.dumps(asdict(staleness), indent=2))
         print(f"{'STALE' if staleness.stale else 'CURRENT'}: {report_path}")
         return 1 if staleness.stale else 0
     if args.command == "refit":
@@ -511,7 +512,7 @@ def main() -> int:
                 )
             except ValueError as exc:
                 parser.error(str(exc))
-            report_path.write_text(json.dumps(asdict(fix_result), indent=2, default=str), encoding="utf-8")
+            atomic_write_text(report_path, json.dumps(asdict(fix_result), indent=2, default=str))
             status = "already LEGAL" if not fix_result.changes and fix_result.final_legality.result == "LEGAL" else f"{len(fix_result.changes)} change(s), now {fix_result.final_legality.result}"
             print(f"{status}: {report_path}")
             return 0 if fix_result.final_legality.result == "LEGAL" else 1
@@ -523,7 +524,7 @@ def main() -> int:
             )
         except ValueError as exc:
             parser.error(str(exc))
-        report_path.write_text(json.dumps(asdict(quality_result), indent=2, default=str), encoding="utf-8")
+        atomic_write_text(report_path, json.dumps(asdict(quality_result), indent=2, default=str))
         if quality_result.note:
             status = quality_result.note
         else:
@@ -565,7 +566,7 @@ def main() -> int:
         write_change_impact_report(scan_outcome.change_impact, impact_path)
     scan_outcome.report["change_impact_report"] = str(impact_path)
     report_path = report_dir / "scan_summary.json"
-    report_path.write_text(json.dumps(scan_outcome.report, indent=2, default=str), encoding="utf-8")
+    atomic_write_text(report_path, json.dumps(scan_outcome.report, indent=2, default=str))
     print(f"Read-only scan complete: {report_path}")
     return 0 if not scan_outcome.result.errors else 1
 

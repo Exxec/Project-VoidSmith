@@ -51,6 +51,7 @@ from starsector_variant_generator.core.models import (
     Weapon,
 )
 from starsector_variant_generator.core.registry import Registry
+from starsector_variant_generator.core.safeio import atomic_write_text
 
 # Includes explicit source-analysis availability states such as
 # COMPILED_ONLY_SCRIPT.  Bump so reusable per-mod fragments cannot hide a
@@ -538,4 +539,4 @@ def _entity_sort_key(entity: Entity) -> tuple[str, str]:
 
 
 def _write_json(path: Path, value: object) -> None:
-    path.write_text(json.dumps(value, indent=2, sort_keys=True, default=str), encoding="utf-8")
+    atomic_write_text(path, json.dumps(value, indent=2, sort_keys=True, default=str))

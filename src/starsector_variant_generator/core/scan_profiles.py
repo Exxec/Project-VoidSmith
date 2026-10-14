@@ -15,6 +15,7 @@ from uuid import uuid4
 
 from starsector_variant_generator.core.cache import build_manifest
 from starsector_variant_generator.core.models import ScanResult, SourceType
+from starsector_variant_generator.core.safeio import atomic_write_text
 
 SCAN_PROFILE_SCHEMA_VERSION = "scan-profile-0.1"
 
@@ -75,7 +76,7 @@ def diff_scan_profile(profile: ScanProfile, installation_path: Path, scan: ScanR
 def save_scan_profiles(path: Path, profiles: tuple[ScanProfile, ...]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {"schema_version": SCAN_PROFILE_SCHEMA_VERSION, "profiles": [asdict(profile) for profile in profiles]}
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    atomic_write_text(path, json.dumps(payload, indent=2, sort_keys=True))
 
 
 def load_scan_profiles(path: Path) -> tuple[ScanProfile, ...]:

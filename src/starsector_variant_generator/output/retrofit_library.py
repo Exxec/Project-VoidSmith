@@ -12,6 +12,10 @@ from starsector_variant_generator.analysis.mechanical_archetypes import (
 )
 from starsector_variant_generator.core.models import Variant
 from starsector_variant_generator.core.registry import Registry
+from starsector_variant_generator.core.safeio import (
+    atomic_write_bytes,
+    atomic_write_text,
+)
 from starsector_variant_generator.generation.candidate import (
     generate_conservative_candidate,
 )
@@ -88,7 +92,7 @@ def _backup_local_copy(target: Path) -> Path | None:
     history = target.parent / ".history" / target.stem / f"{digest}.variant"
     if not history.exists():
         history.parent.mkdir(parents=True, exist_ok=True)
-        history.write_bytes(contents)
+        atomic_write_bytes(history, contents)
     return history
 
 
@@ -109,7 +113,7 @@ def copy_existing_retrofit(variant: Variant, output_root: Path, *, replace: bool
     except OSError as exc:
         raise ValueError(f"Cannot read scanned source variant {variant.id}: {exc}") from exc
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(content, encoding="utf-8")
+    atomic_write_text(target, content)
     return target
 
 
@@ -130,7 +134,7 @@ def save_editable_variant(variant: Variant, registry: Registry, output_root: Pat
     if variant.flux_vents is not None: payload["fluxVents"] = variant.flux_vents
     if variant.flux_capacitors is not None: payload["fluxCapacitors"] = variant.flux_capacitors
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    atomic_write_text(target, json.dumps(payload, indent=2))
     return target
 
 
@@ -167,7 +171,7 @@ def restore_editable_retrofit_history(history_path: Path, output_root: Path) -> 
     target = working_copy_path(output_root, variant_id)
     _backup_local_copy(target)
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_bytes(candidate.read_bytes())
+    atomic_write_bytes(target, candidate.read_bytes())
     return target
 
 
@@ -184,12 +188,12 @@ def publish_editable_retrofit(path: Path, output_root: Path, *, replace: bool = 
             raise FileExistsError(f"Published retrofit differs: {target}")
         _backup_local_copy(target)
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_bytes(contents)
+    atomic_write_bytes(target, contents)
     mod_info = target_root / "mod_info.json"
     mod_payload = '{\n  "id": "voidsmith_editable_retrofits",\n  "name": "VoidSmith Editable Retrofits",\n  "version": "0.1.0",\n  "author": "VoidSmith"\n}\n'
     if mod_info.exists() and mod_info.read_text(encoding="utf-8") != mod_payload:
         raise ValueError(f"Refusing to replace unrelated compatibility-mod manifest: {mod_info}")
-    mod_info.write_text(mod_payload, encoding="utf-8")
+    atomic_write_text(mod_info, mod_payload)
     return target
 
 

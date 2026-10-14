@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from starsector_variant_generator.core.models import ScanResult
+from starsector_variant_generator.core.safeio import atomic_write_text
 
 
 @dataclass(frozen=True)
@@ -54,6 +55,6 @@ def update_manifest(path: Path, scan: ScanResult) -> CacheComparison:
     removed = len(old_entries.keys() - new_entries.keys())
     changed = sum(old_entries[item] != new_entries[item] for item in old_entries.keys() & new_entries.keys())
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(current, indent=2), encoding="utf-8")
+    atomic_write_text(path, json.dumps(current, indent=2))
     status = "CREATED" if previous is None else ("UNCHANGED" if not (added or changed or removed) else "CHANGED")
     return CacheComparison(status, added, changed, removed)

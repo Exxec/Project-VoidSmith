@@ -7,12 +7,13 @@ from dataclasses import asdict
 from pathlib import Path
 
 from starsector_variant_generator.analysis.change_impact import ChangeImpactReport
+from starsector_variant_generator.core.safeio import atomic_write_text
 
 
 def write_change_impact_report(report: ChangeImpactReport, path: Path) -> None:
     """Write only under a caller-selected output path; never game/mod data."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(asdict(report), indent=2, sort_keys=True), encoding="utf-8")
+    atomic_write_text(path, json.dumps(asdict(report), indent=2, sort_keys=True))
 
 
 def compact_change_impact(report: ChangeImpactReport) -> dict[str, object]:
@@ -27,4 +28,4 @@ def compact_change_impact(report: ChangeImpactReport) -> dict[str, object]:
 
 def write_compact_change_impact_report(report: ChangeImpactReport, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(compact_change_impact(report), indent=2, sort_keys=True), encoding="utf-8")
+    atomic_write_text(path, json.dumps(compact_change_impact(report), indent=2, sort_keys=True))

@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
 
+from starsector_variant_generator.core.safeio import atomic_write_text
 
 FEEDBACK_SCHEMA_VERSION = "voidsmith-recommendation-feedback-0.1"
 
@@ -55,5 +56,5 @@ def append_feedback(output_dir: Path, entry: RecommendationFeedback) -> Path:
     if not data["recorded_at"]:
         data["recorded_at"] = datetime.now(UTC).replace(microsecond=0).isoformat()
     entries.append(data)
-    path.write_text(json.dumps({"schema_version": FEEDBACK_SCHEMA_VERSION, "entries": entries, "policy": "Review material only; never auto-applied to legality, ranking, or heuristics."}, indent=2, sort_keys=True), encoding="utf-8")
+    atomic_write_text(path, json.dumps({"schema_version": FEEDBACK_SCHEMA_VERSION, "entries": entries, "policy": "Review material only; never auto-applied to legality, ranking, or heuristics."}, indent=2, sort_keys=True))
     return path

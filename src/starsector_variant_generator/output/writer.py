@@ -8,6 +8,7 @@ from starsector_variant_generator.analysis.classification import classify_weapon
 from starsector_variant_generator.core.heuristics import get_heuristic_set
 from starsector_variant_generator.core.models import Variant
 from starsector_variant_generator.core.registry import Registry
+from starsector_variant_generator.core.safeio import atomic_write_text
 from starsector_variant_generator.validation.legality import (
     LegalityResult,
     validate_variant,
@@ -52,7 +53,7 @@ def _write_text_if_same_or_missing(path: Path, contents: str) -> None:
             raise OutputCollisionError(f"Refusing to overwrite differing existing output: {path}")
         return
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(contents, encoding="utf-8")
+    atomic_write_text(path, contents)
 
 
 def _write_manifest_if_compatible(path: Path, manifest: dict[str, object]) -> None:
@@ -71,7 +72,7 @@ def _write_manifest_if_compatible(path: Path, manifest: dict[str, object]) -> No
             raise OutputCollisionError(f"Refusing to overwrite differing existing manifest: {path}")
         return
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    atomic_write_text(path, json.dumps(manifest, indent=2))
 
 
 def write_variant(variant: Variant, registry: Registry, output_dir: Path) -> Path:
