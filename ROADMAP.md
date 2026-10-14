@@ -136,3 +136,14 @@ Source: BridgeForge `ROADMAP.md` item 70, `docs/HARDENING_PLAN.md`, `docs/RC8_BE
 - **GUI contract by hash.** Pin the Save Workshop workspace rules and flags the way BridgeForge pins `--help` (a golden hash per command); a rule change then shows up as a reviewed diff.
 - **Evidence record for edits** (idea 4 below) can reuse BridgeForge's row format: id, fact, evidence with date, and what relies on it.
 - **Update 2026-10-12: the capacity-overage evidence (BridgeForge item 57) is in.** Over capacity costs 0.1 supplies per day per unit for cargo, fuel and personnel each (capped at 50 per resource, costs add) and slows the fleet to max(1, round(base burn x (2 - r))) for the worst resource's ratio r (BridgeForge `RC8_BEHAVIOUR.md` RC8-34 and RC8-35); a save's capacity figures (`mC`, `mF`, `mP`, `sU` on the player's `<cargo>`) are written from the fleet at save time and a space used above capacity is stored as is (RC8-36). S5 can cite those rows. Still unknown: whether loading recomputes an edited `mC`; one load test would settle it before the Workshop edits capacity fields.
+
+## Automation plan (2026-10-14; plan only, not started)
+
+Owner request 2026-10-14: further automation, fixes, checks and less hand work, written so any AI can implement it. Spec:
+`docs/AUTOMATION_PLAN.md`; the repository contract (no AI dependency, no invented behaviour, heuristics never auto-tuned, IP
+boundary) binds every item. Phases: V0 boundary and hygiene (real-entity calibration packs are tracked in git against `AGENTS.md`;
+owner decision first; atomic writes, bounded archive import, full mypy and ruff in CI, golden `--help`); V1 checks that run
+themselves (`validate-all` over every shipped variant, mod acceptance with a baseline, parse failures with locations, stale enabled
+mods); V2 calibration review a person can finish (auto-resolve names to ids, per-row pre-checks, batch approve by a named reviewer,
+heuristic-set proposal report); V3 Save Workshop S4/S5 from BridgeForge's RC8-34..36 rows; V4 a `check-mod` verdict BridgeForge can
+read and the SPW round trip. Owner decisions 2026-10-14 ('follow your recommendations') are recorded in the plan. **V0.1 done 2026-10-14:** six real-entity calibration files and `docs/Chatgpt mod curated guide` untracked (kept locally under `generated/calibration-sources/moved-from-git-2026-10-14/`), no history rewrite; guard `tests/test_distribution_boundary.py`; a non-working UTF-16 line in `.gitignore` rewritten in ASCII. Full suite: 849 tests, OK (skipped=3). `AGENTS.md` rewritten as version 0.7 (consolidated, Save Workshop clause updated to RC8-34..36, hygiene, evidence, direction and sister-project sections).

@@ -1,468 +1,226 @@
 # AGENTS.md
-# Starsector Variant Generator Repository Contract
-Version 0.6
+# VoidSmith repository contract
+Version 0.7 (2026-10-14). Replaces 0.6: same rules, consolidated (the continuous-execution rule appeared three times), the Save
+Workshop clause updated to the capacity evidence now on record, and sections added for hygiene, evidence, automation direction
+and the sister projects. The Python package keeps its original name, `starsector_variant_generator`.
 
-Read the formal specification before coding.
+VoidSmith is an offline, deterministic, explainable desktop tool for Starsector 0.98a-RC8: it reads the installed game and
+enabled mods, builds legal ship fits, explains them, analyses faction capability, advises fleet support, and edits copies of
+saves within strict limits. It never changes game or mod files.
 
-## Required Reading Order
+## 1. Required reading order
 
 1. `AGENTS.md`
 2. `FORMAL_SPECIFICATION.md`
 3. `DATA_SCHEMA.md`
-4. `GAP_RECOMMENDATION_ENGINE.md` when changing capability gaps, recommendations, diversity, or Why-Not
+4. `GAP_RECOMMENDATION_ENGINE.md` when changing capability gaps, recommendations, diversity or Why-Not
 5. `FACTION_KNOWLEDGE_PACKS.md` when changing faction guidance or pack data
 6. `EQUIPMENT_ACCESS_AND_AUTOFIT.md` when changing access or retrofit substitution
 7. `HULLMODS_CIVILIAN_AND_REFIT.md`
 8. `TEST_PLAN.md`
-9. `HEURISTICS.md` when changing analysis/scoring behavior
+9. `HEURISTICS.md` when changing analysis or scoring behaviour
 10. `GUI.md` when changing GUI code
-11. `ROADMAP.md`
+11. `docs/SAVE_WORKSHOP_DESIGN.md` and `docs/CAMPAIGN_SAVE_PARSER_GATE.md` when touching `campaign/` or the Save Workshop
+12. `ROADMAP.md`, and `docs/AUTOMATION_PLAN.md` for checks, tooling and automation work
 
-## Continuous Execution Rule
+## 2. Direction
 
-Treat milestones as checkpoints, not stopping points. After a completed slice:
-run the relevant tests, update roadmap/status documentation, record limits or
-schema/heuristic changes, and immediately continue into the next in-scope
-dependency. Ask only for a genuine blocker, missing required input, source
-safety concern, or material architecture/data-contract decision.
+What the project is working toward, in order (details in `ROADMAP.md` and `docs/AUTOMATION_PLAN.md`):
 
-## Source Safety
+1. **Safe to publish:** nothing in git names third-party game or mod entities; every write is atomic; untrusted archives are read
+   with limits; lint and type checks are enforced in CI, not only run once.
+2. **Checks that run themselves** instead of hand-run stress tests: every shipped variant validated in one command, mod
+   acceptance compared against a baseline, parse failures reported with locations.
+3. **Finish the Save Workshop** (phase 57) on recorded evidence.
+4. **Calibration a person can finish:** the tool resolves, pre-checks and sorts review rows; people approve; people release
+   heuristic sets.
+5. **Useful to the sister projects** (section 13) through read-only verdicts, never by sharing data in git.
 
-Source game and mod files are read-only.
+The engine stays useful with no knowledge pack, no calibration data and no network.
 
-Never:
-- overwrite source variants
-- alter Starsector core files
-- alter original mod files
-- execute mod scripts merely to discover behavior
-- write outside configured output/log/cache directories
+## 3. Source safety
 
-Treat mod data as untrusted input and sanitize paths.
+Source game and mod files are read-only. Never overwrite source variants, alter Starsector core files or original mod files,
+execute mod scripts to discover behaviour, or write outside the configured output, log and cache directories. Treat mod data as
+untrusted input: sanitize paths, bound archive sizes, refuse links and junctions where a write or delete could follow them.
 
-Save Workshop (`docs/SAVE_WORKSHOP_DESIGN.md`, roadmap phase 57; inspection, planning and verified new-copy writing within saved capacity): the player's
-original save is source data and is never modified. The only permitted write is a new copy of a user-selected save
-below the configured output directory, never into the game's saves folder, and never before every gate in
-`docs/CAMPAIGN_SAVE_PARSER_GATE.md` is met. The writer (S3, owner decision 2026-10-06) writes only changes the plan ACCEPTED within
-the saved capacity, re-reads and verifies the copy, and refuses over-capacity or unprovable changes. Capacity-overage consequences
-are `UNKNOWN` and must not be computed.
+### Save Workshop
 
-## Distribution and IP Boundary
+`docs/SAVE_WORKSHOP_DESIGN.md`, roadmap phase 57. The player's original save is source data and is never modified. The only
+permitted write is a new copy of a user-selected save below the configured output directory, never into the game's saves folder,
+and never before every gate in `docs/CAMPAIGN_SAVE_PARSER_GATE.md` is met. The writer (S3, owner decision 2026-10-06) writes only
+changes the plan ACCEPTED within the saved capacity, re-reads and verifies the copy, and refuses over-capacity or unprovable changes.
 
-Do not ship Starsector core data, mod data, extracted reports, sprites,
-descriptions, real entity lists, mod-specific knowledge packs, or benchmarks
-that name third-party game/mod entities. The distributable repository may
-contain only application code, schemas, neutral synthetic fixtures, and empty
-or generic templates. At runtime, all game/mod-specific facts must be read
-from the user's installed core game or enabled mods and written only to local
-configured output/cache directories. Local benchmark manifests selecting real
-entities are user-created, ignored files.
+Capacity overage is now measured (BridgeForge `docs/RC8_BEHAVIOUR.md` RC8-34 to RC8-36, live runs 2026-10-12): each unit over
+cargo, fuel or personnel capacity costs 0.1 supplies per day (cap 50 per resource), speed falls with the worst ratio, and a save
+stores its capacity figures as of save time. These rows may be **shown** as consequences, cited by row id. Over-capacity
+**writes stay refused**: whether a load recomputes an edited `mC`/`mF`/`mP` is still unmeasured. No other overage effect may be
+computed or claimed.
 
-## No AI Dependency Yet
+## 4. Distribution and IP boundary
 
-Do not add an AI/LLM/API dependency unless explicitly requested later.
+Do not ship Starsector core data, mod data, extracted reports, sprites, descriptions, real entity lists, mod-specific knowledge
+packs, calibration packs, review sheets or benchmarks that name third-party game or mod entities. The repository may contain only
+application code, schemas, neutral synthetic fixtures, and empty or generic templates. At runtime, every game- or mod-specific
+fact is read from the user's installed core and enabled mods and written only to local configured output or cache directories,
+or to the gitignored `generated/` tree. Local benchmark manifests selecting real entities are user-created, ignored files.
 
-The core engine must remain:
-- offline
-- deterministic
-- explainable
-- testable without AI
+`tests/test_distribution_boundary.py` enforces this for tracked files (added 2026-10-14, when six real-entity calibration files
+and a curated guide were moved out of git into `generated/`). Do not weaken it to make a file fit.
 
-## Do Not Invent Game Behavior
+## 5. No AI dependency
 
-Use documented, parseable data and preserve raw evidence.
+Do not add an AI, LLM or API dependency unless the owner explicitly asks. The core engine stays offline, deterministic,
+explainable and testable without AI. AI-assisted review packs are optional input data, never a runtime dependency.
 
-Unknown or scripted mechanics remain:
-- `UNKNOWN`
-- `UNKNOWN_SCRIPTED_EFFECT`
+## 6. Do not invent game behaviour
 
-If an unknown effect is required to determine legality, return:
+Use documented, parseable data and preserve raw evidence. Unknown or scripted mechanics stay `UNKNOWN` or
+`UNKNOWN_SCRIPTED_EFFECT`. If an unknown effect is needed to decide legality, return `NOT_DETERMINABLE` rather than guessing.
 
-`NOT_DETERMINABLE`
+A claim about how the game behaves at runtime needs evidence with a date: a parsed core file, a javap line, a log line or a
+recorded live run. Cite BridgeForge's `docs/RC8_BEHAVIOUR.md` row ids where one exists. Label forecasts PREDICTED and observed
+facts OBSERVED.
 
-rather than guessing.
+## 7. Legality and quality are strictly separate
 
-## Legality and Quality Are Strictly Separate
+Validation alone owns `LEGAL`, `ILLEGAL` and `NOT_DETERMINABLE`. Legality never depends on heuristics, faction doctrine, role
+preference, quality scores, Beginner/Guided/Advanced mode or user taste. Scoring evaluates only `LEGAL` candidates. Warnings
+(poor flux, weak PD, role mismatch, low logistics efficiency) are separate from legality; never use a score or warning to conceal
+an illegal or indeterminate candidate.
 
-Validation alone owns:
-- `LEGAL`
-- `ILLEGAL`
-- `NOT_DETERMINABLE`
+Severity of an illegal shipped variant follows recorded runtime evidence (BridgeForge, 2026-09-27): a variant naming a missing
+weapon is a Fatal error at New Game; a missing hull mod is dropped silently. Report both; do not invent other severities.
 
-Legality must never depend on:
-- heuristics
-- faction doctrine
-- role preference
-- quality scores
-- Beginner/Guided/Advanced mode
-- user taste
+## 8. Heuristics, calibration and overrides
 
-Scoring may evaluate only `LEGAL` candidates.
+### Heuristic registry
 
-Warnings are separate from legality.
+All tunable heuristics belong to a named, versioned registry. Reports, fixtures and generated metadata record the heuristic set
+identifier, resolved values, explicit overrides and adapters used. A new or changed released heuristic needs a rationale,
+documentation, regression coverage and a new set identifier.
 
-A legal fit may have warnings such as:
-- poor flux
-- weak PD
-- role mismatch
-- low logistics efficiency
+**Heuristics are never tuned automatically.** Tools may measure sets against approved calibration rows and write a *proposed* set
+under `generated/`; a person reviews and registers it.
 
-Never use a score or warning to conceal an illegal or indeterminate candidate.
+### Calibration
 
-## Heuristic Registry
+Calibration rows are evidence about real ships and live only under `generated/`. Tools may resolve names to ids, run pre-checks
+and sort rows; only a named person marks a row APPROVED (batch approval of rows that passed every pre-check is allowed, owner
+decision 2026-10-14). Unapproved rows never influence released behaviour.
 
-All tunable heuristics belong to a named, versioned heuristic registry.
+### Manual overrides
 
-Reports, fixtures, and generated metadata must record:
-- heuristic set identifier
-- resolved values
-- explicit overrides
-- adapters used
+Overrides may correct or supplement inferred metadata: role classification, score inputs, hidden/restricted classification,
+doctrine affinity, scripted-effect interpretation when explicitly supplied. Overrides may NOT bypass hard legality.
 
-New or changed released heuristics require:
-- rationale
-- documentation
-- regression coverage
-- a new heuristic-set identifier
+Precedence for non-legality metadata: explicit manual override > adapter-derived model > standard-data inference > unknown/default.
 
-## Adapter Layer
+## 9. Engine design rules
 
-### Scripted-mechanic analyzer hierarchy
+### Adapter layer and scripted-mechanic evidence ladder
 
-For a hullmod, ship system, weapon, or fighter whose effect is not fully
-represented by normalized static fields, collect evidence in this order:
-
-1. parsed static hullmod/equipment metadata;
-2. local source-code static analysis (never execute scripts);
-3. known Starsector API-call interpretation;
-4. local mod-specific configuration;
-5. existing variant/use evidence (statistical only, never hard truth);
-6. adapter-derived model;
-7. explicit manual override;
-8. `UNKNOWN_SCRIPTED_EFFECT` when no reliable interpretation exists.
-
-This is an evidence-acquisition ladder, not score/legality precedence.
-Final non-legality metadata still follows the explicit precedence stated in
-the Manual Overrides section below. Every stage used must be recorded in
-provenance with source location, confidence, and unmodeled remainder.
-
-Custom scripted mechanics must use adapters rather than scattered special cases.
-
-Example:
-
-```text
-adapters/
-    vanilla/
-    hmi/
-    mvs/
-    progressive_smods/
-```
-
-Prefer adapter-specific modeling over:
-
-```python
-if mod_id == "some_mod":
-    ...
-```
-
-throughout generic engine code.
-
-## Manual Overrides
-
-Manual overrides may correct or supplement inferred metadata.
-
-Overrides may affect:
-- role classification
-- score inputs
-- hidden/restricted classification
-- doctrine affinity
-- scripted-effect interpretation when explicitly supplied
-
-Overrides may NOT bypass hard legality.
-
-Precedence for non-legality metadata:
-
-```text
-explicit manual override
-    >
-adapter-derived model
-    >
-standard-data inference
-    >
-unknown/default
-```
-
-## Civilian / Logistics Scope
-
-Civilian and logistics ships are first-class fitting targets.
-
-Support per-ship profiles such as:
-- FREIGHTER
-- TANKER
-- SALVAGE
-- SURVEY
-- TROOP_TRANSPORT
-- FAST_LOGISTICS
-- STEALTH_LOGISTICS
-- EXPEDITION_SUPPORT
-- GENERAL_SUPPORT
-
-Do not implement whole-fleet optimization in the current scope.
-
-Fleet-wide effects may be recorded as metadata, but do not attempt to optimize
-them without an explicitly requested fleet-planning phase.
-
-## Hullmod Modeling
-
-Hullmods should be represented through normalized typed effects when their
-behavior can be reliably determined.
-
-Evaluate the resulting `DerivedShipState`, not the hullmod name alone.
-
-Unknown scripted effects remain unknown until modeled by an adapter/override.
-
-## Refit / Repair Assistant
-
-Support a mode that improves an existing variant with minimal changes.
-
-It must:
-- preserve locked user choices
-- explain each suggested change
-- support a maximum-change budget
-- never silently rebuild the whole ship
-- distinguish legality fixes from quality improvements
-
-## Continuous Work Policy
-
-Phases are checkpoints, not automatic stop points.
-
-When given broad implementation scope, continue through in-scope phases as far
-as practical.
-
-At each milestone:
-1. run relevant tests
-2. update `ROADMAP.md`
-3. write/update completion notes
-4. record limitations/schema/heuristic changes
-5. continue unless genuinely blocked or the requested scope is complete
-
-Do not ask for confirmation merely because a phase finished.
-
-## Architectural Boundaries
-
-Keep separate:
-- parsers
-- normalized data
-- provenance
-- adapters
-- overrides
-- validation
-- derived ship state
-- classification
-- heuristics
-- generation
-- scoring
-- explanation
-- refit assistant
-- export
-- GUI
-
-The GUI must not become a second rules engine.
-
-## Testing
-
-Add tests with parser, validator, adapter, hullmod-effect, civilian-profile, and
-scoring changes.
-
-Golden-output changes must be deliberate and documented.
-
-## Scope Discipline
-
-Finish the requested functionality before adding unrelated features.
-
-Do not add decorative GUI work before backend contracts are stable enough to
-support it.
-
-
-## Faction Knowledge Packs
-
-Faction-specific guidance must be implemented as optional data-driven
-**Faction Doctrine & Retrofit Packs**, not hardcoded into the generic engine.
-
-Knowledge packs may provide:
-- curated faction doctrine
-- preferred native hull roles
-- discouraged roles
-- preferred/conditional hullmods
-- retrofit templates
-- capability-gap interpretation
-- progression-stage guidance
-- officer suggestions
-- thematic notes
-
-Knowledge packs may influence recommendation quality but may never override hard
-legality. The generic engine must remain useful when no pack exists.
-
-## Automatic Faction Capability Analysis
-
-The application must build a useful faction capability profile from installed
-mod data alone using parseable hulls, weapons, fighters, variants, built-ins,
-known hullmod effects, and role classifications.
-
-Manual or AI-assisted review packs are optional enrichment, not mandatory
-dependencies.
-
-## Recommendation Categories
-
-Capability-gap recommendations must distinguish:
-
-- `NATIVE`
-- `RETROFIT`
-- `ACQUISITION`
-
-The engine should return a small ranked shortlist, normally 3-5 useful options,
-rather than only describing a missing capability.
-
-## Recommendation Confidence
-
-Every recommendation must separate:
-- recommendation score
-- confidence
-
-High score with low confidence must remain visibly low confidence.
-
-## Recommendation Diversity
-
-Avoid returning several near-identical solutions when useful alternatives exist.
-
-Prefer different solution families when practical:
-- maximum capability
-- practical/low-cost
-- mobility-oriented
-- durability-oriented
-- faction-thematic
-- native retrofit
-- foreign acquisition
-
-Diversity must never promote illegal or clearly poor candidates.
-
-## Why-Not Support
-
-Recommendation services should explain why a specific eligible hull or retrofit
-failed to make the shortlist.
-
-## Knowledge Pack Freshness
-
-Every pack records:
-- schema version
-- target mod/faction
-- target mod version
-- relevant source hashes where available
-- authored/generated date
-- authorship method
-
-Status:
-- `CURRENT`
-- `PARTIALLY_STALE`
-- `STALE`
-- `INCOMPATIBLE`
-
-Stale guidance may remain advisory but must reduce confidence.
-
-## Lightweight Recommendation Constraints
-
-Support:
-- allow foreign hulls
-- allow hidden/secret hulls
-- AI / Player / Either
-- include experimental retrofits
-- doctrine strictness: LOOSE / BALANCED / STRICT
-- optional manually selected campaign stage
-
-Do not require fleet inventory, save-state, or full fleet composition questions.
-
-## GUI Workspace Separation
-
-The desktop application should use distinct top-level workspaces/tabs so
-different systems do not collapse into one overloaded screen.
-
-Recommended top-level tabs:
-
-1. **Ships**
-   - Hull Browser
-   - Ship Fitting Canvas
-   - Existing Variant / Build Inspector
-   - Candidate Comparison
-
-2. **Retrofits**
-   - Refit / Repair Assistant
-   - Retrofit Templates
-   - Native vs Retrofit comparison
-   - Locked-component editing
-   - Before / After comparison
-
-3. **Faction**
-   - Faction Capability Profile
-   - Strengths / Weaknesses / Gaps
-   - Native / Retrofit / Acquisition recommendations
-   - Knowledge Pack status
-   - Doctrine strictness
-   - Progression-stage guidance
-
-4. **Data / Analysis**
-   - Weapons
-   - Hullmods
-   - Fighters
-   - Existing variants
-   - Doctrine evidence
-   - Adapter / override provenance
-   - Unknown scripted effects
-
-5. **Settings / Export**
-   - Starsector path
-   - enabled mods
-   - scan/cache status
-   - heuristic set
-   - output path
-   - compatibility mod export
-   - debug/logging controls
-
-Do not put whole-fleet optimization into the Faction workspace in the current
-scope. "Faction" means faction capability and recommendation context, not an
-exact player fleet planner.
-
-
-## Equipment Provenance vs Faction Affinity
-
-Never equate `source_mod_id` with faction ownership. Factionless content should normally be modeled as `UNALIGNED` and may participate when access policy permits.
-
-## Retrofit Application Modes
-
-Support `EXACT`, `STARSECTOR_STYLE`, and `ADAPTIVE`. Adaptive is the recommended default. Exact never substitutes. Starsector-style preserves the template. Adaptive preserves role/doctrine and optimizes legal substitutions.
-
-
-Continuous execution rule
-
-Continue working through the current roadmap automatically until one of the following occurs:
-
-you encounter a genuine blocking ambiguity that cannot be resolved from the repository, specs, tests, or existing code
-required external/user input is missing
-continuing would risk modifying protected/source files
-you discover a fundamental architecture conflict that requires a design decision
-the requested roadmap scope is complete
-
-Do not stop merely because a phase, milestone, slice, or subtask is complete.
-
-At each completed slice:
-
-run the relevant tests
-update the roadmap/status
-record limitations or design changes
-continue immediately into the next logical in-scope task
-
-Do not ask for permission to continue after successful completion of a slice.
-
-If a non-blocking implementation choice is needed, make the most conservative architecture-consistent choice, document it, and continue.
-
-Ask me only when the decision would materially change scope, architecture, data contracts, safety, or expected behavior.
-
-Partial uncertainty is not automatically a blocker. If the repository contains enough evidence to make a reasonable, reversible implementation choice, proceed and document the assumption.
+For a hullmod, ship system, weapon or fighter whose effect is not fully represented by normalized static fields, collect evidence
+in this order: (1) parsed static metadata; (2) local source-code static analysis, never executing scripts; (3) known Starsector
+API-call interpretation; (4) local mod-specific configuration; (5) existing variant or use evidence (statistical only, never hard
+truth); (6) adapter-derived model; (7) explicit manual override; (8) `UNKNOWN_SCRIPTED_EFFECT`. This is an evidence-acquisition
+ladder, not score or legality precedence. Every stage used is recorded in provenance with source location, confidence and
+unmodelled remainder. Custom scripted mechanics use adapters (`adapters/vanilla/`, `adapters/<mod>/`), not `if mod_id == ...`
+branches in generic engine code.
+
+### Hullmod modelling
+
+Represent hullmods through normalized typed effects when their behaviour can be reliably determined; evaluate the resulting
+`DerivedShipState`, not the hullmod name. Unknown scripted effects stay unknown until an adapter or override models them.
+
+### Civilian and logistics scope
+
+Civilian and logistics ships are first-class fitting targets, with per-ship profiles (FREIGHTER, TANKER, SALVAGE, SURVEY,
+TROOP_TRANSPORT, FAST_LOGISTICS, STEALTH_LOGISTICS, EXPEDITION_SUPPORT, GENERAL_SUPPORT). Fleet-wide effects may be recorded
+as metadata. Fleet Support and Scenario advice is advisory; whole-fleet optimization is out of scope without an explicitly
+requested fleet-planning phase.
+
+### Refit / repair assistant
+
+Improves an existing variant with minimal changes: preserves locked user choices, explains each change, supports a
+maximum-change budget, never silently rebuilds the whole ship, and distinguishes legality fixes from quality improvements.
+Retrofit modes: `EXACT` (never substitutes), `STARSECTOR_STYLE` (preserves the template), `ADAPTIVE` (default; preserves role and
+doctrine and optimizes legal substitutions).
+
+### Equipment provenance vs faction affinity
+
+Never equate `source_mod_id` with faction ownership. Factionless content is normally `UNALIGNED` and may participate when access
+policy permits.
+
+### Architectural boundaries
+
+Keep separate: parsers, normalized data, provenance, adapters, overrides, validation, derived ship state, classification,
+heuristics, generation, scoring, explanation, refit assistant, export, campaign (save) handling, GUI. The GUI never becomes a
+second rules engine: it calls `api.py` and presents results.
+
+## 10. Faction knowledge and recommendations
+
+- Faction-specific guidance is optional, data-driven **Faction Doctrine & Retrofit Packs**, never hardcoded. Packs may provide
+  doctrine, preferred and discouraged roles, hullmods, retrofit templates, gap interpretation, progression guidance, officer
+  suggestions and thematic notes. They influence recommendation quality, never hard legality.
+- The engine builds a useful faction capability profile from installed mod data alone; packs are enrichment.
+- Packs record schema version, target mod/faction and version, source hashes, authored or generated date and authorship method;
+  status `CURRENT`, `PARTIALLY_STALE`, `STALE` or `INCOMPATIBLE`. Stale guidance stays advisory with reduced confidence.
+- Gap recommendations distinguish `NATIVE`, `RETROFIT` and `ACQUISITION`, return a ranked shortlist of normally 3-5 options, keep
+  score and confidence separate (high score with low confidence stays visibly low confidence), prefer different solution
+  families, and never promote illegal or clearly poor candidates for diversity. Why-Not explains why an eligible option missed.
+- Lightweight constraints: foreign hulls, hidden/secret hulls, AI / Player / Either, experimental retrofits, doctrine strictness
+  LOOSE / BALANCED / STRICT, optional campaign stage. Do not require fleet inventory or full fleet composition.
+- `player_suitability` (phase 54) is decision-gated: do not change its behaviour or infer player skill or combat outcomes.
+
+## 11. GUI
+
+Top-level workspaces: **Ships** (browser, fitting canvas, inspector, comparison, generate), **Retrofits** (refit/repair
+assistant, templates, before/after), **Faction** (capability, gaps, recommendations, pack status, Why-Not, feedback), **Data /
+Analysis** (weapons, hullmods, fighters, variants, doctrine evidence, provenance, unknown effects), **Settings / Export** (paths,
+mods, scan/cache, heuristic set, output, export, release verification, debug), and the **Save Workshop** behind a default-off
+setting. Fleet Support and Scenario stay advisory. No decorative GUI work before the backend contract is stable; GUI changes
+follow `GUI.md` and keep `tools/gui_smoke_test.py` passing.
+
+## 12. Engineering hygiene
+
+- Write files atomically (temp file in the same folder, then `os.replace`); delete trees only inside an allowed root and never
+  through a link or junction. (Being introduced: `docs/AUTOMATION_PLAN.md` V0.2; new code follows it now.)
+- Read untrusted archives with per-entry, total and compression-ratio limits before extracting anything.
+- Tests with every parser, validator, adapter, hullmod-effect, civilian-profile, scoring and campaign change. Fixtures are neutral
+  and synthetic. Golden-output changes are deliberate and documented in the commit.
+- Before committing, run the suite and the checks CI runs (`CLAUDE.md` lists the commands). Full-source mypy reached zero on
+  2026-08-31: keep it there.
+- One logical change per commit; update `ROADMAP.md` and `docs/WORK_LOG.md` with what was built, its limits and its tests.
+- Before merging another agent's branch, review its diff for deleted files and files cut by more than a fifth, and rerun the full
+  suite on the merged tree.
+
+## 13. Sister projects
+
+VoidSmith is published; its siblings are local projects of the same owner. Read their contracts before editing them.
+
+| Project | Relationship |
+|---|---|
+| BridgeForge (`Documents/Project BridgeForge`) | revives legacy mods; owns `docs/RC8_BEHAVIOUR.md`, the runtime facts VoidSmith cites. Planned: `voidsmith check-mod` gives it a read-only verdict on a revived mod |
+| Salvor (`Documents/Project Salvor`) | save rescue (diagnose, repair a copy). The save editor lives here, in the Save Workshop, not in Salvor |
+| Project Go (`Documents/Starsector project go`) | mod translator |
+| SPW | inventory source; round trip still to be proven on a real install |
+
+Exchange happens through files the user selects or commands the user runs. Never copy a sibling's mod or game data into this
+repository.
+
+## 14. How to work
+
+Treat milestones as checkpoints, not stopping points. Continue through the current roadmap automatically until one of these
+happens: a genuine blocking ambiguity the repository, specs, tests or code cannot resolve; required user input is missing;
+continuing would risk modifying protected or source files; a fundamental architecture conflict needs a design decision; or the
+requested scope is complete.
+
+At each completed slice: run the relevant tests, update the roadmap and status, record limits and design changes, and continue
+into the next logical in-scope task without asking. For a non-blocking implementation choice, make the most conservative
+architecture-consistent choice, document it and continue. Partial uncertainty is not a blocker when the repository gives enough
+evidence for a reasonable, reversible choice: proceed and record the assumption.
+
+Ask the owner only when a decision would materially change scope, architecture, data contracts, safety or expected behaviour,
+or before anything irreversible or outward-facing (publishing a release, rewriting history, pushing). Finish the requested work
+before adding unrelated features.
