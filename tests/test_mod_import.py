@@ -5,6 +5,7 @@ import unittest
 import zipfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest import mock
 
 from starsector_variant_generator.core.mod_import import resolve_dropped_mod
 
@@ -122,3 +123,91 @@ class ResolveDroppedArchiveTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def _zip_bytes(entries: dict[str, bytes], compression: int = zipfile.ZIP_DEFLATED) -> bytes:
+    import io
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", compression) as zf:
+        for name, data in entries.items():
+            zf.writestr(name, data)
+    return buffer.getvalue()
+
+
+class ArchiveLimitTests(unittest.TestCase):
+    def _drop(self, tmp: str, payload: bytes) -> tuple[object, Path]:
+        archive = Path(tmp) / "limited.zip"
+        archive.write_bytes(payload)
+        cache = Path(tmp) / "cache"
+        return resolve_dropped_mod(archive, cache), cache
+
+    def test_a_high_compression_ratio_entry_is_refused_before_anything_is_extracted(self) -> None:
+        payload = _zip_bytes({"mod_info.json": b'{"id": "x"}', "pad.bin": bytes(8 * 1024 * 1024)})
+        with TemporaryDirectory() as tmp:
+            result, cache = self._drop(tmp, payload)
+            self.assertIsNone(result.mod_root)
+            self.assertIn("compression ratio", result.error or "")
+            self.assertFalse((cache / "limited" / "mod_info.json").exists())
+
+    def test_an_entry_over_the_per_entry_cap_is_refused(self) -> None:
+        import os
+
+        from starsector_variant_generator.core import mod_import
+        payload = _zip_bytes({"mod_info.json": b'{"id": "x"}', "big.bin": os.urandom(4096)}, zipfile.ZIP_STORED)
+        with TemporaryDirectory() as tmp, mock.patch.object(mod_import, "MAX_ENTRY_BYTES", 1024):
+            result, cache = self._drop(tmp, payload)
+            self.assertIsNone(result.mod_root)
+            self.assertIn("uncompressed", result.error or "")
+            self.assertFalse((cache / "limited" / "mod_info.json").exists())
+
+    def test_a_total_over_the_cap_is_refused(self) -> None:
+        from starsector_variant_generator.core import mod_import
+        payload = _zip_bytes({"a.txt": b"a" * 600, "b.txt": b"b" * 600, "mod_info.json": b'{"id": "x"}'}, zipfile.ZIP_STORED)
+        with TemporaryDirectory() as tmp, mock.patch.object(mod_import, "MAX_TOTAL_BYTES", 1000):
+            result, _cache = self._drop(tmp, payload)
+            self.assertIn("total limit", result.error or "")
+
+    def test_an_archive_within_the_limits_still_extracts(self) -> None:
+        payload = _zip_bytes({"mod_info.json": b'{"id": "fine"}', "data/notes.txt": b"x" * 5000})
+        with TemporaryDirectory() as tmp:
+            result, _cache = self._drop(tmp, payload)
+            self.assertIsNone(result.error)
+            self.assertEqual("fine", result.mod_id)
+
+    def test_a_declared_size_that_lies_is_caught_while_reading(self) -> None:
+        from starsector_variant_generator.core import mod_import
+        payload = _zip_bytes({"mod_info.json": b'{"id": "x"}', "grow.bin": b"z" * 5000}, zipfile.ZIP_STORED)
+        with TemporaryDirectory() as tmp, mock.patch.object(mod_import, "check_archive_limits"), \
+                mock.patch.object(mod_import, "MAX_ENTRY_BYTES", 1000):
+            result, _cache = self._drop(tmp, payload)
+            self.assertIsNone(result.mod_root)
+            self.assertIn("while reading", result.error or "")
+
+    def test_a_symlink_entry_is_refused(self) -> None:
+        import io
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w") as zf:
+            info = zipfile.ZipInfo("link")
+            info.external_attr = (0o120777 << 16)
+            zf.writestr(info, "target")
+        with TemporaryDirectory() as tmp:
+            result, _cache = self._drop(tmp, buffer.getvalue())
+            self.assertIn("symbolic link", result.error or "")
+
+    def test_an_extraction_target_that_is_a_link_is_refused_and_its_target_kept(self) -> None:
+        from tests.link_support import make_link
+        payload = _zip_bytes({"mod_info.json": b'{"id": "x"}'})
+        with TemporaryDirectory() as tmp:
+            cache = Path(tmp) / "cache"
+            cache.mkdir()
+            outside = Path(tmp) / "outside"
+            outside.mkdir()
+            (outside / "keep.txt").write_text("keep", encoding="utf-8")
+            if not make_link(cache / "limited", outside):
+                self.skipTest("links cannot be created here")
+            archive = Path(tmp) / "limited.zip"
+            archive.write_bytes(payload)
+            result = resolve_dropped_mod(archive, cache)
+            self.assertIsNone(result.mod_root)
+            self.assertIn("link", result.error or "")
+            self.assertTrue((outside / "keep.txt").exists())
