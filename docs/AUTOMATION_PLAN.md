@@ -1,7 +1,7 @@
 # VoidSmith automation plan: fewer hand-run checks and hand-filled sheets
 
 Owner request 2026-10-14 (made in a BridgeForge session): a roadmap plan for further automation, fixes, checks and anything that
-reduces hand work, written so any AI can implement it. Nothing here is built. Each item names the modules to touch, the behaviour,
+reduces hand work, written so any AI can implement it. **Status 2026-10-18: V0.1 to V4.2 are built on branch `automation-plan` (see ROADMAP.md for the limits and the local steps that need the real install).** Each item names the modules to touch, the behaviour,
 the tests and when it is done. An implementer needs this file, `AGENTS.md` (and its reading order), `ROADMAP.md` and the code.
 
 The repository contract is unchanged and binds every item: no AI/LLM dependency; offline, deterministic, explainable; unknown

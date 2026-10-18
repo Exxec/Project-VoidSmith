@@ -722,3 +722,10 @@
 - CI: ruff E9,F,B and full mypy; fixed 10 B905, 2 B007, 3 unused imports and the `CalibrationWorkspaceResult.diagnostics` annotation (it is a tuple of dicts). `cli/main.py` now exposes `build_parser()`; the golden test hashes parser structure rather than rendered `--help` because argparse output differs between Python 3.11, 3.12 and 3.13+. `.gitattributes` added (LF, CRLF for batch and PowerShell).
 - `validate-all`, `acceptance`, parse-failure locations and the stale-enabled-mod report; all unit-tested on synthetic data (`tests/test_validate_all.py`, `test_acceptance_baseline.py`, `test_parse_diagnostics.py`, `test_scan_parse_failures.py`, `test_stale_enabled_mods.py`). Parser offsets refer to the normalised text, so the structure line (raw file) is reported beside them. The first real-install runs are local steps (see ROADMAP).
 
+## 2026-10-18 - Automation plan V1 GUI, V2, V3, V4
+
+- GUI Diagnostics tab for located parse failures and stale enabled mods, through `api.scan_diagnostic_lines`; offscreen tests in `tests/test_gui_canvas.py`.
+- Calibration review tooling (`calibration resolve|approve|propose`) with tests in `tests/test_calibration_review.py` (synthetic hulls only; the heuristic measurement is mocked). Heuristic sets are never registered or tuned; the candidate is an unchanged copy with a TODO rationale.
+- Save Workshop: docs cite RC8-34..36; `campaign/overage.py` preview; GUI "Write edited copy" with `api.run_save_verify_copy` (tests with the writer mocked plus one real end-to-end write on a synthetic save). Found while wiring it: `MainWindow._finish_thread` re-enables a finished control, which would have re-armed the write button after a write, so write controls carry a `saveWriteControl` property that keeps them disabled until the widget refreshes them.
+- `check-mod` and the SPW round-trip test (`tests/test_check_mod.py`, `tests/test_spw_round_trip.py`).
+- Writing Python edits through a bash heredoc corrupted backslash-n escape sequences more than once; edits containing them were redone with chr(92) or the Edit tool.
