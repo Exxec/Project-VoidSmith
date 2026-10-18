@@ -25,7 +25,7 @@ from starsector_variant_generator.analysis.scenario_advisor import (
     scenario_advisor_request_from_payload,
     scenario_advisor_request_to_payload,
 )
-from starsector_variant_generator.cli import automation_commands
+from starsector_variant_generator.cli import automation_commands, calibration_commands
 from starsector_variant_generator.core.config import AppConfig
 from starsector_variant_generator.core.logging import configure_logging
 from starsector_variant_generator.core.result_cache import AnalysisResultCache
@@ -220,12 +220,15 @@ def build_parser() -> argparse.ArgumentParser:
     refit.add_argument("--starsector-path", type=Path, required=True)
     refit.add_argument("--output-dir", type=Path, default=Path("generated"))
     automation_commands.add_parsers(subparsers)
+    calibration_commands.add_parsers(subparsers)
     return parser
 
 
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
+    if args.command == calibration_commands.COMMAND:
+        return calibration_commands.run(args, parser)
     if args.command in automation_commands.COMMANDS:
         return automation_commands.run(args, parser)
     if args.command == "save":
