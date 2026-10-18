@@ -67,7 +67,7 @@ def is_link(path: Path | str) -> bool:
 
 
 def _resolved(path: Path | str) -> Path:
-    return Path(path).expanduser().resolve()
+    return _resolve_existing(Path(path).expanduser())
 
 
 def _inside(path: Path, root: Path) -> bool:
@@ -78,9 +78,26 @@ def _inside(path: Path, root: Path) -> bool:
         return False
 
 
+def _resolve_existing(path: Path) -> Path:
+    """Resolve the deepest existing ancestor (long names, links followed) and re-attach the not-yet-existing tail."""
+    current, tail = Path(os.path.abspath(path)), []
+    while not current.exists() and current.parent != current:
+        tail.append(current.name)
+        current = current.parent
+    return current.resolve().joinpath(*reversed(tail))
+
+
+def _as_located(raw: Path) -> Path:
+    """Where `raw` itself sits: its parent folder fully resolved (so a Windows 8.3 alias such as RUNNER~1 matches the long form
+    the allowed root uses, and a link in the parent chain shows its real place), with the final name kept unresolved so a link
+    that is itself the target is judged as a link, not as what it points to."""
+    absolute = Path(os.path.abspath(raw))
+    return _resolve_existing(absolute.parent) / absolute.name
+
+
 def _lexically_inside(raw: Path, allowed_roots: Iterable[Path | str]) -> None:
-    lexical = Path(os.path.abspath(raw))
-    roots = [Path(os.path.abspath(Path(r).expanduser())) for r in allowed_roots]
+    lexical = _as_located(raw)
+    roots = [_resolved(r) for r in allowed_roots]
     if not any(_inside(lexical, root) and lexical != root for root in roots):
         raise UnsafePathError(f"{lexical} is outside the allowed roots")
 
@@ -94,8 +111,8 @@ def check_deletable(path: Path | str, allowed_roots: Iterable[Path | str]) -> Pa
     target = _resolved(raw)
     if any(target == root for root in roots):
         raise UnsafePathError(f"{target} is an allowed root itself, not something inside one")
-    lexical = Path(os.path.abspath(raw))
-    if not any(_inside(lexical, root) or _inside(lexical, Path(os.path.abspath(root))) for root in roots):
+    lexical = _as_located(raw)
+    if not any(_inside(lexical, root) for root in roots):
         raise UnsafePathError(f"{lexical} is outside the allowed roots: {', '.join(str(r) for r in roots)}")
     if not any(_inside(target, root) for root in roots):
         raise UnsafePathError(f"{lexical} leads to {target}, which is outside the allowed roots (a link out of them)")

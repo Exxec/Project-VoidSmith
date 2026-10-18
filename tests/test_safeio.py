@@ -109,5 +109,69 @@ class GuardedDeleteTests(unittest.TestCase):
             self.assertEqual(os.listdir(root), ["d"])
 
 
+def short_alias(path: Path) -> Path | None:
+    """The Windows 8.3 short-name form of an existing path, or None where short names do not exist or are disabled."""
+    if os.name != "nt":
+        return None
+    import ctypes
+    buffer = ctypes.create_unicode_buffer(1024)
+    if not ctypes.windll.kernel32.GetShortPathNameW(str(path), buffer, 1024):
+        return None
+    alias = Path(buffer.value)
+    return alias if str(alias).lower() != str(path).lower() else None
+
+
+class ShortNameAliasTests(unittest.TestCase):
+    def long_named_root(self, tmp: str) -> Path:
+        root = Path(tmp).resolve() / "a rather long folder name"
+        (root / "child dir").mkdir(parents=True)
+        return root
+
+    def test_an_8_3_alias_of_the_allowed_root_is_accepted(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = self.long_named_root(tmp)
+            alias = short_alias(root)
+            if alias is None:
+                self.skipTest("8.3 short names are unavailable here")
+            (root / "child dir" / "run.partial.jsonl").write_text("x", encoding="utf-8")
+            self.assertTrue(safe_unlink(alias / "child dir" / "run.partial.jsonl", [root]))
+            self.assertTrue(safe_rmtree(alias / "child dir", [root]))
+            self.assertFalse((root / "child dir").exists())
+
+    def test_an_alias_given_as_the_root_and_a_missing_path_inside_it_are_accepted(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = self.long_named_root(tmp)
+            alias = short_alias(root)
+            if alias is None:
+                self.skipTest("8.3 short names are unavailable here")
+            self.assertFalse(safe_rmtree(root / "never created", [alias]))
+            self.assertTrue(safe_rmtree(root / "child dir", [alias]))
+
+    def test_the_alias_does_not_let_a_sibling_folder_in(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = self.long_named_root(tmp)
+            sibling = Path(tmp).resolve() / "another folder"
+            sibling.mkdir()
+            alias = short_alias(root)
+            if alias is None:
+                self.skipTest("8.3 short names are unavailable here")
+            with self.assertRaises(UnsafePathError):
+                safe_rmtree(sibling, [alias])
+            self.assertTrue(sibling.exists())
+
+    def test_deleting_through_a_link_that_leaves_the_root_is_still_refused(self) -> None:
+        with TemporaryDirectory() as tmp, TemporaryDirectory() as other:
+            root = Path(tmp).resolve()
+            (Path(other) / "sub").mkdir()
+            (Path(other) / "sub" / "keep.txt").write_text("keep", encoding="utf-8")
+            if not make_link(root / "ln", Path(other)):
+                self.skipTest("links cannot be created here")
+            with self.assertRaises(UnsafePathError):
+                safe_rmtree(root / "ln" / "sub", [root])
+            with self.assertRaises(UnsafePathError):
+                safe_unlink(root / "ln" / "sub" / "keep.txt", [root])
+            self.assertTrue((Path(other) / "sub" / "keep.txt").exists())
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -19,12 +19,19 @@ from starsector_variant_generator.cli.main import build_parser
 GOLDEN = Path(__file__).with_name("cli_golden.json")
 
 
+def _is_required(action: argparse.Action) -> bool:
+    """argparse sets `required` on a nargs='*' or '?' positional differently in 3.11 and 3.12+; derive it from nargs instead."""
+    if not action.option_strings:
+        return action.nargs not in ("*", "?")
+    return bool(action.required)
+
+
 def _describe(action: argparse.Action) -> dict[str, object]:
     return {
         "options": list(action.option_strings),
         "dest": action.dest,
         "nargs": action.nargs,
-        "required": action.required,
+        "required": _is_required(action),
         "choices": None if action.choices is None or isinstance(action, argparse._SubParsersAction) else [str(c) for c in action.choices],
         "default": None if action.default is None else str(action.default).replace("\\", "/"),
         "type": getattr(action.type, "__name__", None),

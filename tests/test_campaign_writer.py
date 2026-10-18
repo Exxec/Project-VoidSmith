@@ -176,6 +176,22 @@ class SaveWriterTests(unittest.TestCase):
         self.assertIsNone(result.copy_dir)
         self.assertFalse((self.out / 'save_workshop' / 'doomed').exists())
 
+    def test_failed_verification_removes_the_copy_when_the_output_dir_is_an_8_3_alias(self):
+        try:
+            from test_safeio import short_alias
+        except ImportError:  # run as tests.test_campaign_writer
+            from tests.test_safeio import short_alias
+        long_out = self.root / 'a rather long output folder'
+        long_out.mkdir()
+        alias = short_alias(long_out)
+        if alias is None:
+            self.skipTest('8.3 short names are unavailable here')
+        failed = VerificationReport('FAILED', True, False, True, (), ('forced',))
+        with patch.object(writer_module, 'verify_copy', return_value=failed):
+            result = api.run_save_edit_write(self.plan(('credits', 250)), alias, name='doomed')
+        self.assertEqual(result.status, 'FAILED_VERIFICATION')
+        self.assertFalse((long_out / 'save_workshop' / 'doomed').exists())
+
     def test_unexpected_error_removes_the_copy(self):
         with patch.object(writer_module, 'verify_copy', side_effect=RuntimeError('boom')):
             result = self.write(('credits', 250), name='doomed')
