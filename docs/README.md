@@ -12,7 +12,7 @@ and are intentionally not consolidated into release documentation.
 | [Portable packaging](WINDOWS_PACKAGING.md) | Reproducible Windows and Linux release artifacts. |
 | [Resource inspection and edit planning](CAMPAIGN_SAVE_RESOURCES.md) | S2 static storage evidence, exact locators, pure plans, refusal rules, the within-capacity write gate and the S3 copy writer. |
 | [Campaign inspection format](CAMPAIGN_SAVE_FORMAT.md) | Qualified read-only save inspection, schema, failure behavior and remaining gates. |
-| [Save Workshop design](SAVE_WORKSHOP_DESIGN.md) | Plan for minor edits to a save copy; S0-S3 implemented in source, over-capacity writes refused, GUI write controls not built. |
+| [Save Workshop design](SAVE_WORKSHOP_DESIGN.md) | Plan for minor edits to a save copy; S0-S3 implemented in source, over-capacity writes refused, GUI write control built behind the default-off setting. |
 | [Save Workshop implementation plan](SAVE_WORKSHOP_IMPLEMENTATION_PLAN.md) | Module layout, GUI design, build slices and lessons ported from BridgeForge. |
 | [Developer Guide](DEVELOPER_GUIDE.md) | Architecture, verification, and contribution rules. |
 | [Calibration import notes](CALIBRATION_IMPORT_NOTES.md) | Sanitized fixture and calibration-import constraints. |

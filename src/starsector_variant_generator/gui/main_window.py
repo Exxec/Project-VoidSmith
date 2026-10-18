@@ -461,9 +461,9 @@ class MainWindow(QMainWindow):
             if label: box.addWidget(QLabel(label))
             box.addWidget(widget)
         layout.addWidget(group)
-        self.save_workshop_enabled = QCheckBox("Enable Save Workshop read-only preview")
+        self.save_workshop_enabled = QCheckBox("Enable Save Workshop (inspect, plan, write verified copies)")
         self.save_workshop_enabled.setChecked(False)
-        self.save_workshop_enabled.setToolTip("Source preview only; edit plans write nothing and the copy-write gate remains closed.")
+        self.save_workshop_enabled.setToolTip("Off by default. When on, the Save Workshop can inspect a save and plan edits; 'Write edited copy' then writes a verified NEW copy below the output directory, only for changes within the saved capacity. The original save is never changed.")
         self.save_workshop_enabled.toggled.connect(self._toggle_save_workshop)
         layout.addWidget(self.save_workshop_enabled)
         mods_group = QGroupBox("ADDITIONAL MODS (drag && drop)"); mods_layout = QVBoxLayout(mods_group)
@@ -494,7 +494,7 @@ class MainWindow(QMainWindow):
 
     def _toggle_save_workshop(self, enabled: bool) -> None:
         if enabled and self.save_workshop_page is None:
-            self.save_workshop_page = SaveWorkshopWidget(self._run, lambda: Path(self.root.text().strip()) if self.root.text().strip() else None, self)
+            self.save_workshop_page = SaveWorkshopWidget(self._run, lambda: Path(self.root.text().strip()) if self.root.text().strip() else None, self, output_dir=lambda: Path(self.output.text().strip()) if self.output.text().strip() else None)
             self.workspace_tabs.addTab(self.save_workshop_page, "Save Workshop")
         if self.save_workshop_page is not None:
             index = self.workspace_tabs.indexOf(self.save_workshop_page)
@@ -1045,7 +1045,7 @@ class MainWindow(QMainWindow):
         # Backend tasks are immutable snapshots. Token-gating prevents a stale
         # result from replacing a newer UI request without unsafe cancellation.
         token = self._operation_tokens.get(control, 0) + 1; self._operation_tokens[control] = token
-        thread = QThread(self); worker = (SaveWorker if control.property("readOnlySaveControl") else AnalysisWorker)(operation); worker.moveToThread(thread); thread.started.connect(worker.run)
+        thread = QThread(self); worker = (SaveWorker if control.property("readOnlySaveControl") or control.property("saveWriteControl") else AnalysisWorker)(operation); worker.moveToThread(thread); thread.started.connect(worker.run)
         # thread.quit connected first, before the application-level
         # handler -- see _start_scan's identical reasoning.
         worker.completed.connect(thread.quit); worker.completed.connect(lambda result: self._complete_operation(control, token, completed, result))
@@ -1087,7 +1087,7 @@ class MainWindow(QMainWindow):
         dialog = self._operation_progress.pop(thread, None)
         if dialog is not None:
             dialog.close(); dialog.deleteLater()
-        self._threads.discard(thread); self._active_workers.pop(thread, None); control.setEnabled(self._registry is not None or control is self.release_verify_button or bool(control.property("readOnlySaveControl"))); thread.deleteLater()
+        self._threads.discard(thread); self._active_workers.pop(thread, None); control.setEnabled(False if control.property("saveWriteControl") else (self._registry is not None or control is self.release_verify_button or bool(control.property("readOnlySaveControl")))); thread.deleteLater()
         self._maybe_close_after_background_work()
     def _operation_failed(self, message: str) -> None: self.statusBar().showMessage(f"Operation failed: {message}"); QMessageBox.critical(self, "Operation failed", message)
 

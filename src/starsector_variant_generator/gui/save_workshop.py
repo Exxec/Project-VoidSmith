@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (QCheckBox, QFileDialog, QHBoxLayout, QLabel,
 
 from starsector_variant_generator import api
 from starsector_variant_generator.campaign.edit_plan import EditRequest
-from starsector_variant_generator.gui.presentation import format_save_plan, format_save_resources
+from starsector_variant_generator.gui.presentation import format_save_plan, format_save_resources, format_save_write
 
 
 class SaveResourceTableModel(QAbstractTableModel):
@@ -74,15 +74,17 @@ class SaveResourceTableModel(QAbstractTableModel):
 
 
 class SaveWorkshopWidget(QWidget):
-    def __init__(self, runner, installation_path, parent=None):
+    def __init__(self, runner, installation_path, parent=None, output_dir=None):
         super().__init__(parent)
         self._runner = runner
+        self._output_dir = output_dir or (lambda: None)
+        self._current_plan = None
         self._installation_path = installation_path
         self._epoch = 0
         self.write_gate = api.run_save_write_gate()
         self.selected_save: Path | None = None
         layout = QVBoxLayout(self)
-        layout.addWidget(QLabel('Read-only preview. Plans do not modify saves; copy writing is still gated.'))
+        layout.addWidget(QLabel('Plans do not modify saves. Write edited copy writes a verified NEW copy below the output directory; your save is never changed.'))
         split = QSplitter(Qt.Horizontal)
         left = QWidget(); controls = QVBoxLayout(left)
         self.choose_button = QPushButton('Choose save directory…')
@@ -113,14 +115,19 @@ class SaveWorkshopWidget(QWidget):
         footer = QHBoxLayout()
         footer.addWidget(QLabel('Your original save is not changed. Capacity effects remain UNKNOWN.'), 1)
         self.write_button = QPushButton('Write edited copy'); self.write_button.setEnabled(False)
-        self.write_button.setToolTip('GUI write controls are not built yet (use `voidsmith save write`). ' + self.write_gate.reason)
+        self.write_button.setProperty('saveWriteControl', True)
+        self.write_button.clicked.connect(self.write_copy)
         footer.addWidget(self.write_button); layout.addLayout(footer)
+        self._refresh_write_button()
         self.model.dataChanged.connect(self._invalidate_plan)
         self._invalidate_plan()
 
     def _invalidate_plan(self, *_args):
         self._epoch += 1
-        self.plan_view.setPlainText('Plan not current. Enter new values and choose Review edit plan.\nWriting a copy is not available in this window yet (CLI: voidsmith save write). Write gate: ' + self.write_gate.status)
+        self._current_plan = None
+        self.plan_view.setPlainText('Plan not current. Enter new values and choose Review edit plan.\nWrite gate: ' + self.write_gate.status)
+        if hasattr(self, 'write_button'):
+            self._refresh_write_button()
 
     def _choose_save(self):
         selected = QFileDialog.getExistingDirectory(self, 'Choose the save directory to inspect')
@@ -167,5 +174,40 @@ class SaveWorkshopWidget(QWidget):
             if self._epoch != epoch:
                 return
             self.model.set_plan(result)
+            self._current_plan = result
             self.plan_view.setPlainText(format_save_plan(result))
+            self._refresh_write_button()
         self._runner('Reviewing save edit plan; no writes', operation, complete, self.plan_button, cancellable=True)
+
+    def _writable_plan(self):
+        """The current plan if every change is ACCEPTED within the saved capacity (the capacity opt-in never enables a write)."""
+        plan = self._current_plan
+        if plan is None or not plan.changes or any(change.outcome != 'ACCEPTED' for change in plan.changes):
+            return None
+        return plan
+
+    def _refresh_write_button(self):
+        plan, output = self._writable_plan(), self._output_dir()
+        self.write_button.setEnabled(plan is not None and output is not None)
+        if plan is not None and output is not None:
+            self.write_button.setToolTip(f'Writes a verified new copy below {output}. The original save is not changed.')
+        elif plan is None:
+            self.write_button.setToolTip('Review an edit plan first; every change must be ACCEPTED within the saved capacity. ' + self.write_gate.reason)
+        else:
+            self.write_button.setToolTip('Choose a safe output directory in Settings / Export.')
+
+    def write_copy(self):
+        plan, output = self._writable_plan(), self._output_dir()
+        if plan is None or output is None:
+            self.plan_view.setPlainText('Nothing to write: review an edit plan with only ACCEPTED changes and set an output directory. No files written.')
+            return
+        def operation():
+            result = api.run_save_edit_write(plan, output)
+            again = api.run_save_verify_copy(plan, Path(result.copy_dir)) if result.status == 'WRITTEN' and result.copy_dir else None
+            return result, again
+        def complete(outcome):
+            result, again = outcome
+            self._current_plan = None
+            self.plan_view.setPlainText(format_save_write(result, again))
+            self._refresh_write_button()
+        self._runner('Writing a verified copy; the original is not changed', operation, complete, self.write_button)

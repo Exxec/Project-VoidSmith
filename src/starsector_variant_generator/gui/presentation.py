@@ -157,3 +157,21 @@ def format_save_plan(plan) -> str:
         lines.extend((*format_overage_lines(preview), ""))
     lines.extend(plan.notes)
     return "\n".join(lines)
+
+
+def format_save_write(result, reverification=None) -> str:
+    """Present a write attempt and the independent re-verification; VERIFIED only when both agree."""
+    lines = [f"WRITE RESULT: {result.status}", result.reason, ""]
+    if result.status == "WRITTEN":
+        verified = all(report is not None and report.status == "VERIFIED" for report in (result.verification, reverification))
+        lines.append("VERIFIED" if verified else "FAILED_VERIFICATION: do not use this copy")
+        lines.append(f"New copy: {result.copy_dir}")
+        if reverification is not None:
+            lines.extend(f"Problem: {problem}" for problem in reverification.problems)
+            lines.extend(f"{target}: {old} -> {new} (re-read from the copy)" for target, old, new in reverification.changed)
+    elif result.status == "FAILED_VERIFICATION" and result.verification is not None:
+        lines.append("FAILED_VERIFICATION: the copy was removed")
+        lines.extend(f"Problem: {problem}" for problem in result.verification.problems)
+    lines.extend(("", *result.notes))
+    return "\n".join(lines)
+

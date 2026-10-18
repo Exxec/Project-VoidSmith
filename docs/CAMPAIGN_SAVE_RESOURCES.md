@@ -140,7 +140,7 @@ The write gate is `OPEN_WITHIN_CAPACITY` (owner decision 2026-10-06; it was
   in a local test the game loaded an edited copy and then saved to the ORIGINAL's folder, so back up the original before playing the copy.
   The edited copy's saved space-used figure was stale (the game accepted it and wrote the stack sum on its next save).
   Game acceptance remains untested; S5 and S6 are separate. S4's GUI write
-  controls are not built.
+  controls are built (2026-10-18) behind the default-off Workshop setting.
 
 Existing packaged binaries are unchanged.
 
@@ -155,7 +155,7 @@ resource facts, saved capacity and evidence limits. Resources uses a model/view
 table with current value, requested new value, backend check and reason tooltip.
 Changing a request or opt-in invalidates the current plan. Plan and verify shows
 backend old/new values, reasons, evidence and the independent write gate.
-The write button is disabled (GUI write controls are not built; use `voidsmith save write`) and displays the backend gate reason.
+The write button is enabled only for a fully ACCEPTED, current plan with an output directory (otherwise its tooltip names what is missing and the backend gate reason); it writes through `api.run_save_edit_write`, re-verifies the copy and shows VERIFIED or FAILED_VERIFICATION.
 
 All save inspection and planning run in retained SaveWorker threads using the
 existing background-operation service. Stop Waiting discards result delivery;

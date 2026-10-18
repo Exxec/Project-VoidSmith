@@ -46,7 +46,7 @@ class SaveWorkshopGuiTests(unittest.TestCase):
         self.assertIn('ACCEPTED', self.widget.plan_view.toPlainText())
         self.assertIn('120.0 -> 300', self.widget.plan_view.toPlainText())
         self.assertFalse(self.widget.write_button.isEnabled())
-        self.assertIn('OPEN_WITHIN_CAPACITY', self.widget.write_button.toolTip())
+        self.assertIn('output directory', self.widget.write_button.toolTip())  # accepted plan, but no output directory set
         self.assertEqual(source_hashes(self.folder), before)
 
     def test_refusal_and_capacity_planning_opt_in_are_backend_results(self):
@@ -120,6 +120,95 @@ class SaveWorkshopGuiTests(unittest.TestCase):
         self.assertFalse(widget.write_button.isEnabled())
         window.save_workshop_enabled.setChecked(False)
         self.assertFalse(window.workspace_tabs.isTabVisible(window.workspace_tabs.indexOf(widget)))
+
+
+@unittest.skipIf(QApplication is None, 'Optional PySide6 GUI dependency is not installed')
+class SaveWorkshopWriteTests(unittest.TestCase):
+    """Write edited copy: enabled only for a fully ACCEPTED plan with an output directory; the backend writer is mocked here."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.app = QApplication.instance() or QApplication([])
+
+    def setUp(self):
+        temp = TemporaryDirectory(); self.addCleanup(temp.cleanup)
+        self.root = Path(temp.name)
+        self.folder = synthetic_save(self.root / 'save')
+        self.out = self.root / 'out'
+        def runner(_message, operation, completed, _button, **_kwargs):
+            completed(operation())
+        self.widget = SaveWorkshopWidget(runner, lambda: None, output_dir=lambda: self.out)
+        self.addCleanup(self.widget.close)
+        self.widget.inspect_directory(self.folder)
+
+    def plan(self, target, value):
+        model = self.widget.model
+        row = next(i for i, r in enumerate(model.resources) if r.target == target)
+        model.setData(model.index(row, 2), value)
+        self.widget.review_plan()
+
+    def test_button_is_disabled_until_an_accepted_plan_exists_and_after_an_edit(self):
+        self.assertFalse(self.widget.write_button.isEnabled())
+        self.plan('credits', '300')
+        self.assertTrue(self.widget.write_button.isEnabled())
+        self.widget.model.setData(self.widget.model.index(0, 2), '1')
+        self.assertFalse(self.widget.write_button.isEnabled())
+
+    def test_a_written_copy_is_reverified_and_shown_as_verified_with_the_writer_mocked(self):
+        from starsector_variant_generator.campaign.verify import VerificationReport
+        from starsector_variant_generator.campaign.writer import SaveWriteResult
+        ok = VerificationReport('VERIFIED', True, True, True, (('credits', '120.0', '300.0'),), ())
+        written = SaveWriteResult('WRITTEN', 'Verified copy written', str(self.out / 'copy'), ok, ('note',))
+        self.plan('credits', '300')
+        with patch('starsector_variant_generator.api.run_save_edit_write', return_value=written) as write,                 patch('starsector_variant_generator.api.run_save_verify_copy', return_value=ok) as verify:
+            self.widget.write_copy()
+        write.assert_called_once()
+        self.assertEqual(self.out, write.call_args.args[1])
+        verify.assert_called_once()
+        text = self.widget.plan_view.toPlainText()
+        self.assertIn('WRITE RESULT: WRITTEN', text)
+        self.assertIn('VERIFIED', text)
+        self.assertNotIn('FAILED_VERIFICATION', text)
+        self.assertFalse(self.widget.write_button.isEnabled())  # one plan, one write
+
+    def test_a_failed_reverification_is_reported_as_failed_verification(self):
+        from starsector_variant_generator.campaign.verify import VerificationReport
+        from starsector_variant_generator.campaign.writer import SaveWriteResult
+        ok = VerificationReport('VERIFIED', True, True, True, (), ())
+        bad = VerificationReport('FAILED', True, False, True, (), ('credits re-reads as 1',))
+        written = SaveWriteResult('WRITTEN', 'Verified copy written', str(self.out / 'copy'), ok, ())
+        self.plan('credits', '300')
+        with patch('starsector_variant_generator.api.run_save_edit_write', return_value=written),                 patch('starsector_variant_generator.api.run_save_verify_copy', return_value=bad):
+            self.widget.write_copy()
+        self.assertIn('FAILED_VERIFICATION', self.widget.plan_view.toPlainText())
+        self.assertIn('credits re-reads as 1', self.widget.plan_view.toPlainText())
+
+    def test_an_over_capacity_plan_never_enables_or_calls_the_writer_even_with_the_opt_in(self):
+        self.widget.allow_capacity.setChecked(True)
+        self.plan('credits', '300')
+        self.widget.plan_view.setPlainText('')
+        row = next(i for i, r in enumerate(self.widget.model.resources) if r.target == 'commodity:supplies')
+        catalog = CommodityCatalog('PARSED', frozenset({'supplies'}))
+        self.widget._installation_path = lambda: self.root
+        self.widget.model.setData(self.widget.model.index(row, 2), '101')
+        with patch('starsector_variant_generator.api.run_save_commodity_catalog', return_value=catalog),                 patch('starsector_variant_generator.api.run_save_edit_write') as write:
+            self.widget.review_plan()
+            self.assertIn('NOT_DETERMINABLE', self.widget.plan_view.toPlainText())
+            self.assertFalse(self.widget.write_button.isEnabled())
+            self.widget.write_copy()
+        write.assert_not_called()
+        self.assertIn('Nothing to write', self.widget.plan_view.toPlainText())
+
+    def test_real_backend_writes_a_verified_copy_and_leaves_the_original_untouched(self):
+        before = source_hashes(self.folder)
+        self.plan('credits', '300')
+        self.widget.write_copy()
+        text = self.widget.plan_view.toPlainText()
+        self.assertIn('WRITE RESULT: WRITTEN', text)
+        self.assertIn('VERIFIED', text)
+        self.assertNotIn('FAILED_VERIFICATION', text)
+        self.assertEqual(before, source_hashes(self.folder))
+        self.assertTrue(any(self.out.rglob('campaign.xml')))
 
 
 if __name__ == '__main__':

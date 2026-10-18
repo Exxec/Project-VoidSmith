@@ -1283,8 +1283,10 @@ states remain visible. No campaign facts enter fitting/recommendation engines.
 SaveWorker uses the retained background-operation lifecycle; Stop Waiting
 suppresses stale result delivery without claiming safe backend interruption.
 Changed selection/input/opt-in invalidates a pending plan or stale result.
-Main-window close waits for its workers. Write edited copy stays disabled with
-the backend OPEN_WITHIN_CAPACITY gate reason (GUI write controls are not built; the CLI `save write` exists). The original-save safety banner
-is persistent. GUI writing and output-copy verification, discovery-table navigation,
+Main-window close waits for its workers. Write edited copy is enabled only when the current plan has every change ACCEPTED within the saved capacity and a safe
+output directory is set (owner decision 2026-10-14; the Workshop itself is behind its default-off setting). It calls
+`api.run_save_edit_write`, then re-verifies the written copy through `api.run_save_verify_copy` and shows VERIFIED or
+FAILED_VERIFICATION; the capacity opt-in never enables a write. The original-save safety banner
+is persistent. Discovery-table navigation,
 per-row reset/set-to-capacity controls and a shipping flag decision remain
 future S3/S4/S6 work; no live-game acceptance is claimed.

@@ -125,6 +125,7 @@ from starsector_variant_generator.campaign.catalog import CommodityCatalog
 from starsector_variant_generator.campaign.edit_plan import EditPlan, EditRequest
 from starsector_variant_generator.campaign.locators import ResourceSnapshot
 from starsector_variant_generator.campaign.models import SaveInspection
+from starsector_variant_generator.campaign.verify import VerificationReport
 from starsector_variant_generator.campaign.writer import SaveWriteResult
 from starsector_variant_generator.core.cache import (
     CacheComparison,
@@ -912,6 +913,12 @@ def run_save_edit_write(plan: EditPlan, output_dir: Path, *, name: str | None = 
     """
     from starsector_variant_generator.campaign.writer import write_save_copy
     return write_save_copy(plan, output_dir, name=name)
+
+
+def run_save_verify_copy(plan: EditPlan, copy_dir: Path) -> VerificationReport:
+    """Independently re-verify a written copy against its plan (hashes taken when the plan was made); read-only."""
+    from starsector_variant_generator.campaign.verify import verify_copy
+    return verify_copy(Path(plan.source_dir), copy_dir, plan, dict(plan.source_hashes))
 
 
 def run_campaign_save_discovery(directory: Path) -> CampaignSaveDiscovery:
