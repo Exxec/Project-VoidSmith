@@ -12,6 +12,7 @@ from starsector_variant_generator.analysis.gap_recommendation import BuildWhyNot
 from starsector_variant_generator.analysis.scenario_advisor import (
     ScenarioFleetAssessment,
 )
+from starsector_variant_generator.campaign.overage import format_overage_lines
 
 
 def format_generation_results(assessed_candidates: list[dict[str, Any]], profile: str, flux_mode: str) -> str:
@@ -151,5 +152,8 @@ def format_save_plan(plan) -> str:
         if change.locator:
             lines.append(f"Evidence: {change.locator.evidence}")
         lines.append("")
+    preview = getattr(plan, "overage_preview", ())
+    if preview:
+        lines.extend((*format_overage_lines(preview), ""))
     lines.extend(plan.notes)
     return "\n".join(lines)

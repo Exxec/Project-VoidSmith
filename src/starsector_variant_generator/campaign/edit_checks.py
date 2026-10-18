@@ -8,6 +8,7 @@ from decimal import Decimal
 from .catalog import CommodityCatalog
 from .edit_plan import SAVE_WRITE_GATE, EditPlan, EditRequest, PlannedChange
 from .locators import ResourceSnapshot
+from .overage import overage_preview
 
 # Tier-1 contract, not a catalog: membership must still come from installed CSV.
 TIER1_COMMODITIES = frozenset(("supplies", "fuel", "crew", "marines", "heavy_machinery"))
@@ -65,7 +66,7 @@ def build_edit_plan(source_dir: str, snapshot: ResourceSnapshot, requests: tuple
             replacement = resource.locator.original
         rows.append([request, resource, commodity, outcome, reason, replacement])
     # Capacity is judged per dimension after every request is known, so a combined edit is checked once.
-    verdicts = _capacity_verdicts(snapshot, resources, rows)
+    verdicts, usage = _capacity_verdicts(snapshot, resources, rows)
     for request, resource, _commodity, outcome, reason, replacement in rows:
         if request.target in verdicts:
             outcome, reason = verdicts[request.target]
@@ -77,13 +78,14 @@ def build_edit_plan(source_dir: str, snapshot: ResourceSnapshot, requests: tuple
     return EditPlan("campaign-edit-plan-v1", source_dir, snapshot.source_hashes, catalog.evidence, tuple(changes), ready,
                     SAVE_WRITE_GATE.status, ("Plan only: no files written.",
                     "Writing needs every change ACCEPTED (within the saved capacity); the plan's capacity opt-in never enables an over-capacity write.",
-                    "Saved capacity figures are not runtime-verified. Game acceptance is untested. Legality and recommendation engines do not consume this plan."))
+                    "Saved capacity figures are not runtime-verified. Game acceptance is untested. Legality and recommendation engines do not consume this plan."),
+                    overage_preview(usage, {name: Decimal(value) for name, value in snapshot.capacities}))
 
 
 _PERSONNEL = ("commodity:crew", "commodity:marines")
 
 
-def _capacity_verdicts(snapshot: ResourceSnapshot, resources: dict, rows: list) -> dict[str, tuple[str, str]]:
+def _capacity_verdicts(snapshot: ResourceSnapshot, resources: dict, rows: list) -> tuple[dict[str, tuple[str, str]], dict[str, Decimal]]:
     """Judge changed commodity quantities against the saved capacity figures, per dimension.
 
     Cargo: saved space used plus the change times each stack's saved space per unit, against saved cargo
@@ -94,6 +96,7 @@ def _capacity_verdicts(snapshot: ResourceSnapshot, resources: dict, rows: list) 
     pending = {request.target: Decimal(request.value) for request, resource, commodity, outcome, _r, _x in rows
                if outcome == "ACCEPTED" and commodity is not None and Decimal(request.value) != Decimal(resource.value)}
     verdicts: dict[str, tuple[str, str]] = {}
+    usage: dict[str, Decimal] = {}
 
     def settle(targets, ok: bool, detail: str) -> None:
         for target in targets:
@@ -116,12 +119,14 @@ def _capacity_verdicts(snapshot: ResourceSnapshot, resources: dict, rows: list) 
         if "fuel" not in capacity:
             settle(fuel, False, "saved fuel capacity unavailable")
         else:
+            usage["fuel"] = pending[fuel[0]]
             settle(fuel, pending[fuel[0]] <= capacity["fuel"], f"fuel {pending[fuel[0]]} against capacity {capacity['fuel']}")
     if personnel:
         if "personnel" not in capacity or "commodity:crew" not in resources:
             settle(personnel, False, "saved personnel capacity or crew stack unavailable")
         else:
             total = sum((pending.get(t, Decimal(resources[t].value)) for t in _PERSONNEL if t in resources), Decimal(0))
+            usage["personnel"] = total
             settle(personnel, total <= capacity["personnel"], f"crew + marines {total} against capacity {capacity['personnel']}")
     if cargo:
         spaces = {t: unit_space(t) for t in cargo}
@@ -141,5 +146,6 @@ def _capacity_verdicts(snapshot: ResourceSnapshot, resources: dict, rows: list) 
                     unit = spaces[t]
                     if unit is not None:
                         used += (pending[t] - Decimal(resources[t].value)) * unit
+                usage["cargo"] = used
                 settle(cargo, 0 <= used <= capacity["cargo"], f"cargo space {used} against capacity {capacity['cargo']}")
-    return verdicts
+    return verdicts, usage

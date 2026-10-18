@@ -34,6 +34,7 @@ class EditPlan:
     ready_for_copy: bool
     write_gate_status: str
     notes: tuple[str, ...]
+    overage_preview: tuple[dict[str, object], ...] = ()
 
     def to_payload(self) -> dict[str, object]:
         return asdict(self)
