@@ -33,6 +33,7 @@ from pathlib import Path
 from time import perf_counter
 from typing import Any
 
+from starsector_variant_generator.analysis.stale_enabled_mods import find_stale_enabled_mods
 from starsector_variant_generator.analysis.parse_diagnostics import locate_parse_failures
 from starsector_variant_generator.analysis.campaign_save_discovery import (
     CampaignSaveDiscovery,
@@ -132,6 +133,7 @@ from starsector_variant_generator.core.knowledge_packs import (
 )
 from starsector_variant_generator.core.models import (
     Faction,
+    ModInfo,
     ScanProgress,
     ScanResult,
     Variant,
@@ -216,6 +218,17 @@ class ScanOutcome:
     report: dict
 
 
+def _installed_mods(config: AppConfig, logger: Logger, result: ScanResult) -> list[ModInfo]:
+    """Every mod folder on disk, only when some enabled id was not found (the scan itself lists just the scanned mods)."""
+    if not any(item.startswith("Enabled mod not discovered:") for item in result.skipped_entities):
+        return []
+    try:
+        return Scanner(config.starsector_path, logger).discover_sources()
+    except OSError as exc:
+        logger.warning("Could not list installed mods for the stale-enabled report: %s", exc)
+        return []
+
+
 def run_scan(
     config: AppConfig,
     logger: Logger,
@@ -276,6 +289,7 @@ def run_scan(
     report = result.report(config.heuristic_set, include_entities=include_entities)
     logger.info("Scan report built in %.2fs", perf_counter() - _phase_started)
     report["parse_failures"] = [failure.to_dict() for failure in locate_parse_failures(result)]
+    report["stale_enabled_mods"] = [item.to_dict() for item in find_stale_enabled_mods(result, _installed_mods(config, logger, result))]
     report["cache"] = asdict(cache_result)
     report["change_impact"] = asdict(change_impact)
     report["registry"] = {
