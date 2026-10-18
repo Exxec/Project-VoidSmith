@@ -154,3 +154,41 @@ read and the SPW round trip. Owner decisions 2026-10-14 ('follow your recommenda
 
 Local steps that need the real install or the game: run `scan` and read the Diagnostics tab and CLI lines (SVG-004, SVG-014, SVG-017); `validate-all` and compare with the SVG-012/013 441-variant total; `acceptance --write-baseline` once; `calibration resolve` on the real review sheets (the 726 rows) and read how many are ready, then a person runs `calibration approve`; `calibration propose` after rows are approved; one write of a copy from the GUI and a load of it in the game; the one remaining capacity check (does a load recompute an edited `mC`/`mF`/`mP`) in BridgeForge's capacity rig; `check-mod` on a BridgeForge `working/` copy; the SPW inventory round trip on the real install. S6 (shipping the flag on) stays the owner's decision.
 
+
+## Recommendations (2026-10-18; proposed, not approved)
+
+Written after the automation plan (V0-V4) merged and CI went green on Python 3.11, 3.12 and the Windows smoke job. The owner
+asked for recommendations and long-term recommendations. None is scheduled until the owner picks it; the contract in
+`AGENTS.md` (no AI dependency, no invented behaviour, heuristics never auto-tuned, IP boundary) binds all of them.
+
+### Near term: real-install evidence for what was just built
+
+1. **Run the real-install checks once and record them** (the list in the Automation plan section above): `validate-all`
+   against the SVG-012/013 total, the first `acceptance --write-baseline`, `scan` for SVG-004/014/017, and `calibration
+   resolve` over the 726 review rows. Benefit: every new command gets its first real number, and the ready-for-review count
+   tells the owner how much calibration work is actually left.
+2. **Close the last capacity unknown** with BridgeForge's capacity rig: does loading a save recompute an edited
+   `mC`/`mF`/`mP`? It is the only fact standing between the Save Workshop and a decision on over-capacity edits.
+3. **Write one copy from the GUI and load it in the game**, then record it as the first Save Workshop live acceptance. S6
+   (shipping the setting on by default) is the owner's call after that run, not before.
+4. **Release decision.** `pyproject.toml` says 1.0.0 while the newest tag is `v0.1.0RC3` (marked Latest) and an older
+   `v1.0.0rc2` exists. Pick one version line before the next tag (recommended: tag the current master as `v1.1.0` or a
+   `v1.1.0rc1`, since it adds commands and the Save Workshop write), and mark the stray `v0.1.0RC*` releases as superseded.
+5. **CI on Python 3.13** as well: the 3.11 golden failure showed version differences surface only in CI.
+
+### Long term: what VoidSmith should become
+
+1. **The fitting and fleet tool that understands revived mods.** BridgeForge revives a mod; `check-mod` already gives it a
+   read-only verdict. Extend that into a standing link: every BridgeForge archive gets a VoidSmith verdict (legal variants,
+   missing weapons, stale references) before release, and VoidSmith's registry reads revived mods as first-class sources.
+2. **Calibration as a curated, local evidence base.** Keep calibration data local under `generated/`, but make it durable:
+   approved rows versioned with the game and mod versions they were judged on, expiring when either changes (the same idea
+   as BridgeForge's version-stamped baselines). Heuristic sets stay human-released, with the `propose` report as their
+   measured justification.
+3. **Save Workshop beyond tier 1, one evidenced rule at a time.** Fleet repair state, then blueprints, then relations, each
+   only after a live run proves how the game reads the edited field. The capacity work is the pattern to repeat.
+4. **Scripted-effect coverage through adapters.** The largest quality gap is still UNKNOWN_SCRIPTED_EFFECT hull mods and
+   flux coverage (SVG-011). Grow adapters per widely used library or mod family, with evidence for each modelled effect,
+   rather than special cases in the engine.
+5. **Stay offline and deterministic.** The value of VoidSmith is that its answers are explainable and repeatable; keep any
+   future assistance optional and outside the engine, as the contract says.
