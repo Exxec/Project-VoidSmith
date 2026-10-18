@@ -25,6 +25,7 @@ from starsector_variant_generator.analysis.scenario_advisor import (
     scenario_advisor_request_from_payload,
     scenario_advisor_request_to_payload,
 )
+from starsector_variant_generator.cli import automation_commands
 from starsector_variant_generator.core.config import AppConfig
 from starsector_variant_generator.core.logging import configure_logging
 from starsector_variant_generator.core.result_cache import AnalysisResultCache
@@ -218,12 +219,15 @@ def build_parser() -> argparse.ArgumentParser:
     refit.add_argument("--source-mod", help="Disambiguates --faction-id when multiple mods declare the same faction id (quality-improvement modes)")
     refit.add_argument("--starsector-path", type=Path, required=True)
     refit.add_argument("--output-dir", type=Path, default=Path("generated"))
+    automation_commands.add_parsers(subparsers)
     return parser
 
 
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
+    if args.command in automation_commands.COMMANDS:
+        return automation_commands.run(args, parser)
     if args.command == "save":
         if args.save_command == "inspect":
             inspected = api.run_save_resources(args.save_dir) if args.resources else api.run_save_inspect(args.save_dir)

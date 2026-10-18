@@ -133,7 +133,18 @@ def _attribute_message(message: str, ordered_sources: list[ModInfo]) -> str | No
     return None
 
 
-def audit_mod_acceptance(scan: ScanResult, registry: Registry) -> dict[str, Any]:
+def audit_mod_acceptance(
+    scan: ScanResult, registry: Registry, *, only_mod_ids: frozenset[str] | None = None,
+    complex_audit: dict[str, Any] | None = None, include_synthetic: bool = True,
+) -> dict[str, Any]:
+    """Classify every installed mod, or only `only_mod_ids` (the per-variant work is skipped for the others).
+
+    `complex_audit` lets a caller that audits mod by mod compute `audit_complex_hulls` once; `include_synthetic=False` leaves out
+    the FAIL records for unparseable or enabled-but-missing mods (a chunked caller adds them in one final call).
+    """
+    def wanted(mod_id: str) -> bool:
+        return only_mod_ids is None or mod_id in only_mod_ids
+
     ordered_sources = sorted(scan.mods, key=lambda source: len(str(source.path)), reverse=True)
     mod_sources = [source for source in scan.mods if source.source_type is SourceType.MOD]
 
@@ -182,12 +193,16 @@ def audit_mod_acceptance(scan: ScanResult, registry: Registry) -> dict[str, Any]
     # unambiguous index, never guess" discipline Registry itself uses.
     fighter_anomalies_by_mod: dict[str, list[dict[str, str]]] = defaultdict(list)
     for variant in scan.variants:
+        if not wanted(variant.source_mod):
+            continue
         for fighter_id in variant.fighter_wings:
             if fighter_id not in registry.fighters.by_id:
                 fighter_anomalies_by_mod[variant.source_mod].append({
                     "context": "variant_fighter_wing", "id": variant.id, "reference_id": fighter_id,
                 })
     for hull in scan.hulls:
+        if not wanted(hull.source_mod):
+            continue
         for fighter_id in hull.built_in_fighter_wings:
             if fighter_id not in registry.fighters.by_id:
                 fighter_anomalies_by_mod[hull.source_mod].append({
@@ -197,7 +212,8 @@ def audit_mod_acceptance(scan: ScanResult, registry: Registry) -> dict[str, Any]
     # Multipart/composite hull findings: reuse complex_hull_audit outright
     # rather than re-deriving the same evidence -- each finding already
     # carries its own source_mod.
-    complex_audit = audit_complex_hulls(scan, registry)
+    if complex_audit is None:
+        complex_audit = audit_complex_hulls(scan, registry)
     complex_by_mod: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for finding in complex_audit["findings"]:
         complex_by_mod[finding["source_mod"]].append(finding)
@@ -213,7 +229,7 @@ def audit_mod_acceptance(scan: ScanResult, registry: Registry) -> dict[str, Any]
     adapter_usage_by_mod: dict[str, set[str]] = defaultdict(set)
     unknown_effects_by_mod: dict[str, set[str]] = defaultdict(set)
     for variant in scan.variants:
-        if not variant.hull_id:
+        if not variant.hull_id or not wanted(variant.source_mod):
             continue
         # Named distinctly from the `hull` loop variable used above (line
         # 181's fighter-anomaly sweep): that binding's non-Optional `Hull`
@@ -264,7 +280,7 @@ def audit_mod_acceptance(scan: ScanResult, registry: Registry) -> dict[str, Any]
 
     # --- synthetic FAIL records for mods that never got a real ModInfo ---
     synthetic_records: list[ModAcceptanceRecord] = []
-    for message in scan.skipped_entities:
+    for message in scan.skipped_entities if include_synthetic else ():
         if message not in consumed_messages:
             continue
         malformed = _MALFORMED_MOD_INFO_RE.match(message)
@@ -292,6 +308,8 @@ def audit_mod_acceptance(scan: ScanResult, registry: Registry) -> dict[str, Any]
     # --- classify every real, ModInfo-backed installed mod ---
     records: list[ModAcceptanceRecord] = []
     for source in mod_sources:
+        if not wanted(source.mod_id):
+            continue
         counts = counts_by_mod.get(source.mod_id, {kind: 0 for kind in _ENTITY_KINDS})
         total_entities = sum(counts.values())
         mod_errors = sorted(errors_by_mod.get(source.mod_id, []))

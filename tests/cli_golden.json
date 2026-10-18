@@ -1,5 +1,6 @@
 {
   "(root)": "505a783b0a71fe36",
+  "acceptance": "e9c147b6a587b5af",
   "analyze-variant": "cb32516125747e54",
   "check-export": "377d9d51e8e5c501",
   "doctrine": "1c6d0d60e092223f",
@@ -19,5 +20,6 @@
   "scan": "cc909d0cee663ba3",
   "scenario-advisor": "1fb50a26ffd11f65",
   "validate": "365e1a2592c9ed0d",
+  "validate-all": "0f6ec82092ff1cc1",
   "why-not": "e4fb2048ae06e6f5"
 }

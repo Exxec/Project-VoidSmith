@@ -34,6 +34,7 @@ from time import perf_counter
 from typing import Any
 
 from starsector_variant_generator.analysis.stale_enabled_mods import find_stale_enabled_mods
+from starsector_variant_generator.analysis.validate_all import validate_all
 from starsector_variant_generator.analysis.parse_diagnostics import locate_parse_failures
 from starsector_variant_generator.analysis.campaign_save_discovery import (
     CampaignSaveDiscovery,
@@ -486,6 +487,14 @@ def run_validate(registry: Registry, variant_id: str) -> LegalityAssessment:
     if variant is None:
         raise ValueError(f"Variant not found or ambiguous: {variant_id}")
     return validate_variant(variant, registry)
+
+
+def run_validate_all(
+    scan: ScanResult, *, registry: Registry | None = None, source: str = "all",
+    on_source_done: Callable[[int, int, str, int, float], None] | None = None,
+) -> dict[str, object]:
+    """Validate every shipped variant of `source` (all, core or mod:<id>) and group the results by code and by mod."""
+    return validate_all(scan, registry or Registry.from_scan(scan), source, on_source_done)
 
 
 def run_validate_fit(registry: Registry, variant: Variant) -> LegalityAssessment:
