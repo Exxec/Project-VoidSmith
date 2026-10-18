@@ -33,6 +33,7 @@ from pathlib import Path
 from time import perf_counter
 from typing import Any
 
+from starsector_variant_generator.analysis.parse_diagnostics import locate_parse_failures
 from starsector_variant_generator.analysis.campaign_save_discovery import (
     CampaignSaveDiscovery,
     discover_campaign_directory,
@@ -274,6 +275,7 @@ def run_scan(
     logger.info("Building scan report (include_entities=%s)", include_entities)
     report = result.report(config.heuristic_set, include_entities=include_entities)
     logger.info("Scan report built in %.2fs", perf_counter() - _phase_started)
+    report["parse_failures"] = [failure.to_dict() for failure in locate_parse_failures(result)]
     report["cache"] = asdict(cache_result)
     report["change_impact"] = asdict(change_impact)
     report["registry"] = {

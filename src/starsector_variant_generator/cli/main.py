@@ -6,6 +6,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from starsector_variant_generator import api
+from starsector_variant_generator.analysis.parse_diagnostics import ParseFailure, format_failure_line
 from starsector_variant_generator.analysis.fleet_support import (
     FleetSupportConstraints,
     SupportFocus,
@@ -574,6 +575,8 @@ def main() -> int:
     report_path = report_dir / "scan_summary.json"
     atomic_write_text(report_path, json.dumps(scan_outcome.report, indent=2, default=str))
     print(f"Read-only scan complete: {report_path}")
+    for failure in scan_outcome.report.get("parse_failures", []):
+        print("Parse failure: " + format_failure_line(ParseFailure(**failure)))
     return 0 if not scan_outcome.result.errors else 1
 
 
