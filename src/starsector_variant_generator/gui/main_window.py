@@ -434,6 +434,9 @@ class MainWindow(QMainWindow):
         page = QWidget(); layout = QVBoxLayout(page); split = QSplitter(Qt.Horizontal); tabs = QTabWidget(); self.data_tables: dict[str, QTableView] = {}; self._data_entities: dict[str, list[Any]] = {}
         for title, headers in (("Weapons", ["Name", "Size", "Type", "Source Mod"]), ("Hullmods", ["Name", "Hidden", "Source Mod"]), ("Fighters", ["Name", "Role", "Source Mod"]), ("Variants", ["Name", "Hull", "Source Mod"])):
             table = QTableView(); table.setModel(EntityTableModel(headers, table)); table.setEditTriggers(QTableView.NoEditTriggers); table.selectionModel().selectionChanged.connect(lambda _selected, _deselected, title=title: self._show_provenance(title)); tabs.addTab(table, title); self.data_tables[title] = table
+        self.scan_diagnostics_view = QPlainTextEdit(); self.scan_diagnostics_view.setReadOnly(True)
+        self.scan_diagnostics_view.setPlainText("Scan to list parse failures with locations and enabled mods that are not installed.")
+        tabs.addTab(self.scan_diagnostics_view, "Diagnostics")
         self.provenance_detail = QPlainTextEdit(); self.provenance_detail.setReadOnly(True); self.provenance_detail.setPlainText("Select a normalized record to inspect local source provenance.")
         provenance_group = QGroupBox("PROVENANCE"); provenance_layout = QVBoxLayout(provenance_group); provenance_layout.addWidget(self.provenance_detail)
         split.addWidget(tabs); split.addWidget(provenance_group); split.setSizes([860, 360]); layout.addWidget(split); return page
@@ -753,11 +756,14 @@ class MainWindow(QMainWindow):
         for value in self._catalog.hull_sizes(): self.size_filter.addItem(value, value)
         for value in self._catalog.source_mods(): self.source_filter.addItem(value, value)
         for faction in self._catalog.factions(): self.faction_filter.addItem(f"{faction.name} ({faction.source_mod})", (faction.id, faction.source_mod))
+        diagnostic_lines = api.scan_diagnostic_lines(getattr(outcome, "report", None))
+        self.scan_diagnostics_view.setPlainText("\n".join(diagnostic_lines) if diagnostic_lines else "No located parse failures and no enabled mods missing from the install.")
         self._refresh_hulls(); self._populate_secondary()
         extra_note = f"Additional dropped mod(s) included: {', '.join(mod.mod_id or mod.mod_name or '?' for mod in self._extra_mods)}." if self._extra_mods else ""
         self.scan_summary.setPlainText("\n".join(line for line in (
             f"Loaded: {len(outcome.result.hulls)} hulls, {len(outcome.result.weapons)} weapons, {len(outcome.result.hullmods)} hullmods, {len(outcome.result.variants)} variants.",
             f"Diagnostics: {len(outcome.result.warnings)} warnings, {len(outcome.result.errors)} source errors, {len(outcome.result.skipped_entities)} skipped records.",
+            f"{len(diagnostic_lines)} located diagnostic line(s) are listed under Data / Analysis > Diagnostics." if diagnostic_lines else "",
             self._scan_metrics_summary(outcome.result),
             extra_note,
             "Source data was read-only. Inspect Data / Analysis for entity provenance; local reports are under the configured output directory.",

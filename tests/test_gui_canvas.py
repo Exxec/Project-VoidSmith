@@ -1306,3 +1306,31 @@ class GuiCanvasTests(unittest.TestCase):
         run_mock.assert_not_called()
         self.assertIn("Generate Scenario Fit", window.faction_detail.toPlainText())
         window.close()
+
+    def test_diagnostics_tab_lists_parse_failures_and_stale_enabled_mods_from_the_report(self) -> None:
+        scan = ScanResult(hulls=[Hull("h", "Hull", "core", Path("fixture"))])
+        report = {
+            "parse_failures": [{
+                "path": "mods/x/data/a.skin", "category": "MALFORMED_OR_CONCATENATED_DATA", "parser_reason": "Extra data",
+                "parser_line": 5, "parser_column": 1, "parser_char": 26, "last_good_token": "}", "structure_issue": "CONCATENATED_VALUES",
+                "structure_line": 5, "structure_column": 0, "structure_detail": "d", "hint": "Two top-level values in one file.", "message": "m",
+            }],
+            "stale_enabled_mods": [{"enabled_id": "old_id", "closest_mod_id": "new_id", "closest_folder": "New", "closest_name": "N",
+                                    "matched_field": "mod_id", "similarity": 0.8}],
+        }
+        window = MainWindow()
+        window._scan_complete(SimpleNamespace(result=scan, registry=Registry.from_scan(scan), report=report))
+        text = window.scan_diagnostics_view.toPlainText()
+        self.assertIn("a.skin", text)
+        self.assertIn("parser line 5", text)
+        self.assertIn("Two top-level values", text)
+        self.assertIn("Enabled but not installed: old_id", text)
+        self.assertIn("located diagnostic line", window.scan_summary.toPlainText())
+        window.close()
+
+    def test_diagnostics_tab_says_so_when_the_report_has_nothing_to_list(self) -> None:
+        scan = ScanResult(hulls=[Hull("h", "Hull", "core", Path("fixture"))])
+        window = MainWindow()
+        window._scan_complete(SimpleNamespace(result=scan, registry=Registry.from_scan(scan)))
+        self.assertIn("No located parse failures", window.scan_diagnostics_view.toPlainText())
+        window.close()

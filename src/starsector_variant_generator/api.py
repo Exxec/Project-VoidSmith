@@ -26,16 +26,23 @@ and usage text; GUI: an error dialog).
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass, replace
 from logging import Logger
 from pathlib import Path
 from time import perf_counter
 from typing import Any
 
-from starsector_variant_generator.analysis.stale_enabled_mods import find_stale_enabled_mods
+from starsector_variant_generator.analysis.stale_enabled_mods import (
+    find_stale_enabled_mods,
+    format_stale_line,
+)
 from starsector_variant_generator.analysis.validate_all import validate_all
-from starsector_variant_generator.analysis.parse_diagnostics import locate_parse_failures
+from starsector_variant_generator.analysis.parse_diagnostics import (
+    ParseFailure,
+    format_failure_line,
+    locate_parse_failures,
+)
 from starsector_variant_generator.analysis.campaign_save_discovery import (
     CampaignSaveDiscovery,
     discover_campaign_directory,
@@ -303,6 +310,19 @@ def run_scan(
     if spw_inventory is not None:
         report["spw_identity_context"] = review_spw_inventory(spw_inventory, config.starsector_path)
     return ScanOutcome(result, registry, cache_result, change_impact, report)
+
+
+def scan_diagnostic_lines(report: Mapping[str, object] | None) -> tuple[str, ...]:
+    """Presentable lines for the scan report's located parse failures and stale enabled mods (GUI and CLI share this)."""
+    if not report:
+        return ()
+    lines: list[str] = []
+    for entry in report.get("parse_failures", []):  # type: ignore[attr-defined]
+        lines.append("Parse failure: " + format_failure_line(ParseFailure(**entry)))
+        lines.append("    " + str(entry["hint"]))
+    for entry in report.get("stale_enabled_mods", []):  # type: ignore[attr-defined]
+        lines.append(format_stale_line(entry))
+    return tuple(lines)
 
 
 @dataclass(frozen=True)
