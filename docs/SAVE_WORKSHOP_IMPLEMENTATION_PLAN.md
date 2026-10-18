@@ -82,7 +82,7 @@ one-time notice: edits are written to a copy; close the game first; try the copy
   - **Resources** (tier 1): a table with columns Item, Current, Capacity, New value, Check. "New value" is a spin
     box per row; the Check column shows `ACCEPTED`, `REFUSED` or `NOT_DETERMINABLE` with the reason as a tooltip.
     An over-capacity row is highlighted with a persistent "effects unknown" label and stays blocked until the
-    opt-in checkbox ("Allow over capacity; consequences are unknown") is ticked. Row buttons: reset, and "set to
+    opt-in checkbox ("Allow over capacity; consequences are unknown") is ticked. (Superseded by S3: an over-capacity change is refused outright, the checkbox only allows planning with capacity uncertainty.) Row buttons: reset, and "set to
     capacity" where a capacity was read.
   - **Plan and verify**: the full diff (old value, new value, evidence), the plan's overall state, and, after a
     write, the verification report. A plan with any `REFUSED` row cannot be written.
@@ -105,7 +105,7 @@ missing; no silent modifications; nothing is written until the button is pressed
 
 ## Implementation checkpoint — 2026-10-06
 
-S0/S1 are implemented for XML structure and direct descriptor facts only; see `CAMPAIGN_SAVE_FORMAT.md`. The existing metadata discovery API is unchanged. S2 resource locators and pure edit plans are implemented under `CAMPAIGN_SAVE_RESOURCES.md`; no writer is enabled. S4 offers an independent default-off read-only GUI preview for resource inspection and backend plan review; write/verify and full discovery/navigation controls remain pending. S3 is implemented (2026-10-06, owner decision): `campaign/writer.py`, `campaign/verify.py` and `voidsmith save write` write verified new copies for changes within the saved capacity; over-capacity changes are refused and the opt-in write path is not implemented. S5 requires a controlled game session and remains UNKNOWN.
+S0/S1 are implemented for XML structure and direct descriptor facts only; see `CAMPAIGN_SAVE_FORMAT.md`. The existing metadata discovery API is unchanged. S2 resource locators and pure edit plans are implemented under `CAMPAIGN_SAVE_RESOURCES.md`; no writer is enabled. S4 offers an independent default-off read-only GUI preview for resource inspection and backend plan review; write/verify and full discovery/navigation controls remain pending. S3 is implemented (2026-10-06, owner decision): `campaign/writer.py`, `campaign/verify.py` and `voidsmith save write` write verified new copies for changes within the saved capacity; over-capacity changes are refused and the opt-in write path is not implemented. S5 evidence is now on record (2026-10-12, BridgeForge `docs/RC8_BEHAVIOUR.md` RC8-34 to RC8-36, see "Evidence for capacity overages" below); over-capacity writes stay refused.
 
 ## Slices, in order
 
@@ -115,30 +115,34 @@ S0/S1 are implemented for XML structure and direct descriptor facts only; see `C
 | S1 | `campaign/format.py`, models, `run_save_inspect`, CLI `save inspect` (read-only) | malformed, DOCTYPE, oversized, linked and newer-version inputs are refused with tests |
 | S2 | Locators, edit requests, edit checks, plan (no write), CLI `save plan` | every tier-1 rule has a test that names it; overage returns `NOT_DETERMINABLE` |
 | S3 | Writer and verifier, CLI `save write` | hash-before/after non-mutation test; only-planned-spans test; target-exists refusal; failed verification removes the copy |
-| S4 | GUI workspace, presentation functions, worker | presentation tests pass; GUI smoke on a synthetic save; the refuse and opt-in paths are exercised |
-| S5 | Evidence for capacity overages (see below) | a documented rule, or the `UNKNOWN` rules re-confirmed, with the evidence cited |
+| S4 | GUI workspace, presentation functions, worker | presentation tests pass; GUI smoke on a synthetic save; the refusal paths are exercised; "Write edited copy" (default-off setting, owner decision 2026-10-14) calls `api.run_save_edit_write` and shows the verify result |
+| S5 | Evidence for capacity overages (see below) | **Evidence recorded 2026-10-12 (RC8-34..36); the rule is cited, overage writes stay refused until one load check settles whether a load recomputes an edited `mC`/`mF`/`mP`** |
 | S6 | Release readiness: docs, user-facing limits, feature flag decision | the owner decides whether the flag ships on; `README`, quick-start and user-guide "not supported" lines are updated in the same change |
 
-S0 and S5 need real saves and the game, so they are user-local work. They cannot be completed by agent sessions
-that lack the game or saves.
+S0 and the one remaining S5 live check need real saves and the game, so they are user-local work. They cannot be
+completed by agent sessions that lack the game or saves.
 
-## Evidence plan for capacity overages
+## Evidence for capacity overages (S5, recorded 2026-10-12)
 
-The tool is built without the answer; the answer decides only whether over-capacity edits can ever be described. S3 no longer waits for it. The
-useful narrower question is whether the saved capacity figures match the runtime ones in the at-capacity and above-capacity states; a local pilot
-found them equal in one below-capacity state, which is not a rule.
-Run in a throwaway campaign, outside this repository (BridgeForge's test rig is one way): set cargo, fuel and crew
-below, at and above capacity; record the quantities, the fleet's observed speed and the observed daily supplies
-use for each case; repeat once with a fleet of a different size. Write the observations, the game version and the
-procedure into the evidence record, then add a documented rule here. No formula is inferred from fewer than three
-distinct fleets.
+The sister project measured the overage rules in a throwaway campaign on three fleets and 87 states (build 0.98a-RC8, run
+CAP2-20261012); the facts live in BridgeForge's `docs/RC8_BEHAVIOUR.md` and are cited here by row id, not copied as data:
+
+- **RC8-34** each unit over cargo space, fuel or personnel capacity costs 0.1 supplies per day (capped at 50 per resource); the three costs add to the fleet's maintenance.
+- **RC8-35** speed is 20 x the burn level, and the burn level becomes max(1, round(base burn x (2 - r))) for the worst used/capacity ratio r above 1; only the worst resource counts.
+- **RC8-36** a save stores its capacity figures (`mC`, `mF`, `mP`, `sU`) as of save time, and a space used above capacity is stored as is. Not tested: whether a load recomputes a hand-edited `mC`/`mF`/`mP`.
+
+What follows for the Workshop: it may **show** those two consequences for a planned edit, labelled with the row ids and the build
+they were measured on (`save plan`, slice V3.2 of `docs/AUTOMATION_PLAN.md`), and no other overage effect may be computed or claimed.
+**Over-capacity writes stay refused.** The one remaining live check, replacing the earlier 36-run matrix: write a copy whose
+`mC`/`mF`/`mP` or stack total deliberately exceeds its saved capacity, load it in BridgeForge's capacity rig (BridgeForge item 57),
+and record whether the game keeps or recomputes the edited figure. Until a row records that, the refusal stays.
 
 ## Tests that must exist before the gate can close
 
 Path traversal and link refusal; malformed and truncated input; DOCTYPE and entity refusal; unknown fields and
 roots; newer-version refusal; hash-identical original after every operation; only-planned-spans diff; target-exists
-refusal; each tier-1 rule by name; the over-capacity refuse and opt-in paths; and a check that no real save or game
-data is in the repository or the package.
+refusal; each tier-1 rule by name; the over-capacity refusal paths (an over-capacity change is refused with and without the
+capacity-uncertainty opt-in); and a check that no real save or game data is in the repository or the package.
 
 ## Out of scope for this plan
 

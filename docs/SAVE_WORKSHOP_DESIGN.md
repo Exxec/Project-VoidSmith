@@ -34,21 +34,22 @@ Anything the tool does not recognise is refused, not guessed.
 
 ## Capacity overages are UNKNOWN
 
-The project owner reports that carrying more than a fleet's capacity slows the fleet (if the limit is weight
-based) and raises the supplies consumed per day. The calculation is not known, and nothing here may invent it
-(`AGENTS.md`, "Do Not Invent Game Behavior").
+Carrying more than a fleet's capacity slows the fleet and raises the supplies consumed per day. Since 2026-10-12 the two effects
+are recorded in BridgeForge's `docs/RC8_BEHAVIOUR.md` (RC8-34: 0.1 supplies per day per unit over, capped at 50 per resource;
+RC8-35: speed from the worst used/capacity ratio; RC8-36: a save stores its capacity figures as of save time). Nothing beyond
+those rows may be computed or claimed (`AGENTS.md`, "Do not invent game behaviour").
 
 Rules:
 
-1. The Workshop never predicts or displays a speed or upkeep consequence. The effect is `UNKNOWN`.
+1. The Workshop may display the daily supplies cost and the speed effect of an over-capacity edit only as computed from RC8-34 and RC8-35, labelled with those row ids and build 0.98a-RC8. Every other overage effect is `UNKNOWN`.
 2. It refuses to write a quantity above the capacity it can read from the save. The design allowed an explicit user
    opt-in with a visible warning; S3 (owner decision 2026-10-06) does not implement that path, so over-capacity edits
    are never written. Changes at or below the saved capacity are written.
 3. Capacity itself is read from installed data only if documented and parseable; otherwise the check returns
    `NOT_DETERMINABLE` and the user must opt in to proceed.
-4. Evidence to resolve this, in order: a controlled before/after run in a throwaway campaign, recorded with the
-   quantities, the observed fleet speed and the observed daily consumption; then a documented rule here, with the
-   evidence cited. Until then the rules above stay.
+4. The consequences are evidenced (RC8-34 to RC8-36). What is still unmeasured is whether a load recomputes an edited
+   `mC`/`mF`/`mP`; one load check in BridgeForge's capacity rig settles it. Until a row records that, over-capacity
+   writes stay refused (rule 2).
 
 ## How this meets the parser gate
 
