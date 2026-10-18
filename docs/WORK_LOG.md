@@ -714,3 +714,11 @@
 - Every observed defect receives an ID in `BUGS.md`.
 - Generated inventories are derived from the scan report; source files remain untouched.
 - Later phases must add an entry here with tests run and report locations.
+
+## 2026-10-18 - Automation plan V0.2 to V1.4
+
+- Built `core/safeio.py` and moved all writes in `src/` onto it; the ratchet test counts bare writes and deletes (baseline now empty). Campaign copy cleanup uses `safe_rmtree`.
+- Bounded zip import (entry, total, ratio, symlink entries, link targets) with crafted in-memory zips as tests; the extraction reads real byte counts so a lying zip directory cannot bypass the caps.
+- CI: ruff E9,F,B and full mypy; fixed 10 B905, 2 B007, 3 unused imports and the `CalibrationWorkspaceResult.diagnostics` annotation (it is a tuple of dicts). `cli/main.py` now exposes `build_parser()`; the golden test hashes parser structure rather than rendered `--help` because argparse output differs between Python 3.11, 3.12 and 3.13+. `.gitattributes` added (LF, CRLF for batch and PowerShell).
+- `validate-all`, `acceptance`, parse-failure locations and the stale-enabled-mod report; all unit-tested on synthetic data (`tests/test_validate_all.py`, `test_acceptance_baseline.py`, `test_parse_diagnostics.py`, `test_scan_parse_failures.py`, `test_stale_enabled_mods.py`). Parser offsets refer to the normalised text, so the structure line (raw file) is reported beside them. The first real-install runs are local steps (see ROADMAP).
+
