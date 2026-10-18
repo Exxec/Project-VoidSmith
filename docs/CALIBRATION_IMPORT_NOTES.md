@@ -28,6 +28,8 @@ this repository. This file records only the generic import contract.
 
 ## Suggested activation workflow
 
+Steps 1, 2 and 4 now have commands (2026-10-18), all operating on sheets kept under the `generated/` folder: `voidsmith calibration resolve SHEET` (steps 1 and 2: resolves names to hull ids and adds `equipment_ok`, `legality` and `ready_for_review` columns), `voidsmith calibration approve SHEET --reviewer NAME` (step 4: a named person marks ready rows APPROVED) and `voidsmith calibration propose SHEET` (measures registered heuristic sets against APPROVED rows and writes an unregistered candidate stub). Step 3 and step 5 stay manual, and registering a heuristic set stays manual.
+
 1. Resolve `ship_display` to scanned internal hull IDs.
 2. Validate weapons/hullmods/fighters against the installed mod set.
 3. Resolve `UNSPECIFIED_WITHIN_GUIDE` affinity from local faction/equipment metadata.

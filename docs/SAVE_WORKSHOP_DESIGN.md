@@ -1,7 +1,7 @@
 # Save Workshop design (decision-gated)
 
-Status: **design approved 2026-10-06; S0–S3 implemented by owner request: read-only inspection, edit planning and a verified new-copy writer for changes within the saved capacity.** Over-capacity writing, the GUI write controls and release readiness remain unbuilt.
-The source implementation now includes S0/S1 read-only inspection under `CAMPAIGN_SAVE_FORMAT.md`. Qualified resource locators, pure planning and the S3 writer are documented in `CAMPAIGN_SAVE_RESOURCES.md`. S4 provides a default-off read-only GUI preview; existing distributed binaries are unchanged.
+Status: **design approved 2026-10-06; S0–S4 implemented by owner request: read-only inspection, edit planning, a verified new-copy writer for changes within the saved capacity, and (2026-10-18) a GUI "Write edited copy" button behind a default-off setting.** Over-capacity writing and release readiness (S6, the owner's flag decision) remain unbuilt.
+The source implementation now includes S0/S1 read-only inspection under `CAMPAIGN_SAVE_FORMAT.md`. Qualified resource locators, pure planning and the S3 writer are documented in `CAMPAIGN_SAVE_RESOURCES.md`. S4 provides a default-off GUI workspace that inspects, plans and writes verified copies, and `save plan` and the GUI plan view show the recorded overage consequences (RC8-34, RC8-35) without ever enabling an over-capacity write; existing distributed binaries are unchanged.
 
 ## Purpose
 

@@ -1,6 +1,6 @@
 # Sister repository interoperability design (2026-09-27)
 
-Status: proposed. VoidSmith remains offline and deterministic. It reads only explicitly selected local evidence and never changes source game/mod files. Distributable fixtures must be neutral and synthetic.
+Status: proposed; `voidsmith check-mod` (read-only PASS / REVIEW / FAIL JSON verdict for a revived mod folder) and a synthetic SPW round-trip test (`tests/test_spw_round_trip.py`) exist since 2026-10-18, the recorded run on a real install does not. VoidSmith remains offline and deterministic. It reads only explicitly selected local evidence and never changes source game/mod files. Distributable fixtures must be neutral and synthetic.
 
 ## Release evidence contract (BridgeForge lesson)
 

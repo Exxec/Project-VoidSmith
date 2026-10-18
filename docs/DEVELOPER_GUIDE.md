@@ -120,24 +120,85 @@ unknown behavior is preserved honestly.
 
 `api.py` is the service boundary used by the CLI and GUI. Keep CLI orchestration
 thin and serialize dataclasses through explicit API/result payload helpers where
-caches need round trips. CLI commands are implemented in `cli/main.py`; run
-`voidsmith --help` and per-command `--help` before documenting or changing
-options.
+caches need round trips. CLI commands are implemented in `cli/main.py`, with
+`validate-all`, `acceptance` and `check-mod` in `cli/automation_commands.py` and
+`calibration` in `cli/calibration_commands.py`; run `voidsmith --help` and
+per-command `--help` before documenting or changing options (a grammar change
+also changes `tests/cli_golden.json`, see below).
 
 The GUI entry point is `voidsmith-gui`. Keep scan/generation work off the UI
 thread. `gui/resources.py` resolves art only beneath a scanned source root;
 the canvas maps sprite texture dimensions into `.ship` geometry coordinates.
 
-Run the portable suite:
+Run the portable suite (the GUI tests need the `gui` extra and skip without
+PySide6; set `QT_QPA_PLATFORM=offscreen` on a headless host):
 
 ```powershell
-uv run --no-project --with-editable . python -m unittest discover -s tests -v
+uv run --no-project --with-editable ".[gui]" python -m unittest discover -s tests -v
 ```
 
 Use synthetic fixtures in `tests/fixtures/` for portable coverage. Local real
 qualification/audit outputs belong below ignored `generated/`. Add focused
 parser, registry, validator, adapter/analyzer, scoring, and GUI tests when a
 change crosses those boundaries.
+
+## Automation commands, safe I/O and CI gates
+
+Built from `docs/AUTOMATION_PLAN.md` (V0 to V4); `ROADMAP.md` records limits and the steps that need a real install.
+
+- **`validate-all`** (`cli/automation_commands.py`, `api.run_validate_all`, `analysis/validate_all.py`): every `.variant`
+  goes through `validation/legality.py`; the module only groups results by finding code and by source (`core`, `mod:<id>`).
+  Runtime severity comes from the `RUNTIME_SEVERITY` table (missing weapon: fatal at New Game; missing hull mod: dropped
+  silently, BridgeForge RC8 evidence dated 2026-09-27); every other code is `NOT_RECORDED`. Add a severity only with a dated
+  evidence row. Writes `reports/validate_all.json` and `.md` through `safeio`; exit 1 if any variant is `ILLEGAL`.
+- **`acceptance`** (`analysis/acceptance_baseline.py` wrapping `analysis/mod_acceptance.py`, whose classification rules are
+  unchanged): chunked audit with a progress line per mod and a resumable `*.partial.jsonl` checkpoint whose header names the
+  inputs. A baseline file is written only by `--write-baseline`. Exit 1 on a regression; the informational codes
+  `UNKNOWN_HULLMOD_EFFECTS` and `ADAPTER_MODELED_HULLMODS_USED` never count as one.
+- **`check-mod MOD_PATH`** (`analysis/check_mod.py`): scans the one folder as an extra source, restricts entities to it (context
+  `core` by default, or `enabled`), runs the `validate-all` logic and the parse-failure locator, and returns a
+  `check-mod-0.1` JSON verdict: `FAIL` (exit 2), `REVIEW` (exit 1), `PASS` (exit 0). It identifies the mod by folder, refuses an
+  `--output` inside the mod folder, and never writes to the mod.
+- **Scan diagnostics**: `scan` adds `parse_failures` (`analysis/parse_diagnostics.py`: the parser's own line and column, the last
+  good token, and a string- and comment-aware pass over the raw file for the first bracket-depth error) and `stale_enabled_mods`
+  (`analysis/stale_enabled_mods.py`: deterministic closest-folder hint, never edits `enabled_mods.json`) to the scan report. Both
+  CLI and GUI render them through `api.scan_diagnostic_lines`; the GUI shows them in the read-only **Data / Analysis > Diagnostics**
+  tab. Keep any new rendering in `api.py`, not in the GUI.
+- **`calibration resolve | approve | propose`** (`cli/calibration_commands.py`, `analysis/calibration_review.py`,
+  `analysis/calibration_propose.py`): every sheet path must be under the generated folder (calibration data names real entities and
+  is never tracked). `resolve` writes a new sheet with `equipment_ok`, `legality`, `ready_for_review`; `approve` needs
+  `--reviewer`, accepts only ready rows and appends to an `.approvals.jsonl` log; `propose` measures registered heuristic sets
+  against APPROVED rows only and writes an unregistered candidate stub. Nothing here registers or tunes a heuristic set
+  (`AGENTS.md` section 8).
+- **Save Workshop** (`campaign/`, `gui/save_workshop.py`): `campaign/overage.py` builds `EditPlan.overage_preview` from the recorded
+  rows RC8-34 and RC8-35 (cost per unit over, cap, worst ratio and burn formula; RC8-36 is cited for the saved figures). It is
+  presentation only: it never changes an outcome, and an over-capacity change stays `NOT_DETERMINABLE` and unwritten. The GUI
+  **Write edited copy** button is enabled only for a current plan whose changes are all `ACCEPTED`, with a safe output directory;
+  it calls `api.run_save_edit_write`, then `api.run_save_verify_copy`, on a `SaveWorker` thread. The capacity opt-in never
+  enables a write. Settings / Export keeps the whole workspace off by default.
+- **`core/safeio.py`**: `atomic_write_text/bytes/json` (temp file in the same folder, `os.replace`) and `safe_rmtree` /
+  `safe_unlink`, which refuse paths outside the roots you pass, the roots themselves, symlinks and Windows junctions. Use them for
+  every file write and delete in `src/`. `tests/test_safeio_ratchet.py` counts bare `.write_text(`, `.write_bytes(` and `rmtree(`
+  per file against `tests/safeio_baseline.json` (currently empty); the baseline may only shrink.
+- **Bounded archive import** (`core/mod_import.py`): before extracting, a zip entry over 200 MB uncompressed, a total over 2 GB, a
+  compression ratio over 100 (entries over 1 MB), a symlink entry, or a link or junction target is refused; real bytes are counted
+  while extracting.
+- **CI gates** (`.github/workflows/tests.yml`): the `unittest` job (Ubuntu, Python 3.11 and 3.12, plus `python -m build`), a
+  Windows job (suite and GUI smoke test), and a `static-analysis` job running `ruff check src tests tools` and `mypy src`. Ruff
+  selects `E9`, `F` and `B` with `B008` ignored (`[tool.ruff.lint]` in `pyproject.toml`); mypy is run over the whole source tree and
+  must stay at zero errors. `tests/test_cli_golden.py` hashes each command's argparse grammar into `tests/cli_golden.json`; a
+  deliberate CLI change is regenerated with `python -m tests.test_cli_golden --write` and explained in the commit. The hash is over
+  the parser structure, not the rendered help, because argparse renders usage differently across Python versions.
+  `.gitattributes` keeps LF line endings (batch files CRLF).
+
+Before a commit, run the same checks CI runs:
+
+```powershell
+$env:QT_QPA_PLATFORM = "offscreen"
+uv run --no-project --with-editable ".[gui]" python -m unittest discover -s tests
+uv run --no-project --with ruff ruff check src tests tools
+uv run --no-project --with mypy mypy src
+```
 
 ## Build and release
 
@@ -160,7 +221,10 @@ Before release, run tests, build through the appropriate script, and inspect
 the generated manifest/artifact. Do not add source data, logs, cache databases,
 or generated reports to distribution.
 
-## Documentation consistency audit (2026-08-26)
+## Documentation consistency audit (2026-08-26; refreshed 2026-10-18)
+
+The 2026-10-18 refresh re-checked every command, option, GUI label and status in the tracked guides against `voidsmith --help`, the
+per-command `--help` output and the code, after the automation plan was implemented. The list below is the 2026-08-26 audit, kept as is.
 
 Verified from code/tests: CLI command names/options in `cli/main.py`, entry
 points in `pyproject.toml`, GUI workspace/button labels in `gui/main_window.py`,

@@ -185,7 +185,7 @@ follow `GUI.md` and keep `tools/gui_smoke_test.py` passing.
 ## 12. Engineering hygiene
 
 - Write files atomically (temp file in the same folder, then `os.replace`); delete trees only inside an allowed root and never
-  through a link or junction. (Being introduced: `docs/AUTOMATION_PLAN.md` V0.2; new code follows it now.)
+  through a link or junction. (`core/safeio.py`, `docs/AUTOMATION_PLAN.md` V0.2; `tests/test_safeio_ratchet.py` keeps bare writes and deletes from growing.)
 - Read untrusted archives with per-entry, total and compression-ratio limits before extracting anything.
 - Tests with every parser, validator, adapter, hullmod-effect, civilian-profile, scoring and campaign change. Fixtures are neutral
   and synthetic. Golden-output changes are deliberate and documented in the commit.
@@ -201,10 +201,10 @@ VoidSmith is published; its siblings are local projects of the same owner. Read 
 
 | Project | Relationship |
 |---|---|
-| BridgeForge (`Documents/Project BridgeForge`) | revives legacy mods; owns `docs/RC8_BEHAVIOUR.md`, the runtime facts VoidSmith cites. Planned: `voidsmith check-mod` gives it a read-only verdict on a revived mod |
+| BridgeForge (`Documents/Project BridgeForge`) | revives legacy mods; owns `docs/RC8_BEHAVIOUR.md`, the runtime facts VoidSmith cites. `voidsmith check-mod` (built 2026-10-18) gives it a read-only verdict on a revived mod |
 | Salvor (`Documents/Project Salvor`) | save rescue (diagnose, repair a copy). The save editor lives here, in the Save Workshop, not in Salvor |
 | Project Go (`Documents/Starsector project go`) | mod translator |
-| SPW | inventory source; round trip still to be proven on a real install |
+| SPW | inventory source; a synthetic round trip is tested (`tests/test_spw_round_trip.py`); the round trip on a real install is still to be proven |
 
 Exchange happens through files the user selects or commands the user runs. Never copy a sibling's mod or game data into this
 repository.

@@ -327,11 +327,34 @@ Neutral synthetic fixtures cover direct descriptor facts, unsupported versions/c
 Neutral synthetic tests cover selected-player references vs NPC data, inline/referenced cargo and credit values, exact UTF-8 byte spans, duplicate/cyclic objects, duplicate stacks and unrecognized scalar markup, quote-aware numeric attributes, changed sources and numeric encoding limits. Pure plans test whole non-negative numbers, float32 exactness, int32 bounds, no-op byte preservation, tier gates, missing stacks, duplicate requests, installed commodity membership, source changes and disabled/unknown mod exclusion. Capacity is judged per dimension (cargo across all edited stacks, fuel, crew plus marines): at or below the saved figure is ACCEPTED, above or unprovable is NOT_DETERMINABLE; explicit planning opt-in never bypasses refusals and never lets the writer write an over-capacity change. Cargo partial state refuses commodity edits. `tests/test_campaign_writer.py` covers S3 on synthetic saves: verified copy with only the planned spans changed (including length changes and UTF-8), original hashes unchanged, target-exists refusal, source-changed refusal, output-directory and name rules, non-flat folder refusal, failed verification and unexpected errors removing the copy, a verifier that flags tampered copies, per-dimension capacity rules, and the CLI exit codes. No test writes a real save.
 
 
-## 26. Save Workshop preview tests
+## 26. Save Workshop GUI tests
 
-Synthetic GUI smoke checks source hash preservation, resource model editing,
-backend refusal and capacity opt-in presentation, permanent write-gate disable,
-empty/malformed input, plan invalidation and stale-result rejection. A main-window
-test verifies default-off entry, enable/disable behavior and a real retained
-save worker that returns without loading a fitting scan. Optional PySide6
-absence skips these GUI tests; current host runs all five successfully.
+Synthetic GUI smoke checks (`tests/test_gui_save_workshop.py`) cover source hash preservation, resource model editing,
+backend refusal and capacity opt-in presentation, empty/malformed input, plan invalidation and stale-result rejection. Since
+2026-10-18 they also cover "Write edited copy": disabled until the plan is current and every change is ACCEPTED within the saved
+capacity and an output directory is set, never enabled by the capacity opt-in, the backend write mocked, and the VERIFIED /
+FAILED_VERIFICATION presentation. A main-window test verifies default-off entry, enable/disable behavior and a real retained
+save worker that returns without loading a fitting scan. Optional PySide6 absence skips these GUI tests.
+
+`tests/test_overage_preview.py` pins the overage preview arithmetic (0.1 supplies per day per unit over, cap 50, worst-ratio burn
+formula) and that a preview never changes an outcome or enables a write.
+
+
+## 27. Automation and hygiene tests
+
+All use neutral synthetic fixtures (`docs/AUTOMATION_PLAN.md`):
+
+- `tests/test_safeio.py`, `tests/test_safeio_ratchet.py`: atomic writes, refusal of outside paths, roots, links and junctions in
+  `safe_rmtree`/`safe_unlink`; the shrink-only count of bare writes and deletes in `src/`.
+- `tests/test_mod_import.py`: crafted in-memory zips for the entry, total and ratio limits, link entries and link targets.
+- `tests/test_cli_golden.py`: the hash of every command's grammar against `tests/cli_golden.json`.
+- `tests/test_validate_all.py`: legal, missing-weapon and over-OP variants grouped by code and mod, with the recorded severities only.
+- `tests/test_acceptance_baseline.py`: baseline write and compare, regression exit status, checkpoint resume.
+- `tests/test_scan_parse_failures.py`, `tests/test_parse_diagnostics.py`, `tests/test_stale_enabled_mods.py`: located parse failures
+  and the closest-folder hint.
+- `tests/test_calibration_review.py`: name resolution rules, pre-check columns, approval by a named reviewer only for ready rows,
+  refusal of sheets outside the generated folder.
+- `tests/test_check_mod.py`: PASS / REVIEW / FAIL verdicts and exit codes, and that the mod folder is never written.
+- `tests/test_spw_round_trip.py`: a synthetic SPW inventory joined with a scan; ambiguous cases leave the scan unchanged.
+
+CI also runs `ruff check src tests tools` (`E9,F,B`) and `mypy src`; see `docs/DEVELOPER_GUIDE.md`.

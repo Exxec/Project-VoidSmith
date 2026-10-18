@@ -16,6 +16,10 @@ Fresh current-code scan: `generated/starsector_scan_current/reports/scan_summary
 | `QualityCaptains` | Community mod lists identify it as “Quality Captains: A Skill Rework.” [Source](https://www.reddit.com/r/starsector/comments/rofpig/budget_list_of_mods_to_use/) | Gameplay/skill-overhaul mod | Missing from this installation; it is not treated as a utility or silently ignored. |
 | `Red_stripe` | A Starsector launcher log reports discovery under the `red_stripe` mod ID; a current release page identifies Red Stripe as a faction mod. [Discovery evidence](https://www.fossic.org/thread-7032-1.html), [release evidence](https://www.fossic.org/forum.php?aid=80029&from=album&mod=viewthread&page=1&tid=19982) | Gameplay/faction mod | Missing from this installation; no faction, hull, or equipment data is available to scan. |
 
+## Reporting since 2026-10-18
+
+`scan` now prints one `Enabled but not installed:` line per such id, with the closest installed folder by id, folder name and display name as a hint, and the GUI lists the same lines under Data / Analysis > Diagnostics. The section above is the 2026-08-21 evidence and is not re-verified by this note; run a fresh `scan` for the current list.
+
 ## Follow-up boundary
 
 Do not change `enabled_mods.json` automatically. A human may either restore compatible copies of these mods or remove their stale IDs through the game’s normal mod-management workflow. Re-scan after that external change.

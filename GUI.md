@@ -1134,6 +1134,11 @@ Recommended internal sub-tabs:
 - Variants
 - Provenance
 
+Implemented 2026-10-18: a read-only **Diagnostics** tab beside Weapons, Hullmods, Fighters and Variants. After a scan it lists the
+located parse failures (file, parser line and column, last good token, raw-file structure hint) and the enabled mods that are not
+installed (with the closest installed folder as a hint), using `api.scan_diagnostic_lines`, the same text the `scan` command prints.
+It is information only and offers no repair; the GUI computes none of it.
+
 ### 55.5 Settings / Export
 
 Purpose:
@@ -1270,15 +1275,17 @@ mission. The UI must render the backend assessment and its stated limits; it
 must not calculate scenario readiness or candidate ranking locally.
 
 
-## 63. Save Workshop read-only source preview
+## 63. Save Workshop source preview and verified copy writer
 
-Settings / Export exposes a default-off, session-only Save Workshop preview.
+Settings / Export exposes a default-off, session-only checkbox, **Enable Save Workshop (inspect, plan, write verified copies)**.
 Enabling it adds a distinct top-level workspace, with explicit save-directory
 selection, a read-only overview, model/view resource requests and backend plan
 review. No save path is guessed. The GUI owns input text and presentation only;
 resource location, numeric/storage/tier/membership checks and capacity outcomes
 come exclusively from campaign backend services. Unavailable and UNKNOWN
-states remain visible. No campaign facts enter fitting/recommendation engines.
+states remain visible. When a plan includes an over-capacity commodity change, the plan view adds the backend `overage_preview`
+lines (recorded supplies cost and the speed ratio, each labelled with its BridgeForge row id and the build); they are display only and
+the change stays unwritten. No campaign facts enter fitting/recommendation engines.
 
 SaveWorker uses the retained background-operation lifecycle; Stop Waiting
 suppresses stale result delivery without claiming safe backend interruption.
@@ -1288,5 +1295,5 @@ output directory is set (owner decision 2026-10-14; the Workshop itself is behin
 `api.run_save_edit_write`, then re-verifies the written copy through `api.run_save_verify_copy` and shows VERIFIED or
 FAILED_VERIFICATION; the capacity opt-in never enables a write. The original-save safety banner
 is persistent. Discovery-table navigation,
-per-row reset/set-to-capacity controls and a shipping flag decision remain
-future S3/S4/S6 work; no live-game acceptance is claimed.
+per-row reset/set-to-capacity controls and the shipping flag decision (S6, the
+owner's) remain future work; no live-game acceptance is claimed.

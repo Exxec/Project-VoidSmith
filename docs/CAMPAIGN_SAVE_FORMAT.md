@@ -72,7 +72,7 @@ separate schema, no-write safety plan, neutral fixtures, refusal/non-mutation
 tests and the isolated inspection consumer. Existing directory discovery stays
 metadata-only. Broader semantics require their own documented evidence and tests.
 
-S0 and S1 are implemented for this single observed profile. S2 is separately implemented and qualified in `CAMPAIGN_SAVE_RESOURCES.md`; basic inspection keeps its original descriptor-only schema. S3 (2026-10-06) adds a verified new-copy writer for changes within the saved capacity, `voidsmith save write`; see `CAMPAIGN_SAVE_RESOURCES.md`. No Save Workshop GUI write control or default-on flag exists.
+S0 and S1 are implemented for this single observed profile. S2 is separately implemented and qualified in `CAMPAIGN_SAVE_RESOURCES.md`; basic inspection keeps its original descriptor-only schema. S3 (2026-10-06) adds a verified new-copy writer for changes within the saved capacity, `voidsmith save write`; see `CAMPAIGN_SAVE_RESOURCES.md`. The Save Workshop's GUI "Write edited copy" (2026-10-18) sits behind a default-off setting; no default-on flag exists.
 The existing BridgeForge format survey was reviewed as a structural cross-check; its statistical cargo observations do not prove stored types or runtime effects. No code was imported.
 
 S5 still requires controlled throwaway-campaign observations, which cannot be

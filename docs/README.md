@@ -14,7 +14,9 @@ and are intentionally not consolidated into release documentation.
 | [Campaign inspection format](CAMPAIGN_SAVE_FORMAT.md) | Qualified read-only save inspection, schema, failure behavior and remaining gates. |
 | [Save Workshop design](SAVE_WORKSHOP_DESIGN.md) | Plan for minor edits to a save copy; S0-S3 implemented in source, over-capacity writes refused, GUI write control built behind the default-off setting. |
 | [Save Workshop implementation plan](SAVE_WORKSHOP_IMPLEMENTATION_PLAN.md) | Module layout, GUI design, build slices and lessons ported from BridgeForge. |
-| [Developer Guide](DEVELOPER_GUIDE.md) | Architecture, verification, and contribution rules. |
+| [Developer Guide](DEVELOPER_GUIDE.md) | Architecture, verification, safe I/O, CI gates and contribution rules. |
+| [Automation plan](AUTOMATION_PLAN.md) | The checks that run themselves (validate-all, acceptance, check-mod, scan diagnostics, calibration review) and the status of each item. |
+| [Observed bugs](BUGS.md) | Open and resolved compatibility gaps. |
 | [Calibration import notes](CALIBRATION_IMPORT_NOTES.md) | Sanitized fixture and calibration-import constraints. |
 | [Complex hull acceptance matrix](COMPLEX_HULL_ACCEPTANCE_MATRIX.md) | Acceptance evidence for composite-hull modeling. |
 

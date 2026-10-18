@@ -35,11 +35,11 @@ not understand. The cost is that every locator must be exact, which is why unrec
 ## Service boundary
 
 - `api.py`: `run_save_inspect(save_dir)`, `run_save_edit_plan(save_dir, requests, registry)`,
-  `run_save_edit_write(plan, output_dir)`. Dataclass results with explicit payload helpers, as elsewhere.
+  `run_save_edit_write(plan, output_dir)`, `run_save_verify_copy(plan, copy_dir)`. Dataclass results with explicit payload helpers, as elsewhere.
 - CLI (`cli/main.py`, thin): `voidsmith save inspect`, `voidsmith save plan`, `voidsmith save write`. `write` prints
   the verification report and the not-loaded-in-game notice.
-- Config: one opt-in flag, `save_workshop_enabled`, default off. While the gate is open the flag exists only in
-  development builds. The output location is the existing `output_dir`, under `save_workshop/`.
+- Opt-in: a default-off, session-only checkbox in Settings / Export (a GUI control, not an `AppConfig` field). Source builds
+  only. The output location is the existing `output_dir`, under `save_workshop/`.
 - `run_campaign_save_discovery` stays as it is: the user picks a directory, the discovery lists entries, and the user
   picks one save from it. The tool never guesses a saves location.
 
@@ -105,7 +105,7 @@ missing; no silent modifications; nothing is written until the button is pressed
 
 ## Implementation checkpoint — 2026-10-06
 
-S0/S1 are implemented for XML structure and direct descriptor facts only; see `CAMPAIGN_SAVE_FORMAT.md`. The existing metadata discovery API is unchanged. S2 resource locators and pure edit plans are implemented under `CAMPAIGN_SAVE_RESOURCES.md`; no writer is enabled. S4 offers an independent default-off read-only GUI preview for resource inspection and backend plan review; write/verify and full discovery/navigation controls remain pending. S3 is implemented (2026-10-06, owner decision): `campaign/writer.py`, `campaign/verify.py` and `voidsmith save write` write verified new copies for changes within the saved capacity; over-capacity changes are refused and the opt-in write path is not implemented. S5 evidence is now on record (2026-10-12, BridgeForge `docs/RC8_BEHAVIOUR.md` RC8-34 to RC8-36, see "Evidence for capacity overages" below); over-capacity writes stay refused.
+S0/S1 are implemented for XML structure and direct descriptor facts only; see `CAMPAIGN_SAVE_FORMAT.md`. The existing metadata discovery API is unchanged. S2 resource locators and pure edit plans are implemented under `CAMPAIGN_SAVE_RESOURCES.md` (the S3 writer follows in the next sentences). S4 offers an independent default-off GUI workspace for resource inspection and backend plan review; since 2026-10-18 it also has "Write edited copy" with re-verification (V3.3), while full discovery/navigation controls remain pending. S3 is implemented (2026-10-06, owner decision): `campaign/writer.py`, `campaign/verify.py` and `voidsmith save write` write verified new copies for changes within the saved capacity; over-capacity changes are refused and the opt-in write path is not implemented. S5 evidence is now on record (2026-10-12, BridgeForge `docs/RC8_BEHAVIOUR.md` RC8-34 to RC8-36, see "Evidence for capacity overages" below); over-capacity writes stay refused.
 
 ## Slices, in order
 

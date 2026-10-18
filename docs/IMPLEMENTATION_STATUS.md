@@ -2,6 +2,14 @@
 
 This is an evidence-based status record, not a declaration of version 0.1 completion.
 
+**Automation plan, built 2026-10-18 (`docs/AUTOMATION_PLAN.md` V0 to V4):** `core/safeio.py` (atomic writes, guarded deletes, a
+shrink-only ratchet test), bounded archive import, CI jobs for ruff (`E9,F,B`) and full `mypy src`, a golden test of the CLI grammar,
+`validate-all`, `acceptance` with a baseline, located parse failures and stale enabled mods in `scan` and the GUI Diagnostics tab,
+`calibration resolve | approve | propose`, the Save Workshop overage preview and GUI "Write edited copy" (default-off setting),
+`check-mod`, and a synthetic SPW round-trip test. Not yet done: runs of these on the real install, the one live capacity check
+(whether a load recomputes an edited capacity figure), S6 (shipping the Workshop flag on), and game-load acceptance of an edited
+copy. Test counts and dates in the older entries below are historical; the current count comes from running the suite.
+
 **Fitting-canvas coordinate and provenance polish (2026-08-26):** corrected
 the shared Starsector mount transform: forward/lateral `.ship` coordinates now
 map to the canvas's upright hull art rather than being drawn quarter-turned.
@@ -2332,7 +2340,7 @@ phase N here means the same thing as phase N there.
 
 | Formal phase | Status | Current evidence | Material gaps |
 |---|---|---|---|
-| 0 Foundation | Partial | Package, CLI, config, logging, unit tests, work log, CI (`.github/workflows/tests.yml`, Tier 5); `cli/main.py`'s orchestration is now extracted into an importable service layer (`api.py`) so a future GUI can bind to it directly per `GUI.md`'s Readiness Gate, rather than shelling out to `svg` -- zero CLI-observable behavior change | No packaging/release automation beyond CI's `python -m build` check. |
+| 0 Foundation | Partial | Package, CLI, config, logging, unit tests, work log, CI (`.github/workflows/tests.yml`, Tier 5; since 2026-10-18 also a `static-analysis` job with ruff and full `mypy src`); `cli/main.py`'s orchestration is now extracted into an importable service layer (`api.py`) so a future GUI can bind to it directly per `GUI.md`'s Readiness Gate, rather than shelling out to `svg` -- zero CLI-observable behavior change | No packaging/release automation beyond CI's `python -m build` check. |
 | 1 Scanner/parser | Partial | Core/enabled-mod scan, CSV, `.ship`, `.wpn`, variant, relaxed JSON, legacy encodings/control characters, source hashes; live scan parses 4,736 hulls (including 306 real `.skin`-derived hulls, e.g. `onslaught_xiv` -- SVG-014) and 431 factions against a real 148-mod install with 5 parser errors, all confirmed genuinely malformed `.skin` source files, not a syntax convention; hull/weapon parsers now also capture flux fields, `fighter_bays`, and built-in-weapon mounts (Tier 2, Tier 1.3, Tier 1.4) | 3 skipped source metadata files remain queued; `data/config/settings.json` is still not scanned as a general data source (its two relevant values were verified and hardcoded into `adapters/vanilla/`, not parsed generically). |
 | 2 Registry/cache | Partial | Deterministic indexes, explicit dependency-ID presence audit for string/object metadata declarations, unresolved references, SHA-256 manifest/change detection, and query reports for unambiguous weapons/variants/faction equipment | No SQLite normalized cache, dependency-version compatibility, or load-order resolution (deliberately deferred, ROADMAP.md Tier 5). |
 | 3 Validator/analyzer | Partial | Three-state validation, direct hull/weapon/hullmod/fighter reference checks, size, the **full documented mount-type compatibility matrix** (`core/mount_compatibility.py` -- Ballistic/Energy/Missile plus Hybrid/Composite/Synergy/Universal combinations, not just exact-match; SVG-013), OP (including vent/capacitor cost), fighter-bay capacity, built-in-weapon preservation, per-hull-size vent/capacitor maximum, max-2-logistics-hullmods cap. All stress-tested against all 441 real core variants plus multiple random installed mods' variants with zero false positives and zero exceptions; two real false-positive bugs were found and fixed this way (fighter-bay undercounting on multi-bay-per-slot hulls; exact-match-only mount typing, which dropped `MOUNT_TYPE_MISMATCH` false positives from 299 to 4 real variants). CLI validation. | A general pairwise hullmod-incompatibility mechanic may not exist in vanilla at all (ROADMAP.md Tier 1.2); fighter-wing-internal mount semantics (`hull_size: FIGHTER`) are a distinct, still-undocumented area (4 real variants affected). |

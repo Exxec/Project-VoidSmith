@@ -111,6 +111,16 @@ Both commands emit JSON on stdout; inspection exits one on a refused format,
 and planning exits one if any change is refused or lacks required planning
 opt-in. No plan is executed. `ready_for_copy` is distinct from write permission.
 
+## Overage preview (2026-10-18)
+
+When a planned commodity quantity would exceed a saved capacity, `EditPlan.overage_preview` (shown in `save plan` JSON and in the GUI
+plan view) lists, from `campaign/overage.py`, the recorded consequences cited by BridgeForge row id for build 0.98a-RC8: RC8-34 (0.1
+supplies per day per unit over cargo, fuel or personnel capacity, capped at 50 per resource, costs add) and RC8-35 (the burn level
+becomes max(1, round(base burn x (2 - r))) for the worst used/capacity ratio r; the base burn is not read from a save, so only r and
+the factor are shown). RC8-36 is cited for the saved figures being written at save time. It is display only: the change stays
+NOT_DETERMINABLE and is never written, and every other overage effect is UNKNOWN. Whether a load recomputes an edited
+`mC`/`mF`/`mP` is still unmeasured.
+
 ## S3: verified copy writer (2026-10-06)
 
 The write gate is `OPEN_WITHIN_CAPACITY` (owner decision 2026-10-06; it was
@@ -145,10 +155,10 @@ The write gate is `OPEN_WITHIN_CAPACITY` (owner decision 2026-10-06; it was
 Existing packaged binaries are unchanged.
 
 
-## S4 read-only preview and validation checkpoint
+## S4 GUI workspace and validation checkpoint
 
-In source builds, Settings / Export exposes **Enable Save Workshop read-only
-preview**, off by default and scoped to the current session. This adds a
+In source builds, Settings / Export exposes **Enable Save Workshop (inspect,
+plan, write verified copies)**, off by default and scoped to the current session. This adds a
 separate top-level workspace. The user explicitly selects one save folder;
 no path is guessed or scanned automatically. Overview shows only backend
 resource facts, saved capacity and evidence limits. Resources uses a model/view
@@ -162,7 +172,7 @@ existing background-operation service. Stop Waiting discards result delivery;
 it does not claim to interrupt backend reads. Old results cannot replace a
 newer request. Closing the main window waits for retained workers to finish.
 The preview does not load campaign facts into any fitting or recommendation
-engine. There is no configuration/release default-on decision or write GUI yet.
+engine. There is no default-on or release decision yet (S6 is the owner's).
 
 Validation: full unittest suite, 822 tests run successfully with two skips.
 S2 adds 22 synthetic tests; S4 adds five GUI smoke/workflow tests, including

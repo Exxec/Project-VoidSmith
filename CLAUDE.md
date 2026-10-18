@@ -28,7 +28,9 @@ uv run --no-project --with-editable . python -m unittest tests.test_scanner -v
 uv run --no-project --with-editable . python -m unittest tests.test_scanner.ScannerTests.test_scan_emits_staged_progress_and_records_workload_metrics -v
 ```
 
-Lint (not pinned as a project dependency; run ad hoc via `uv run --with`):
+Lint and types (not pinned as project dependencies; run ad hoc via `uv run --with`). CI runs both in its `static-analysis`
+job (ruff selects `E9,F,B`, see `[tool.ruff.lint]` in `pyproject.toml`), so keep them clean. GUI tests need the `gui` extra and
+`QT_QPA_PLATFORM=offscreen` on a headless host:
 
 ```powershell
 uv run --no-project --with ruff ruff check src/ tests/ tools/

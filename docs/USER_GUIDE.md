@@ -69,7 +69,8 @@ without optional per-entity analysis reports.
 
 The scanner records parser warnings rather than crashing on malformed optional
 numbers. A malformed mod file can still appear in errors; it is not silently
-rewritten.
+rewritten. See Automated checks below for the located parse-failure and
+missing-mod lines that `scan` prints.
 
 ## Ships, variants, and legality
 
@@ -250,7 +251,52 @@ entity/deployment profiles.
 
 ## Read-only campaign inspection (source builds)
 
-Run `voidsmith save inspect "PATH_TO_SELECTED_SAVE_FOLDER"` on a folder you explicitly choose. The inspector accepts only uncompressed game 0.98a-RC8 / save 0.6 XML, reports descriptor facts and SHA-256 hashes, and writes no files. Unsupported versions, unsafe paths/XML and malformed data are refused. Add `--resources` to inspect qualified credits, story points and existing commodity stacks. `voidsmith save plan SAVE_DIR --set credits=200000 --set story_points=10` produces a reviewable plan without writing. Commodity plans also require installed membership via `--starsector-path`; changed quantities stay NOT_DETERMINABLE unless explicitly opted into planning with `--allow-unknown-capacity`. Saved capacities may be stale and overage effects remain unknown. `voidsmith save write SAVE_DIR --set ... --output-dir DIR` writes one verified new copy below `DIR/save_workshop/` when every change is within the saved capacity; it refuses over-capacity changes, never overwrites, never touches the original, and the copy has not been loaded in the game, so try it on a throwaway first, and back up the original, because the game saves a loaded copy back to the original save's folder. See [resource and plan contracts](CAMPAIGN_SAVE_RESOURCES.md). READABLE means accepted XML structure, not proof the game can load the save. Source builds offer a default-off **Save Workshop read-only preview** checkbox in Settings / Export. Its workspace inspects explicitly selected saves and reviews plans on a worker thread; its write button stays disabled (use the CLI). The preview itself creates and edits no save copy. Existing portable builds are unchanged. See [the format contract](CAMPAIGN_SAVE_FORMAT.md).
+Run `voidsmith save inspect "PATH_TO_SELECTED_SAVE_FOLDER"` on a folder you explicitly choose. The inspector accepts only uncompressed game 0.98a-RC8 / save 0.6 XML, reports descriptor facts and SHA-256 hashes, and writes no files. Unsupported versions, unsafe paths/XML and malformed data are refused. Add `--resources` to inspect qualified credits, story points and existing commodity stacks. `voidsmith save plan SAVE_DIR --set credits=200000 --set story_points=10` produces a reviewable plan without writing. Commodity plans also require installed membership via `--starsector-path`; changed quantities stay NOT_DETERMINABLE unless explicitly opted into planning with `--allow-unknown-capacity`. Saved capacities may be stale. When a commodity edit would exceed the saved capacity, the plan keeps it NOT_DETERMINABLE and adds an `overage_preview` (also shown in the GUI plan view): the recorded cost of 0.1 supplies per day per unit over (capped at 50 per resource) and the worst used/capacity ratio with the burn-level formula, each labelled with its BridgeForge row id (RC8-34, RC8-35) and build 0.98a-RC8. Every other overage effect stays unknown, and the preview never enables a write. `voidsmith save write SAVE_DIR --set ... --output-dir DIR` writes one verified new copy below `DIR/save_workshop/` when every change is within the saved capacity; it refuses over-capacity changes, never overwrites, never touches the original, and the copy has not been loaded in the game, so try it on a throwaway first, and back up the original, because the game saves a loaded copy back to the original save's folder. See [resource and plan contracts](CAMPAIGN_SAVE_RESOURCES.md). READABLE means accepted XML structure, not proof the game can load the save. Source builds offer a default-off **Enable Save Workshop (inspect, plan, write verified copies)** checkbox in Settings / Export. Its workspace inspects explicitly selected saves and reviews plans on a worker thread. **Write edited copy** is enabled only for a current plan in which every change is ACCEPTED within the saved capacity and with an output folder set in Settings / Export; it writes the same verified new copy as `save write`, re-verifies it and shows VERIFIED or FAILED_VERIFICATION. Inspecting and planning create no files, and the original save is never changed. Existing portable builds are unchanged. See [the format contract](CAMPAIGN_SAVE_FORMAT.md).
+
+## Automated checks (source builds)
+
+These commands only read the installation and mods. They write reports below the output folder (and, for `check-mod --output`
+and the calibration commands, to the file or folder you name). None of them edits a game or mod file, and none changes a
+heuristic set by itself.
+
+**Scan diagnostics.** `scan` prints, after the report path, one `Parse failure:` line for each mod data file that needs hand repair
+(file, the parser's line and column, the last good token, and where bracket depth first goes wrong in the raw file) and one
+`Enabled but not installed:` line for each id in `enabled_mods.json` with no folder, with the closest installed folder as a hint.
+The same lines appear in the GUI under **Data / Analysis > Diagnostics** after a scan. They are information; VoidSmith does not
+repair mod files or edit `enabled_mods.json`. Parser line numbers refer to the text after comment removal, so they can sit a few
+lines from the raw file; the raw-file structure line is the better guide.
+
+**`validate-all`** validates every shipped variant through the legality engine and writes `reports/validate_all.json` and
+`reports/validate_all.md`, a table by finding code and by mod. Options: `--source all` (default), `core`, or `mod:<id>`;
+`--all-installed-mods`; `--quiet`. It prints one progress line per source and exits 1 when any variant is `ILLEGAL`. The runtime
+severity column states only what has recorded evidence (a variant naming a missing weapon is fatal at New Game; a missing hull mod
+is dropped silently); every other code is `NOT_RECORDED`.
+
+```powershell
+voidsmith validate-all --source core --starsector-path C:\Starsector --output-dir generated
+```
+
+**`acceptance`** gives each mod an acceptance verdict (`PASS`, `PASS_WITH_UNKNOWNS`, `PARTIAL`, `FAIL`) and compares it with a
+baseline file, printing only changes. Without a baseline it says so and prints the summary. `--write-baseline` is a deliberate step
+that replaces the baseline with this run; an interrupted run resumes from a checkpoint. It exits 1 when a mod got worse.
+Default baseline: `generated/reports/acceptance_baseline.json`. Verdicts describe how well VoidSmith understands a mod; they are not legality.
+
+**`check-mod MOD_FOLDER`** prints (or, with `--output FILE`, writes) a JSON verdict on one mod folder, for example a working copy
+from the sister reviver project. `--context core` (default) judges it against the core data only; `--context enabled` adds every
+enabled mod. The verdict is `FAIL` for a located parse failure, an unreadable `mod_info.json` or a variant naming a missing weapon,
+`REVIEW` for other `ILLEGAL` or `NOT_DETERMINABLE` variants or a missing hull mod, otherwise `PASS`. Exit code: PASS 0, REVIEW 1, FAIL 2. `PASS` is not proof the mod works in game. `--output` may not point inside the mod folder.
+
+**`calibration`** helps a person finish a review sheet kept under the `generated/` folder (calibration data names real ships and
+never belongs in the repository):
+
+- `calibration resolve SHEET` writes a new sheet with display names resolved to scanned hull ids (rules `EXACT_NAME`,
+  `NORMALISED_NAME`, `QUALIFIER_STRIPPED`; ambiguous rows list candidates, misses stay blank) and the columns `equipment_ok`,
+  `legality` and `ready_for_review`, ready rows first. Equipment is matched item by item against scanned names, so free text
+  fails that check; legality is checked only for rows that name an existing variant.
+- `calibration approve SHEET --reviewer "Your Name" (--rows 3,5-7 | --all-ready)` marks rows APPROVED with your name and the
+  date, only if they passed every pre-check, and appends to an `.approvals.jsonl` log. Nothing runs it automatically.
+- `calibration propose SHEET` measures registered heuristic sets against APPROVED rows only and writes a report and an unregistered
+  candidate stub under `generated/calibration-proposals` (or `--output-dir`). Registering a set stays a manual, documented step.
 
 ## Unsupported / future work
 

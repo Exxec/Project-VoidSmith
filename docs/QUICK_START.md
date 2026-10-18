@@ -37,7 +37,11 @@ not need to close the running copy.
    (conservative)**.
 
 The GUI can also accept a dropped mod folder or archive as an extra scan source.
-It is not copied into the game installation.
+It is not copied into the game installation. Archives are read with size and
+compression-ratio limits, and links are refused.
+
+After a scan, **Data / Analysis > Diagnostics** lists mod files that failed to
+parse (with file and line) and enabled mods that are not installed.
 
 ## Console: first build
 
@@ -54,7 +58,17 @@ voidsmith export your_hull_id --profile LINE_BRAWLER `
 
 `scan` writes reports and a cache under the output folder. `generate` prints
 the report path for deterministic, bounded alternatives. `export` writes a
-generated compatibility mod only when it has a legal candidate.
+generated compatibility mod only when it has a legal candidate. `scan` also
+prints parse-failure and missing-enabled-mod lines.
+
+Read-only checks (source builds; see the User Guide for details):
+
+```powershell
+voidsmith validate-all --starsector-path C:\Starsector --output-dir generated
+voidsmith acceptance --baseline generated/reports/acceptance_baseline.json `
+  --starsector-path C:\Starsector --output-dir generated
+voidsmith check-mod C:\Mods\MyModFolder --starsector-path C:\Starsector
+```
 
 ## Reading a result
 
@@ -86,7 +100,7 @@ entities, doctrine, and AI/player suitability.
 manual overrides, knowledge-pack guidance, and calibration evidence. These are
 advisory and do not silently override legality.
 
-**Read-only inspection (source builds):** `voidsmith save inspect "PATH_TO_SELECTED_SAVE_FOLDER"` reports qualified descriptor facts and XML integrity only. Add `--resources` for qualified values or use `save plan SAVE_DIR --set credits=200000` for a read-only change plan. `save write SAVE_DIR --set credits=200000 --output-dir DIR` writes a verified new copy below `DIR/save_workshop/` for changes within the saved capacity (the original is never modified; over-capacity changes are refused; the copy is not loaded in the game, so try it on a throwaway first, and back up the original: the game saves a loaded copy back to the original's folder). See [the format contract](CAMPAIGN_SAVE_FORMAT.md).
+**Read-only inspection (source builds):** `voidsmith save inspect "PATH_TO_SELECTED_SAVE_FOLDER"` reports qualified descriptor facts and XML integrity only. Add `--resources` for qualified values or use `save plan SAVE_DIR --set credits=200000` for a read-only change plan. `save write SAVE_DIR --set credits=200000 --output-dir DIR` (or **Write edited copy** in the Save Workshop, which Settings / Export keeps off by default) writes a verified new copy below `DIR/save_workshop/` for changes within the saved capacity (the original is never modified; over-capacity changes are refused; the copy is not loaded in the game, so try it on a throwaway first, and back up the original: the game saves a loaded copy back to the original's folder). See [the format contract](CAMPAIGN_SAVE_FORMAT.md).
 
 **Not supported:** combat simulation, save-game/inventory planning, market
 availability, whole-fleet optimization, executing/decompiling mod code, and
