@@ -7,11 +7,11 @@
 <!-- page-nav:start -->
 **Pages** (each under 64k tokens; split 2026-10-18, content unchanged):
 
-| Page | Sections that start there |
-|---|---|
-| [1](WORK_LOG.md) | 2026-08-21 — Foundation and live scan |
-| [2](WORK_LOG-2.md) | (continues the previous section) |
-| [3](WORK_LOG-3.md) | Post-1.0 phase log; Traceability rules; 2026-10-18 - Automation plan V0.2 to V1.4; 2026-10-18 - Automation plan V1 GUI, V2, V3, V4; 2026-10-18 documentation refresh (branch docs-refresh-2026-10-18) |
+| Page | Sections that start there | Numbered items |
+|---|---|---|
+| [1](WORK_LOG.md) | 2026-08-21 — Foundation and live scan | - |
+| [2](WORK_LOG-2.md) | (continues the previous section) | - |
+| [3](WORK_LOG-3.md) | Post-1.0 phase log; Traceability rules; 2026-10-18 - Automation plan V0.2 to V1.4; 2026-10-18 - Automation plan V1 GUI, V2, V3, V4; 2026-10-18 documentation refresh (branch docs-refresh-2026-10-18) | - |
 <!-- page-nav:end -->
 
 ## 2026-08-21 — Foundation and live scan
