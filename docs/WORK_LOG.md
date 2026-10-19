@@ -1,5 +1,13 @@
 # Work log
 
+## 2026-10-19 — Roadmap qualification and Python 3.13 CI
+
+Added Python 3.13 to the Ubuntu test/build matrix. Ran the current-install read-only scan, validate-all and acceptance commands, then resolved the three local ship-review sheets into new ignored output copies. Original source data, review sheets and the unrelated untracked pipeline contract were preserved. No baseline or calibration approval was written.
+
+Local evidence only: 562 variants (388 LEGAL, 74 ILLEGAL, 100 NOT_DETERMINABLE); acceptance 152 PASS, 2 PARTIAL, 1 FAIL; calibration readiness 32/385, 157/280 and 60/61 (249/726 total). The source-catalog CSV was refused as an incompatible review sheet. Initial sandbox-limited scans were superseded by runs with all discovered mod metadata readable; current counts are not equivalent to the old 441-variant snapshot. Full reports remain under `generated/roadmap-2026-10-19/`, never in git.
+
+Validation: existing Python 3.14.7 environment, 943 tests OK (3 skipped); Ruff clean; mypy clean across 119 source files. Hosted Python 3.13, live game acceptance, real SPW export, named-person approvals and release/default-flag decisions remain separate gates. No publication, push or commit performed.
+
 <!-- page-nav:start -->
 > Page 1 of 3 of the VoidSmith work log. Next: [WORK_LOG-2.md](WORK_LOG-2.md). Newest entries: [WORK_LOG-3.md](WORK_LOG-3.md).
 <!-- page-nav:end -->

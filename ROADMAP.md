@@ -155,6 +155,16 @@ read and the SPW round trip. Owner decisions 2026-10-14 ('follow your recommenda
 Local steps that need the real install or the game: run `scan` and read the Diagnostics tab and CLI lines (SVG-004, SVG-014, SVG-017); `validate-all` and compare with the SVG-012/013 441-variant total; `acceptance --write-baseline` once; `calibration resolve` on the real review sheets (the 726 rows) and read how many are ready, then a person runs `calibration approve`; `calibration propose` after rows are approved; one write of a copy from the GUI and a load of it in the game; the one remaining capacity check (does a load recompute an edited `mC`/`mF`/`mP`) in BridgeForge's capacity rig; `check-mod` on a BridgeForge `working/` copy; the SPW inventory round trip on the real install. S6 (shipping the flag on) stays the owner's decision.
 
 
+## Execution checkpoint — 2026-10-19
+
+Owner request: check the roadmap and implement its phases as a goal. V0–V4 are already built; this pass executes available near-term qualification and adds the proposed Python 3.13 CI matrix entry. It does not authorize human calibration approval, a default-on Workshop, or publication.
+
+- **Near-term item 1: local checks run, with limits.** Read-only scan and validation completed against the currently enabled installation. All discovered mod metadata was readable on the final run. The variant count differs from the historical 441 baseline because the current installation is a different snapshot; no equivalence is claimed. Scan/validation reported findings, so their nonzero exits are retained as diagnostic outcomes rather than called clean passes. Acceptance was run without creating or approving a baseline; the first `--write-baseline` remains a person-run step.
+- **Calibration resolution run.** The three ship-review sheets total 726 rows. New resolved copies are under the ignored local output directory; no input sheet was changed and no row was approved. The separate source-catalog CSV is not a ship-review sheet and was correctly refused by the resolver. Pre-check readiness is not approval or live evidence.
+- **Near-term item 5: implemented.** The Ubuntu test/build matrix now includes Python 3.13 alongside 3.11 and 3.12. Hosted 3.13 execution is NOT_RUN until CI runs; the local suite ran under the existing Python 3.14.7 environment.
+- **Validation:** 943 tests passed (3 skipped); Ruff passed; full-source mypy passed (119 files). Detailed real-entity results and logs stay only under `generated/roadmap-2026-10-19/`.
+- **Remaining gates:** person-run acceptance baseline and calibration approval; user-selected real SPW export; bounded GUI write/load acceptance and BridgeForge capacity observation; phase 54 semantics and S6/release decisions. These are not completed by static tests. Broader long-term recommendations need their own bounded design and evidence inputs.
+
 ## Recommendations (2026-10-18; proposed, not approved)
 
 Written after the automation plan (V0-V4) merged and CI went green on Python 3.11, 3.12 and the Windows smoke job. The owner
@@ -174,7 +184,7 @@ asked for recommendations and long-term recommendations. None is scheduled until
 4. **Release decision.** `pyproject.toml` says 1.0.0 while the newest tag is `v0.1.0RC3` (marked Latest) and an older
    `v1.0.0rc2` exists. Pick one version line before the next tag (recommended: tag the current master as `v1.1.0` or a
    `v1.1.0rc1`, since it adds commands and the Save Workshop write), and mark the stray `v0.1.0RC*` releases as superseded.
-5. **CI on Python 3.13** as well: the 3.11 golden failure showed version differences surface only in CI.
+5. **CI on Python 3.13** as well: implemented 2026-10-19; hosted execution pending. The 3.11 golden failure showed version differences surface only in CI.
 
 ### Long term: what VoidSmith should become
 
