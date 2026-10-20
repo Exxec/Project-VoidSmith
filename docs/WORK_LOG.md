@@ -1,5 +1,10 @@
 # Work log
 
+## 2026-10-20 — Mod version normalization
+
+- Object versions in `mod_info.json` (`{"major":1,"minor":7,"patch":1}`, parts as strings or numbers) now normalize to `1.7.1` through `core/mod_version.py`; missing parts count as `0`. Tests: `tests/test_mod_version.py`, `tests/test_scanner.py`.
+- Existing baselines show the affected rows changing once (the 27 mods that recorded the raw JSON string). The source snapshot cache schema moved to `source-scan-cache-6` so cached raw strings are not reused.
+
 ## 2026-10-19 — Roadmap qualification and Python 3.13 CI
 
 Added Python 3.13 to the Ubuntu test/build matrix. Ran the current-install read-only scan, validate-all and acceptance commands, then resolved the three local ship-review sheets into new ignored output copies. Original source data, review sheets and the unrelated untracked pipeline contract were preserved. No baseline or calibration approval was written.
