@@ -164,6 +164,7 @@ Owner request: check the roadmap and implement its phases as a goal. V0–V4 are
 - **Near-term item 5: implemented.** The Ubuntu test/build matrix now includes Python 3.13 alongside 3.11 and 3.12. Hosted 3.13 execution is NOT_RUN until CI runs; the local suite ran under the existing Python 3.14.7 environment.
 - **Validation:** 943 tests passed (3 skipped); Ruff passed; full-source mypy passed (119 files). Detailed real-entity results and logs stay only under `generated/roadmap-2026-10-19/`.
 - **Remaining gates:** person-run acceptance baseline and calibration approval; user-selected real SPW export; bounded GUI write/load acceptance and BridgeForge capacity observation; phase 54 semantics and S6/release decisions. These are not completed by static tests. Broader long-term recommendations need their own bounded design and evidence inputs.
+- **SPW inventory round trip on the real install (2026-10-20, OBSERVED).** `spw inventory` on `C:\Program Files (x86)\Fractal Softworks\Starsector` (160 mods) fed to `tools/review_spw_inventory.py`: 151 MATCH, 9 UNKNOWN (missing, changed or ambiguous metadata: CFT x2, DDSCache and others), 0 mismatches. Local output `generated/spw-review-2026-10-20/review.json`. Package version aligned to 0.2.0 (PR #1). The acceptance baseline and calibration approvals remain person-run.
 
 ## Recommendations (2026-10-18; proposed, not approved)
 
