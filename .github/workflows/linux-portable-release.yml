@@ -21,6 +21,17 @@ jobs:
         run: python -m pip install uv
       - name: Build and smoke-test portable Windows x64 archive
         run: powershell -ExecutionPolicy Bypass -File tools\build_portable_release.ps1 -BootstrapDependencies -Clean
+      - name: Check portable CLI parity with the source
+        shell: pwsh
+        run: |
+          $archive = Get-ChildItem -Path dist -Filter 'VoidSmith-*-win-x64.zip' | Select-Object -First 1
+          if (-not $archive) { throw 'No portable Windows archive found in dist/.' }
+          $extracted = Join-Path $env:RUNNER_TEMP 'portable-parity'
+          Expand-Archive -LiteralPath $archive.FullName -DestinationPath $extracted -Force
+          $exe = Get-ChildItem -Path $extracted -Recurse -Filter 'VoidSmith.exe' | Select-Object -First 1
+          if (-not $exe) { throw 'VoidSmith.exe not found in the extracted archive.' }
+          python tools/verify_portable_cli.py --exe $exe.FullName
+          if ($LASTEXITCODE -ne 0) { throw 'Portable CLI parity check failed.' }
       - uses: actions/upload-artifact@v4
         with:
           name: VoidSmith-windows-x64
