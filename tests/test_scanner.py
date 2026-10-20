@@ -371,13 +371,13 @@ class ScannerTests(unittest.TestCase):
         self.assertEqual(("base_game",), fixture_mod.dependencies)
         self.assertTrue(any("Dependency entry without explicit string id" in item for item in result.skipped_entities))
 
-    def test_structured_mod_version_is_deterministic_json_provenance(self) -> None:
+    def test_structured_mod_version_is_normalized_to_dotted_text(self) -> None:
         info_path = self.root / "mods/fixture_mod/mod_info.json"
         raw = json.loads(info_path.read_text(encoding="utf-8"))
-        raw["version"] = {"patch": 3, "major": 1}
+        raw["version"] = {"patch": "3", "major": 1}
         info_path.write_text(json.dumps(raw), encoding="utf-8")
         mod = next(item for item in Scanner(self.root).discover_sources() if item.mod_id == "fixture_mod")
-        self.assertEqual('{"major":1,"patch":3}', mod.version)
+        self.assertEqual("1.0.3", mod.version)
 
     def test_registry_queries_preserve_ambiguity_and_source_evidence(self) -> None:
         registry = Registry.from_scan(Scanner(self.root).scan())

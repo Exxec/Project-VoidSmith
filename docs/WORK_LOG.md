@@ -1,5 +1,22 @@
 # Work log
 
+## 2026-10-20 — Portable CLI parity check
+
+- The CLI accepts `--version` (prints `voidsmith <version>`). The windowed portable `VoidSmith.exe` hands `--version`, `--help` and any CLI command to the CLI, so it can be checked from outside the GUI.
+- `tools/verify_portable_cli.py` runs the executable with `--version`, `--help` and `acceptance --help`, and fails when the version differs from pyproject or a command path pinned in `tests/cli_golden.json` is missing from its parent's help. The portable workflow runs it on the extracted archive. Tests: `tests/test_verify_portable_cli.py`, `tests/test_gui_cli_dispatch.py`.
+- `tests/cli_golden.json` regenerated for the root parser only (`--version` added).
+- Not yet run on a real Windows build: the windowed build may not expose stdout to a piped child process, which would make the workflow step fail for a reason unrelated to parity.
+
+## 2026-10-20 — Acceptance enabled-mod drift
+
+- `acceptance` reports each enabled-but-not-installed id once as a STALE line naming the exact id and the file that declares it (`enabled_mods.json`, or `settings.json` when that is the only list). The report JSON gains `stale_enabled`. The FAIL row stays for compatibility. Tests: `tests/test_stale_enabled_mods.py`.
+- Synthetic FAIL rows are now created once per distinct scan message, so a duplicated enabled id no longer yields duplicate rows.
+
+## 2026-10-20 — Mod version normalization
+
+- Object versions in `mod_info.json` (`{"major":1,"minor":7,"patch":1}`, parts as strings or numbers) now normalize to `1.7.1` through `core/mod_version.py`; missing parts count as `0`. Tests: `tests/test_mod_version.py`, `tests/test_scanner.py`.
+- Existing baselines show the affected rows changing once (the 27 mods that recorded the raw JSON string). The source snapshot cache schema moved to `source-scan-cache-6` so cached raw strings are not reused.
+
 ## 2026-10-19 — Roadmap qualification and Python 3.13 CI
 
 Added Python 3.13 to the Ubuntu test/build matrix. Ran the current-install read-only scan, validate-all and acceptance commands, then resolved the three local ship-review sheets into new ignored output copies. Original source data, review sheets and the unrelated untracked pipeline contract were preserved. No baseline or calibration approval was written.

@@ -27,6 +27,7 @@ from starsector_variant_generator.core.models import (
     Variant,
     Weapon,
 )
+from starsector_variant_generator.core.mod_version import normalize_mod_version
 from starsector_variant_generator.core.safeio import atomic_write_bytes
 from starsector_variant_generator.parsers.common import csv_rows, json_file
 from starsector_variant_generator.parsers.entities import (
@@ -69,7 +70,7 @@ class SourceScanFragment:
 # ``marshal`` snapshots are local implementation caches, not exchange files:
 # Python-major/minor-specific encoding is intentional. They avoid paying JSON
 # parse/serialization cost for thousands of already-normalized local records.
-SOURCE_CACHE_SCHEMA = f"source-scan-cache-5-py{sys.version_info.major}.{sys.version_info.minor}"
+SOURCE_CACHE_SCHEMA = f"source-scan-cache-6-py{sys.version_info.major}.{sys.version_info.minor}"
 
 
 class Scanner:
@@ -124,8 +125,7 @@ class Scanner:
                 self.logger.addHandler(logging.NullHandler())
 
     def enabled_mod_ids(self) -> list[str] | None:
-        candidates = (self.game_root / "mods" / "enabled_mods.json", self.game_root / "settings.json")
-        for settings in candidates:
+        for settings in enabled_mods_candidates(self.game_root):
             if not settings.exists():
                 continue
             try:
@@ -180,7 +180,7 @@ class Scanner:
             return None
         mod_id = str(raw.get("id", child.name))
         dependencies = self._dependency_ids(raw.get("dependencies", []), info_path)
-        version = json.dumps(raw["version"], sort_keys=True, separators=(",", ":")) if isinstance(raw.get("version"), (dict, list)) else (str(raw["version"]) if "version" in raw else None)
+        version = normalize_mod_version(raw.get("version"))
         return ModInfo(
             mod_id=mod_id, mod_name=str(raw.get("name", mod_id)), version=version, path=child,
             enabled=(mod_id in enabled) if enabled is not None else None, dependencies=dependencies,
@@ -758,6 +758,20 @@ class Scanner:
                 size=fields.get("size", weapon.size),
                 raw=raw,
             )
+
+
+ENABLED_MOD_SETTINGS = ("mods/enabled_mods.json", "settings.json")
+
+
+def enabled_mods_candidates(game_root: Path) -> tuple[Path, ...]:
+    """Files that may declare the enabled mods, in the order the scanner reads them."""
+    return tuple(game_root / relative for relative in ENABLED_MOD_SETTINGS)
+
+
+def enabled_mods_file(game_root: Path) -> Path:
+    """The file an enabled-but-missing id must be removed from: the first candidate that exists, else `enabled_mods.json`."""
+    candidates = enabled_mods_candidates(game_root)
+    return next((path for path in candidates if path.exists()), candidates[0])
 
 
 def _json_safe(value: object) -> object:

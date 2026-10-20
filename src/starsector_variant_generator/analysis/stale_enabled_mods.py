@@ -71,6 +71,22 @@ def find_stale_enabled_mods(scan: ScanResult, installed: Sequence[ModInfo] = ())
     return results
 
 
+def stale_enabled_entries(scan: ScanResult, enabled_file: str | None) -> list[dict[str, object]]:
+    """One removal instruction per enabled-but-not-installed id: the exact id and the file that declares it.
+
+    The id is quoted as the scan read it, so it can be pasted into the file as is. `enabled_file` is `None` when the caller
+    does not know where the list came from; the entry then says so instead of naming a file.
+    """
+    ids = sorted({message[len(_PREFIX):] for message in scan.skipped_entities if message.startswith(_PREFIX)})
+    return [{"mod_id": mod_id, "enabled_file": enabled_file, "action": "remove this id from enabledMods"} for mod_id in ids]
+
+
+def format_stale_entry(entry: dict[str, object]) -> str:
+    location = entry["enabled_file"] or "the enabled-mods list"
+    return (f"STALE   enabled but not installed: remove \"{entry['mod_id']}\" from {location} "
+            "[the FAIL row is kept for compatibility]")
+
+
 def format_stale_line(entry: StaleEnabledMod | dict[str, object]) -> str:
     data = entry.to_dict() if isinstance(entry, StaleEnabledMod) else entry
     line = f"Enabled but not installed: {data['enabled_id']}"

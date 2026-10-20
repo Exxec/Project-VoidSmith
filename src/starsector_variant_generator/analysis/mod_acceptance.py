@@ -41,6 +41,7 @@ from typing import Any
 
 from starsector_variant_generator.analysis.complex_hull_audit import audit_complex_hulls
 from starsector_variant_generator.analysis.derived_ship_state import derive_ship_state
+from starsector_variant_generator.analysis.stale_enabled_mods import stale_enabled_entries
 from starsector_variant_generator.core.models import ModInfo, ScanResult, SourceType
 from starsector_variant_generator.core.registry import EntityIndex, Registry
 
@@ -135,7 +136,7 @@ def _attribute_message(message: str, ordered_sources: list[ModInfo]) -> str | No
 
 def audit_mod_acceptance(
     scan: ScanResult, registry: Registry, *, only_mod_ids: frozenset[str] | None = None,
-    complex_audit: dict[str, Any] | None = None, include_synthetic: bool = True,
+    complex_audit: dict[str, Any] | None = None, include_synthetic: bool = True, enabled_file: str | None = None,
 ) -> dict[str, Any]:
     """Classify every installed mod, or only `only_mod_ids` (the per-variant work is skipped for the others).
 
@@ -280,7 +281,7 @@ def audit_mod_acceptance(
 
     # --- synthetic FAIL records for mods that never got a real ModInfo ---
     synthetic_records: list[ModAcceptanceRecord] = []
-    for message in scan.skipped_entities if include_synthetic else ():
+    for message in dict.fromkeys(scan.skipped_entities) if include_synthetic else ():
         if message not in consumed_messages:
             continue
         malformed = _MALFORMED_MOD_INFO_RE.match(message)
@@ -392,6 +393,7 @@ def audit_mod_acceptance(
         "unattributed": {
             "warnings": unattributed_warnings, "errors": unattributed_errors, "skipped_entities": unattributed_skipped,
         },
+        "stale_enabled": stale_enabled_entries(scan, enabled_file) if include_synthetic else [],
         "scope_note": (
             "This is a diagnostic acceptance sweep, not a legality result -- validation/legality.py remains the sole "
             "source of LEGAL/ILLEGAL/NOT_DETERMINABLE. Free-text scan warnings/errors/skipped-entity messages are "

@@ -79,7 +79,7 @@ def _append_checkpoint(path: Path, records: list[dict[str, Any]]) -> None:
 
 def run_acceptance(
     scan: ScanResult, registry: Registry, *, scope: str = "ENABLED_ONLY", chunk_size: int = DEFAULT_CHUNK_SIZE,
-    checkpoint_path: Path | None = None, progress: ProgressCallback | None = None,
+    checkpoint_path: Path | None = None, progress: ProgressCallback | None = None, enabled_file: str | None = None,
 ) -> dict[str, Any]:
     """Audit every mod chunk by chunk; returns the audit dict (same shape as `audit_mod_acceptance`) with `resumed_mods` added."""
     header = inputs_fingerprint(scan, scope)
@@ -108,7 +108,7 @@ def run_acceptance(
                 progress(finished, total, record["mod_id"], record["classification"], seconds)
         if checkpoint_path is not None:
             _append_checkpoint(checkpoint_path, part["records"])
-    final = audit_mod_acceptance(scan, registry, only_mod_ids=frozenset(), complex_audit=complex_audit)
+    final = audit_mod_acceptance(scan, registry, only_mod_ids=frozenset(), complex_audit=complex_audit, enabled_file=enabled_file)
     records = sorted([*done.values(), *final["records"]], key=lambda record: record["mod_id"].lower())
     summary = {name: 0 for name in (PASS, PASS_WITH_UNKNOWNS, PARTIAL, FAIL)}
     for record in records:

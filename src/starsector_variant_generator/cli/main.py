@@ -5,7 +5,7 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from starsector_variant_generator import api
+from starsector_variant_generator import __version__, api
 from starsector_variant_generator.analysis.stale_enabled_mods import format_stale_line
 from starsector_variant_generator.analysis.parse_diagnostics import ParseFailure, format_failure_line
 from starsector_variant_generator.analysis.fleet_support import (
@@ -67,6 +67,7 @@ def _why_not_report_lines(explanation: CombinedWhyNotExplanation | BuildWhyNotEx
 def build_parser() -> argparse.ArgumentParser:
     """The complete command-line grammar; kept separate from main() so tests can pin it."""
     parser = argparse.ArgumentParser(prog="voidsmith")
+    parser.add_argument("--version", action="version", version=f"voidsmith {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
     save = subparsers.add_parser("save", help="Explicit campaign-save inspection, edit planning and verified copy writing")
     save_commands = save.add_subparsers(dest="save_command", required=True)

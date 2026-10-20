@@ -25,7 +25,8 @@ from starsector_variant_generator.core.mod_import import resolve_dropped_mod
 from starsector_variant_generator.core.models import ScanResult
 from starsector_variant_generator.core.registry import Registry
 from starsector_variant_generator.core.safeio import atomic_write_json, atomic_write_text
-from starsector_variant_generator.core.scanner import Scanner
+from starsector_variant_generator.analysis.stale_enabled_mods import format_stale_entry
+from starsector_variant_generator.core.scanner import Scanner, enabled_mods_file
 
 COMMANDS = ("validate-all", "acceptance", "check-mod")
 VERDICT_EXIT_CODES = {"PASS": 0, "REVIEW": 1, "FAIL": 2}
@@ -95,9 +96,15 @@ def _run_acceptance(args: argparse.Namespace, parser: argparse.ArgumentParser) -
         if not args.quiet:
             print(f"[{index}/{total}] {mod}: {classification} ({seconds:.1f}s)", flush=True)
 
-    audit = run_acceptance(scan, registry, scope=scope, chunk_size=args.chunk_size, checkpoint_path=checkpoint, progress=progress)
+    enabled_file = enabled_mods_file(config.starsector_path)
+    audit = run_acceptance(
+        scan, registry, scope=scope, chunk_size=args.chunk_size, checkpoint_path=checkpoint, progress=progress,
+        enabled_file=str(enabled_file),
+    )
     if audit["resumed_mods"]:
         print(f"Resumed from checkpoint: {len(audit['resumed_mods'])} mod(s) were already finished.")
+    for entry in audit["stale_enabled"]:
+        print(format_stale_entry(entry))
     full_path = report_dir / f"acceptance_{scope.lower()}.json"
     atomic_write_text(full_path, json.dumps(audit, indent=2, sort_keys=True, default=str))
     current = baseline_from_audit(audit)
