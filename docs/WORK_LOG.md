@@ -1,5 +1,10 @@
 # Work log
 
+## 2026-10-20 — Acceptance enabled-mod drift
+
+- `acceptance` reports each enabled-but-not-installed id once as a STALE line naming the exact id and the file that declares it (`enabled_mods.json`, or `settings.json` when that is the only list). The report JSON gains `stale_enabled`. The FAIL row stays for compatibility. Tests: `tests/test_stale_enabled_mods.py`.
+- Synthetic FAIL rows are now created once per distinct scan message, so a duplicated enabled id no longer yields duplicate rows.
+
 ## 2026-10-20 — Mod version normalization
 
 - Object versions in `mod_info.json` (`{"major":1,"minor":7,"patch":1}`, parts as strings or numbers) now normalize to `1.7.1` through `core/mod_version.py`; missing parts count as `0`. Tests: `tests/test_mod_version.py`, `tests/test_scanner.py`.
