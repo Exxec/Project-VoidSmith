@@ -247,7 +247,7 @@ def main() -> int:
             except (OSError, ValueError) as exc:
                 parser.error(f"cannot verify: {exc}")
             print(json.dumps(report, indent=2))
-            return {"PASS": 0, "REVIEW": 1}.get(report["verdict"], 2)
+            return {"PASS": 0, "REVIEW": 1}.get(str(report["verdict"]), 2)
         from starsector_variant_generator.campaign.edit_plan import EditRequest
         writing = args.save_command == "write"
         try:
