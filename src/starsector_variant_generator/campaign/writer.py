@@ -18,6 +18,7 @@ from pathlib import Path
 from starsector_variant_generator.core.safeio import UnsafePathError, safe_rmtree
 
 from .edit_plan import SAVE_WRITE_GATE, EditPlan
+from .fingerprint import write_expected
 from .format import MAX_CAMPAIGN_BYTES, _safe_path, inspect_save
 from .verify import VerificationReport, file_hashes, planned_spans, verify_copy
 
@@ -146,6 +147,8 @@ def write_save_copy(plan: EditPlan, output_dir: Path, *, name: str | None = None
                     with entry.open("rb") as stream:
                         shutil.copyfileobj(stream, out)
         report = verify_copy(source, target, plan, original_hashes)
+        if report.status == "VERIFIED":
+            write_expected(source, target, plan)
     except Exception as exc:  # noqa: BLE001 - any failure must remove the copy; the original is never touched
         _discard_copy(target)
         return SaveWriteResult("FAILED", f"{type(exc).__name__}: {exc}", None, None,
