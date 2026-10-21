@@ -1,0 +1,125 @@
+{
+  "schema": 1,
+  "repo": "VoidSmith",
+  "gates": [
+    {
+      "id": "voidsmith-capacity-recompute",
+      "title": "Does loading a save recompute an edited mC/mF/mP (BridgeForge capacity rig; the last capacity unknown)",
+      "state": "LIVE_PENDING",
+      "evidence": [],
+      "needs": {
+        "rig": true,
+        "mods": [
+          "bridgeforge_probe"
+        ],
+        "save": true,
+        "java": "25",
+        "launcher": "direct",
+        "lunalib": null,
+        "scenario": "capacity-recompute"
+      },
+      "commands": [
+        "python -m bridgeforge capacity-run ..."
+      ],
+      "source_doc": {
+        "path": "ROADMAP.md",
+        "anchor": "**Close the last capacity unknown**"
+      },
+      "updated": "2026-10-21"
+    },
+    {
+      "id": "voidsmith-savewb-live",
+      "title": "Write one Save Workshop copy from the GUI and load it in the game; first Save Workshop live acceptance (item 79.3 joint session with the capacity check)",
+      "state": "LIVE_PENDING",
+      "evidence": [],
+      "needs": {
+        "rig": true,
+        "mods": [
+          "bridgeforge_probe"
+        ],
+        "save": true,
+        "java": "25",
+        "launcher": "direct",
+        "lunalib": null,
+        "scenario": "savewb-load-copy"
+      },
+      "commands": [
+        "voidsmith GUI: Write edited copy (setting on)",
+        "python -m bridgeforge probe-group live <TESTID>   # loads the copy; compares voidsmith_expected_fingerprint.json"
+      ],
+      "source_doc": {
+        "path": "ROADMAP.md",
+        "anchor": "**Write one copy from the GUI and load it in the game**"
+      },
+      "updated": "2026-10-21"
+    },
+    {
+      "id": "voidsmith-local-checks",
+      "title": "Person-run: acceptance --write-baseline, scan SVG-004/014/017, validate-all against the 441-variant total, calibration resolve then approve",
+      "state": "NOT_TESTED",
+      "evidence": [],
+      "needs": {
+        "rig": false,
+        "mods": [],
+        "save": false,
+        "java": null,
+        "launcher": null,
+        "lunalib": null,
+        "scenario": null
+      },
+      "commands": [
+        "voidsmith acceptance --write-baseline",
+        "voidsmith calibration resolve ..."
+      ],
+      "source_doc": {
+        "path": "ROADMAP.md",
+        "anchor": "Local steps that need the real install or the game"
+      },
+      "updated": "2026-10-21"
+    },
+    {
+      "id": "voidsmith-check-mod-bf",
+      "title": "check-mod on a BridgeForge working/ copy",
+      "state": "NOT_TESTED",
+      "evidence": [],
+      "needs": {
+        "rig": false,
+        "mods": [],
+        "save": false,
+        "java": null,
+        "launcher": null,
+        "lunalib": null,
+        "scenario": null
+      },
+      "commands": [
+        "voidsmith check-mod <BridgeForge working copy>"
+      ],
+      "source_doc": {
+        "path": "ROADMAP.md",
+        "anchor": "`check-mod` on a BridgeForge `working/` copy"
+      },
+      "updated": "2026-10-21"
+    },
+    {
+      "id": "voidsmith-s6-release",
+      "title": "S6 ship the Save Workshop write flag on by default: owner decision after the live acceptance",
+      "state": "BLOCKED",
+      "evidence": [],
+      "needs": {
+        "rig": true,
+        "mods": [],
+        "save": false,
+        "java": null,
+        "launcher": null,
+        "lunalib": null,
+        "scenario": null
+      },
+      "commands": [],
+      "source_doc": {
+        "path": "ROADMAP.md",
+        "anchor": "S6"
+      },
+      "updated": "2026-10-21"
+    }
+  ]
+}
