@@ -15,6 +15,11 @@ from pathlib import Path
 from starsector_variant_generator.analysis.calibration_review import PENDING_STATUS, read_sheet, require_under
 from starsector_variant_generator.core.safeio import atomic_write_text
 
+
+def _as_int(value: object) -> int:
+    """Counts in the summary dicts are ints; the dict type is wider, so narrow it for mypy."""
+    return value if isinstance(value, int) else int(str(value))
+
 COMMAND_PREFIX = "voidsmith calibration"
 REVIEWER_PLACEHOLDER = "<your name>"
 TRIAGE_FILE = "calibration-triage.json"
@@ -94,7 +99,7 @@ def _not_ready_groups(not_ready: list[dict[str, str]], sheet_dir: str) -> list[d
         for pair in reasons_for(row):
             buckets.setdefault(pair, []).append(row)
     groups = [_not_ready_group(reason, key, members, sheet_dir) for (reason, key), members in buckets.items()]
-    return sorted(groups, key=lambda group: (-int(group["count"]), str(group["reason"]), str(group["key"])))
+    return sorted(groups, key=lambda group: (-_as_int(group["count"]), str(group["reason"]), str(group["key"])))
 
 
 def _ready_groups(ready: list[dict[str, str]], sheet: str) -> list[dict[str, object]]:
@@ -108,7 +113,7 @@ def _ready_groups(ready: list[dict[str, str]], sheet: str) -> list[dict[str, obj
             "hull": hull, "faction": faction, "count": len(set(ids)), "rows": spec,
             "approve_command": f'{COMMAND_PREFIX} approve "{sheet}" --reviewer "{REVIEWER_PLACEHOLDER}" --rows {spec}',
         })
-    return sorted(groups, key=lambda group: (-int(group["count"]), str(group["hull"]), str(group["faction"])))
+    return sorted(groups, key=lambda group: (-_as_int(group["count"]), str(group["hull"]), str(group["faction"])))
 
 
 def triage_sheet(sheet: Path, generated_root: Path) -> dict[str, object]:
@@ -135,9 +140,9 @@ def _combined(per_sheet: list[dict[str, object]]) -> list[dict[str, object]]:
             key = (str(group["reason"]), str(group["key"]))
             entry = merged.setdefault(key, {"reason": key[0], "key": key[1], "count": 0, "sheets": 0,
                                             "fix": group["fix"], "fix_command": group["fix_command"]})
-            entry["count"] = int(entry["count"]) + int(group["count"])  # type: ignore[arg-type]
-            entry["sheets"] = int(entry["sheets"]) + 1  # type: ignore[arg-type]
-    return sorted(merged.values(), key=lambda group: (-int(group["count"]), str(group["reason"]), str(group["key"])))  # type: ignore[arg-type]
+            entry["count"] = _as_int(entry["count"]) + _as_int(group["count"])
+            entry["sheets"] = _as_int(entry["sheets"]) + 1
+    return sorted(merged.values(), key=lambda group: (-_as_int(group["count"]), str(group["reason"]), str(group["key"])))
 
 
 def triage_sheets(sheets: list[Path], generated_root: Path, write_dir: Path | None = None) -> dict[str, object]:
