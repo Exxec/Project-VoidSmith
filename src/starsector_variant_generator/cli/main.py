@@ -85,6 +85,9 @@ def build_parser() -> argparse.ArgumentParser:
     write.add_argument("--starsector-path", type=Path, help="Installed core/enabled sources required for commodity membership")
     write.add_argument("--output-dir", type=Path, default=Path("generated"), help="The copy is written below OUTPUT_DIR/save_workshop/")
     write.add_argument("--name", help="Copy folder name (default: derived from the save name and the plan)")
+    verify_ingame = save_commands.add_parser("verify-ingame", help="Compare a loaded copy's expected fingerprint with the probe log's phase=after digests (read-only; exit 0 match, 1 review, 2 fail)")
+    verify_ingame.add_argument("copy_dir", type=Path)
+    verify_ingame.add_argument("probe_log", type=Path)
     scan = subparsers.add_parser("scan", help="Read core and enabled-mod data without modifying sources")
     scan.add_argument("--config", type=Path)
     scan.add_argument("--starsector-path", type=Path)
@@ -237,6 +240,14 @@ def main() -> int:
             inspected = api.run_save_resources(args.save_dir) if args.resources else api.run_save_inspect(args.save_dir)
             print(json.dumps(asdict(inspected), indent=2))
             return 0 if inspected.status == "READABLE" else 1
+        if args.save_command == "verify-ingame":
+            from starsector_variant_generator.campaign.fingerprint import verify_ingame
+            try:
+                report = verify_ingame(args.copy_dir, args.probe_log)
+            except (OSError, ValueError) as exc:
+                parser.error(f"cannot verify: {exc}")
+            print(json.dumps(report, indent=2))
+            return {"PASS": 0, "REVIEW": 1}.get(report["verdict"], 2)
         from starsector_variant_generator.campaign.edit_plan import EditRequest
         writing = args.save_command == "write"
         try:

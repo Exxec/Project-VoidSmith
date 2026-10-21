@@ -11,6 +11,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from .edit_plan import EditPlan
+from .fingerprint import EXPECTED_FILE
 from .format import _safe_path, inspect_save
 from .locators import locate_resources
 
@@ -76,7 +77,7 @@ def verify_copy(source_dir: Path, copy_dir: Path, plan: EditPlan, original_hashe
     if not original_unchanged:
         problems.append("The original save changed while the copy was written")
     source_names = sorted(p.name for p in source.iterdir())
-    copy_names = sorted(p.name for p in copy.iterdir())
+    copy_names = sorted(p.name for p in copy.iterdir() if p.name != EXPECTED_FILE)  # the Workshop's own expectation file
     if source_names != copy_names:
         problems.append("The copy's file list differs from the original's")
     copy_hashes = file_hashes(copy)
