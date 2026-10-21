@@ -9,7 +9,7 @@ import argparse
 import json
 from pathlib import Path
 
-from starsector_variant_generator.analysis import calibration_propose, calibration_review
+from starsector_variant_generator.analysis import calibration_propose, calibration_review, calibration_triage
 from starsector_variant_generator.core.models import ScanResult
 from starsector_variant_generator.core.registry import Registry
 from starsector_variant_generator.core.scanner import Scanner
@@ -43,6 +43,19 @@ def add_parsers(subparsers: argparse._SubParsersAction) -> None:  # type: ignore
     approve.add_argument("--rows", help="Row ids such as 3,5-7 (the row_id column)")
     approve.add_argument("--all-ready", action="store_true", help="Every row with ready_for_review TRUE")
     approve.add_argument("--generated-dir", type=Path, default=DEFAULT_GENERATED)
+    triage = actions.add_parser("triage", help="Group resolved sheets' not-ready rows by reason with one fix each, and ready rows by hull and faction")
+    triage.add_argument("sheets", nargs="+", type=Path, help="Resolved sheet CSVs under the generated folder")
+    triage.add_argument("--json", action="store_true", help="Print the JSON summary instead of the text report")
+    triage.add_argument("--write", type=Path, help="Also write calibration-triage.json into this folder (under the generated folder)")
+    triage.add_argument("--generated-dir", type=Path, default=DEFAULT_GENERATED)
+    alias = actions.add_parser("alias", help="Sidecar aliases the resolver reads: map a ship name or loadout token to an id")
+    alias_actions = alias.add_subparsers(dest="alias_command", required=True)
+    alias_add = alias_actions.add_parser("add", help="Record TOKEN -> ID beside the raw sheets; re-run `calibration resolve` to apply")
+    alias_add.add_argument("sheet_dir", type=Path, help="Folder holding the raw review sheet (under the generated folder)")
+    alias_add.add_argument("token", help="Ship display name, or loadout token with --equipment")
+    alias_add.add_argument("target_id", help="Hull id or hull key (hull:<mod>:<id>); equipment id with --equipment")
+    alias_add.add_argument("--equipment", action="store_true", help="Map a loadout token to a scanned weapon, hullmod or fighter")
+    alias_add.add_argument("--generated-dir", type=Path, default=DEFAULT_GENERATED)
 
 
 def _scan(args: argparse.Namespace) -> tuple[ScanResult, Registry]:
@@ -55,13 +68,25 @@ def run(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
         if args.calibration_command == "resolve":
             scan, registry = _scan(args)
             output = args.output or args.sheet.with_suffix(".resolved.csv")
+            aliases = calibration_review.load_aliases(calibration_review.aliases_path(args.sheet.parent, args.generated_dir))
             summary = calibration_review.resolve_sheet(
                 args.sheet, output, scan, registry, args.generated_dir,
                 name_column=args.name_column, loadout_column=args.loadout_column, variant_column=args.variant_column,
+                aliases=aliases,
             )
         elif args.calibration_command == "approve":
             rows = calibration_review.parse_row_spec(args.rows) if args.rows else None
             summary = calibration_review.approve_rows(args.sheet, args.generated_dir, args.reviewer, rows=rows, all_ready=args.all_ready)
+        elif args.calibration_command == "alias":
+            summary = calibration_review.add_alias(
+                args.sheet_dir, args.generated_dir, args.token, args.target_id, equipment=args.equipment,
+            )
+        elif args.calibration_command == "triage":
+            triage = calibration_triage.triage_sheets(args.sheets, args.generated_dir, write_dir=args.write)
+            if not args.json:
+                print(calibration_triage.render_text(triage))
+                return 0
+            summary = triage
         else:
             scan, registry = _scan(args)
             output_dir = args.output_dir or args.generated_dir / "calibration-proposals"

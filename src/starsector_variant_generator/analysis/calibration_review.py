@@ -31,7 +31,8 @@ ADDED_COLUMNS = (
     "row_id", "resolved_hull_key", "resolve_rule", "resolve_candidates", "equipment_ok", "equipment_unresolved",
     "legality", "ready_for_review", "approved_by", "approved_on",
 )
-RESOLVED_RULES = ("EXACT_NAME", "NORMALISED_NAME", "QUALIFIER_STRIPPED")
+RESOLVED_RULES = ("ALIAS", "EXACT_NAME", "NORMALISED_NAME", "QUALIFIER_STRIPPED")
+ALIASES_FILE = "calibration_aliases.json"
 MAX_CANDIDATES_LISTED = 10
 _NON_ALNUM = re.compile(r"[^a-z0-9]+")
 _QUALIFIER = re.compile(r"\([^)]*\)")
@@ -54,12 +55,12 @@ def require_under(path: Path, root: Path) -> Path:
     return resolved
 
 
-def _norm(text: str) -> str:
+def norm_key(text: str) -> str:
     return _NON_ALNUM.sub("", text.casefold())
 
 
 def _norm_stripped(text: str) -> str:
-    return _norm(_QUALIFIER.sub(" ", text))
+    return norm_key(_QUALIFIER.sub(" ", text))
 
 
 def hull_key(hull: Hull) -> str:
@@ -89,11 +90,57 @@ def _prefer_base(display: str, hulls: list[Hull]) -> list[Hull]:
     return narrowed
 
 
-def resolve_name(display: str, hulls: list[Hull]) -> Resolution:
-    """EXACT_NAME, then NORMALISED_NAME (case/punctuation), then QUALIFIER_STRIPPED (also (D), skin and Vanilla); first hit wins."""
+@dataclass(frozen=True)
+class Aliases:
+    """Sidecar mappings a person adds with `calibration alias add`: normalised name or token -> hull id / equipment id."""
+
+    hulls: dict[str, str]
+    equipment: dict[str, str]
+
+
+NO_ALIASES = Aliases({}, {})
+
+
+def aliases_path(sheet_dir: Path, generated_root: Path) -> Path:
+    return require_under(sheet_dir / ALIASES_FILE, generated_root)
+
+
+def load_aliases(path: Path) -> Aliases:
+    """The sidecar's mappings, or no mappings when the file does not exist yet; a malformed file is a ValueError."""
+    if not path.exists():
+        return NO_ALIASES
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"{path} is not valid JSON: {exc}") from exc
+    if not isinstance(data, dict) or not all(isinstance(data.get(k, {}), dict) for k in ("hulls", "equipment")):
+        raise ValueError(f"{path} must hold {{\"hulls\": {{}}, \"equipment\": {{}}}}.")
+    return Aliases(dict(data.get("hulls", {})), dict(data.get("equipment", {})))
+
+
+def add_alias(sheet_dir: Path, generated_root: Path, token: str, target_id: str, *, equipment: bool = False) -> dict[str, object]:
+    """Record token -> target in the sidecar beside the raw sheets. Only the sidecar is written; no input sheet is touched."""
+    key, target = norm_key(token), target_id.strip()
+    if not key or not target:
+        raise ValueError("An alias needs a name or token and a target id.")
+    path = aliases_path(sheet_dir, generated_root)
+    current = load_aliases(path)
+    hulls, parts = dict(current.hulls), dict(current.equipment)
+    section = parts if equipment else hulls
+    previous = section.get(key)
+    section[key] = target
+    atomic_write_text(path, json.dumps({"hulls": hulls, "equipment": parts}, indent=2, sort_keys=True) + "\n")
+    kind = "equipment" if equipment else "hull"
+    return {"aliases_file": str(path), "kind": kind, "token": token.strip(), "target": target, "replaced": previous}
+
+
+def resolve_name(display: str, hulls: list[Hull], aliases: Aliases = NO_ALIASES) -> Resolution:
+    """ALIAS (sidecar), then EXACT_NAME, NORMALISED_NAME (case/punctuation), QUALIFIER_STRIPPED (also (D), skin, Vanilla); first hit wins."""
+    alias_target = aliases.hulls.get(norm_key(display), "")
     stages = (
+        ("ALIAS", [hull for hull in hulls if alias_target and alias_target in (hull_key(hull), hull.id)]),
         ("EXACT_NAME", [hull for hull in hulls if hull.name == display]),
-        ("NORMALISED_NAME", [hull for hull in hulls if _norm(hull.name) == _norm(display)]),
+        ("NORMALISED_NAME", [hull for hull in hulls if norm_key(hull.name) == norm_key(display)]),
         ("QUALIFIER_STRIPPED", _prefer_base(display, [hull for hull in hulls if _norm_stripped(hull.name) == _norm_stripped(display)])
          if _norm_stripped(display) else []),
     )
@@ -108,18 +155,21 @@ def equipment_index(scan: ScanResult) -> set[str]:
     names: set[str] = set()
     for group in (scan.weapons, scan.hullmods, scan.fighters):
         for entity in group:
-            names.update((_norm(entity.name), _norm(entity.id)))
+            names.update((norm_key(entity.name), norm_key(entity.id)))
     names.discard("")
     return names
 
 
-def check_equipment(loadout_text: str, known: set[str]) -> tuple[str, tuple[str, ...]]:
-    """TRUE when every comma/semicolon separated item names scanned equipment; FALSE lists the others; NOT_APPLICABLE when empty."""
+def check_equipment(loadout_text: str, known: set[str], equipment_aliases: dict[str, str] | None = None) -> tuple[str, tuple[str, ...]]:
+    """TRUE when every comma/semicolon separated item names scanned equipment; FALSE lists the others; NOT_APPLICABLE when empty.
+
+    A token with a sidecar equipment alias is checked as its target id; the unmatched list keeps the token as written."""
     items = [_QUANTITY.sub("", item).strip() for item in re.split(r"[;,]", loadout_text)]
     items = [item for item in items if item]
     if not items:
         return "NOT_APPLICABLE", ()
-    missing = tuple(item for item in items if _norm(item) not in known)
+    aliases = equipment_aliases or {}
+    missing = tuple(item for item in items if norm_key(aliases.get(norm_key(item), item)) not in known)
     return ("FALSE", missing) if missing else ("TRUE", ())
 
 
@@ -148,9 +198,11 @@ def write_sheet(path: Path, fields: list[str], rows: list[dict[str, str]]) -> No
 
 
 def _resolve_row(row: dict[str, str], hulls: list[Hull], known: set[str], scan: ScanResult, registry: Registry,
-                 name_column: str, loadout_column: str, variant_column: str) -> dict[str, str]:
-    resolution = resolve_name(row.get(name_column, ""), hulls)
-    equipment, unresolved = check_equipment(row.get(loadout_column, ""), known) if resolution.hull else ("NOT_APPLICABLE", ())
+                 name_column: str, loadout_column: str, variant_column: str, aliases: Aliases) -> dict[str, str]:
+    resolution = resolve_name(row.get(name_column, ""), hulls, aliases)
+    equipment, unresolved = (
+        check_equipment(row.get(loadout_column, ""), known, aliases.equipment) if resolution.hull else ("NOT_APPLICABLE", ())
+    )
     legality = check_variant(row.get(variant_column, "").strip(), resolution.hull, scan, registry)
     ready = (
         resolution.hull is not None and equipment != "FALSE" and legality in ("LEGAL", "NOT_APPLICABLE")
@@ -167,6 +219,7 @@ def _resolve_row(row: dict[str, str], hulls: list[Hull], known: set[str], scan: 
 def resolve_sheet(
     sheet: Path, output: Path, scan: ScanResult, registry: Registry, generated_root: Path, *,
     name_column: str = "ship_display", loadout_column: str = "loadout_text", variant_column: str = "variant_id",
+    aliases: Aliases = NO_ALIASES,
 ) -> dict[str, object]:
     """Write `output` (a new sheet under generated/) with resolution, pre-check columns and ready rows first."""
     source, destination = require_under(sheet, generated_root), require_under(output, generated_root)
@@ -176,7 +229,7 @@ def resolve_sheet(
     hulls, known = list(scan.hulls), equipment_index(scan)
     resolved_rows = []
     for index, row in enumerate(rows, start=1):
-        extra = _resolve_row(row, hulls, known, scan, registry, name_column, loadout_column, variant_column)
+        extra = _resolve_row(row, hulls, known, scan, registry, name_column, loadout_column, variant_column, aliases)
         resolved_rows.append({**row, **extra, "row_id": row.get("row_id") or str(index),
                               "approved_by": row.get("approved_by", ""), "approved_on": row.get("approved_on", "")})
     resolved_rows.sort(key=lambda row: (row["ready_for_review"] != "TRUE", int(row["row_id"])))
