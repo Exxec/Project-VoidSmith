@@ -1,6 +1,6 @@
 version = 1
 revision = 3
-requires-python = ">=3.11"
+requires-python = ">=3.15"
 
 [[package]]
 name = "altgraph"
@@ -161,7 +161,7 @@ wheels = [
 
 [[package]]
 name = "voidsmith"
-version = "1.0.0"
+version = "0.2.0"
 source = { editable = "." }
 
 [package.optional-dependencies]
