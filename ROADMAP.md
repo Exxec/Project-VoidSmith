@@ -122,7 +122,7 @@ Design and acceptance gates: [docs/SISTER_REPO_INTEROPERABILITY_DESIGN.md](docs/
 
 ## Lessons carried over from BridgeForge's hardening (item 70) and regression pass (2026-10-12; proposed, not approved)
 
-Source: BridgeForge [ROADMAP-3.md](https://github.com/Exxec/Project-BridgeForge/blob/main/ROADMAP-3.md) item 70, `docs/HARDENING_PLAN.md`, `docs/RC8_BEHAVIOUR.md` (RC8-30 to RC8-33). Each line says what it would change here and what it buys; none is started.
+Source: BridgeForge [docs/HARDENING_PLAN.md](https://github.com/Exxec/Project-BridgeForge/blob/main/docs/HARDENING_PLAN.md) item 70, `docs/HARDENING_PLAN.md`, `docs/RC8_BEHAVIOUR.md` (RC8-30 to RC8-33). Each line says what it would change here and what it buys; none is started.
 
 - **Atomic writes and guarded deletes.** Write through a temp file and `os.replace`; delete a tree only inside an allowed root and never through a junction (BridgeForge `safeio.py`, with a ratchet test whose baseline may only shrink). Benefit: an interrupted write or a wrong path cannot leave a half-written or vanished file.
 - **Bounded reads of untrusted archives.** Cap a zip or jar entry (200 MB; class files 32 MB) before reading it (`zipsafe.read_limited`); a hostile or corrupt archive then fails that entry instead of exhausting memory.
