@@ -186,8 +186,8 @@ asked for recommendations and long-term recommendations. None is scheduled until
 3. **Write one copy from the GUI and load it in the game**, then record it as the first Save Workshop live acceptance. S6
    (shipping the setting on by default) is the owner's call after that run, not before.
    **2026-10-20 (item 79.3):** one rig session closes both gates 2 and 3. Write the copy with the Workshop (it now also writes `voidsmith_expected_fingerprint.json` beside the copy: expected `cargo` text and FNV-1a digest, the sections the edit changes and those it must leave unchanged), load it in the game with the BridgeForge probe's save-reload stage, then run `voidsmith save verify-ingame COPY_DIR PROBE_LOG` (exit 0 match, 1 review, 2 fail). The load is the GUI-copy acceptance; the per-section report says whether the game kept or recomputed the cargo figures. `player` and the other sections are not reproducible from the Workshop's readers and are checked only as unchanged against the probe's stored digest. The Workshop does not edit `mC`/`mF`/`mP`, so the capacity question itself is answered only for a copy whose capacity was edited by hand.
-4. **Release decision.** `pyproject.toml` now says 0.2.0 (aligned in PR #1; it said 1.0.0 when this was written) while the newest tag is `v0.1.0RC3` (marked Latest) and an older
-   `v1.0.0rc2` exists. Pick one version line before the next tag (the 1.1.0 recommendation predates the 0.2.0 realignment and needs the owner to restate it, since it adds commands and the Save Workshop write), and mark the stray `v0.1.0RC*` releases as superseded.
+4. **Release decision.** Decided 2026-10-21: VoidSmith stays on the 0.x line. `v0.2.0` is tagged from master and published by the
+   tag workflow (Windows and Linux portable archives); it supersedes `v0.1.0RC*` and the stray `v1.0.0rc2`.
 5. **CI on Python 3.13** as well: implemented 2026-10-19, then superseded: the project now requires Python 3.15 (`requires-python >=3.15`) and CI runs 3.15 only. The 3.11 golden failure showed version differences surface only in CI.
 
 ### Long term: what VoidSmith should become
