@@ -1,5 +1,9 @@
 # Work log
 
+## 2026-10-22 — BridgeForge roadmap citation
+
+- Point the hardening lessons at BridgeForge's retained ROADMAP-3.md before its older pages move into the archive. Documentation only; no behavior or evidence status changed. Validation: 998 tests, OK (skipped=3); ruff clean; mypy clean across 122 source files.
+
 ## 2026-10-20 — Portable CLI parity check
 
 - The CLI accepts `--version` (prints `voidsmith <version>`). The windowed portable `VoidSmith.exe` hands `--version`, `--help` and any CLI command to the CLI, so it can be checked from outside the GUI.
