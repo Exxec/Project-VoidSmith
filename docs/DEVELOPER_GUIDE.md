@@ -183,7 +183,7 @@ Built from `docs/AUTOMATION_PLAN.md` (V0 to V4); `ROADMAP.md` records limits and
 - **Bounded archive import** (`core/mod_import.py`): before extracting, a zip entry over 200 MB uncompressed, a total over 2 GB, a
   compression ratio over 100 (entries over 1 MB), a symlink entry, or a link or junction target is refused; real bytes are counted
   while extracting.
-- **CI gates** (`.github/workflows/tests.yml`): the `unittest` job (Ubuntu, Python 3.11 and 3.12, plus `python -m build`), a
+- **CI gates** (`.github/workflows/tests.yml`): the `unittest` job (Ubuntu, Python 3.15, plus `python -m build`), a
   Windows job (suite and GUI smoke test), and a `static-analysis` job running `ruff check src tests tools` and `mypy src`. Ruff
   selects `E9`, `F` and `B` with `B008` ignored (`[tool.ruff.lint]` in `pyproject.toml`); mypy is run over the whole source tree and
   must stay at zero errors. `tests/test_cli_golden.py` hashes each command's argparse grammar into `tests/cli_golden.json`; a
@@ -202,7 +202,7 @@ uv run --no-project --with mypy mypy src
 
 ## Build and release
 
-`dist/build_voidsmith.bat` invokes `tools/build_gui_exe.ps1` for a local
+`tools/build_gui_exe.ps1` makes a local
 one-file GUI build. `tools/build_portable_release.ps1` produces the portable
 PyInstaller onedir/zip release. Both use locked/offline dependencies by default
 and package no game/mod data. The one-file script bumps the patch version and
