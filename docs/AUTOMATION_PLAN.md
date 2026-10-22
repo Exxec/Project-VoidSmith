@@ -12,9 +12,9 @@ measure and propose a new set; a person releases it); no game or mod data in the
 
 | Fact | Value |
 |---|---|
-| Version | `voidsmith` 1.0.0, Python 3.11+, GPL-3.0-only |
+| Version | `voidsmith` 1.0.0 (now 0.2.0), Python 3.11+ (now 3.15+), GPL-3.0-only |
 | Tests | 851 `def test_` in 85 files (last recorded run 847 passed, 3 skipped) |
-| CI | `tests.yml`: Ubuntu 3.11/3.12, Windows + GUI smoke; ruff `--select E9` only; mypy on two files only |
+| CI | `tests.yml`: Ubuntu 3.11/3.12 (now 3.15 only, with a `static-analysis` job running ruff `E9,F,B` and full mypy), Windows + GUI smoke; ruff `--select E9` only; mypy on two files only |
 | Open roadmap | phase 54 decision-gated; phase 57 Save Workshop S4 (GUI write), S5 (overage rule), S6 (release) pending; sister-repo items 1-2; 2026-10-06 proposals 2-4; BridgeForge lessons (none started) |
 | Open bugs | SVG-004 (three enabled-but-missing mods), SVG-011 (flux coverage about 15%), SVG-023 (`player_suitability` dead ternary) |
 

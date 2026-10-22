@@ -11,7 +11,7 @@ If you have a packaged Windows release, extract the VoidSmith folder somewhere
 writable and launch the included GUI executable. It is portable: no installer,
 administrator rights, or registry setup is required.
 
-For a source checkout, use Python 3.11+ and `uv`:
+For a source checkout, use Python 3.15+ and `uv`:
 
 ```powershell
 uv sync --extra gui
@@ -21,7 +21,7 @@ uv run voidsmith-gui
 The primary console command is `voidsmith`; the GUI entry point is
 `voidsmith-gui`. Legacy `svg` / `svg-gui` aliases remain for local workflow
 compatibility. A Windows build can be made from a checkout with
-`dist/build_voidsmith.bat`. If a previous `dist/VoidSmith.exe` is still open,
+`tools/build_gui_exe.ps1` (output goes to the gitignored `dist/`). If a previous `dist/VoidSmith.exe` is still open,
 use the newly created versioned `dist/VoidSmith-<version>.exe`; the build does
 not need to close the running copy.
 

@@ -24,7 +24,7 @@ a writable directory, and launch the included executable. Windows and Linux
 release artifacts are built natively for their respective platforms when
 published.
 
-For a source checkout, install Python 3.11+ and [uv](https://docs.astral.sh/uv/):
+For a source checkout, install Python 3.15+ and [uv](https://docs.astral.sh/uv/):
 
 ```powershell
 uv sync --extra gui
