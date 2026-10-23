@@ -1,5 +1,9 @@
 # Work log
 
+## 2026-10-22 — Structural refactor V1
+
+- Split recommendation search/ranking/cache/explanation/scenario responsibilities and GUI window helpers; retain compatible import paths and callback signatures. Extract the independent API catalog queries. Validation: 998 -> 1,001 tests, 3 skips unchanged; ruff clean; mypy clean across 139 files; CLI help/version byte-identical; GUI and portable/archive smoke pass; portable version/help and all 31 golden command paths pass. Pending PR review/merge; see [the V1 audit](REFACTOR_V1_AUDIT.md). No release or live-evidence gate changed.
+
 ## 2026-10-22 — BridgeForge roadmap citation
 
 - Point the hardening lessons at BridgeForge's stable docs/HARDENING_PLAN.md specification for item 70; merge this citation after BridgeForge PR #65 as reviewed. Documentation only; no behavior or evidence status changed. Validation: 998 tests, OK (skipped=3); ruff clean; mypy clean across 122 source files.
