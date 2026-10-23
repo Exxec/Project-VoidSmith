@@ -206,3 +206,11 @@ asked for recommendations and long-term recommendations. None is scheduled until
    rather than special cases in the engine.
 5. **Stay offline and deterministic.** The value of VoidSmith is that its answers are explainable and repeatable; keep any
    future assistance optional and outside the engine, as the contract says.
+
+
+## Cross-repository refactor V1 checkpoint — 2026-10-22
+
+Implemented for review: recommendation family modules, window presentation/action helpers and the independent API catalog
+query seam. Existing entry points and behavior are preserved. Full suite: 1,001 tests, 3 existing skips; ruff and full-source
+mypy clean. CLI help/version are unchanged; GUI and portable/archive smoke and CLI parity checks pass.
+See [the V1 audit](docs/REFACTOR_V1_AUDIT.md). Pending PR review/merge; no owner, live, rights or publication gate is closed.

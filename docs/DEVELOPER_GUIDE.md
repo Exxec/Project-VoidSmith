@@ -241,3 +241,15 @@ Items requiring follow-up rather than a claim of support:
   enumerated here; CLI output reports the actual path.
 - Runtime mod load-order override semantics, system-spawn deployment, and
   custom AI behavior cannot be verified statically and remain unsupported.
+
+
+## Structural refactor V1
+
+Recommendation implementations live under `analysis/gap/`; `analysis/gap_recommendation.py` remains the established
+import facade. Keep models and shared ranking below the three search legs; orchestration, explanations, cache conversion
+and scenario options remain separate responsibilities. Preserve the current ranking and evidence contracts.
+
+`gui/main_window.py` owns the Qt window, initialization and background-worker lifetime. Its `window_layout`, `window_scan`,
+`window_fitting`, `window_retrofits`, `window_faction` and `window_advisors` helpers operate on that same window and call
+backend/API services. Catalog query implementations live in `api_queries.py` and are re-exported from `api.py`.
+Validation and review status: [REFACTOR_V1_AUDIT.md](REFACTOR_V1_AUDIT.md).

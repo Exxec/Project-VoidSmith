@@ -26,191 +26,59 @@ and usage text; GUI: an error dialog).
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
-from dataclasses import asdict, dataclass, replace
-from logging import Logger
-from pathlib import Path
-from time import perf_counter
-from typing import Any
+from collections.abc import Callable as Callable, Mapping as Mapping
+from dataclasses import asdict as asdict, dataclass as dataclass, replace as replace
+from logging import Logger as Logger
+from pathlib import Path as Path
+from time import perf_counter as perf_counter
+from typing import Any as Any
 
-from starsector_variant_generator.analysis.stale_enabled_mods import (
-    find_stale_enabled_mods,
-    format_stale_line,
-)
-from starsector_variant_generator.analysis.validate_all import validate_all
-from starsector_variant_generator.analysis.parse_diagnostics import (
-    ParseFailure,
-    format_failure_line,
-    locate_parse_failures,
-)
-from starsector_variant_generator.analysis.campaign_save_discovery import (
-    CampaignSaveDiscovery,
-    discover_campaign_directory,
-)
-from starsector_variant_generator.analysis.change_impact import (
-    ChangeImpactReport,
-    analyze_change_impact,
-)
-from starsector_variant_generator.analysis.classification import (
-    classify_civilian_role,
-    classify_fighter,
-    classify_hullmod,
-    classify_weapon,
-)
-from starsector_variant_generator.analysis.combat_doctrine import infer_combat_doctrine
-from starsector_variant_generator.analysis.combat_entity import (
-    classify_fighter_wing_entity,
-    recommendation_eligibility,
-)
-from starsector_variant_generator.analysis.doctrine import (
-    DoctrineEvidence,
-    analyze_faction_doctrine,
-)
-from starsector_variant_generator.analysis.equipment_affinity import (
-    classify_equipment_affinity,
-    classify_equipment_availability,
-)
-from starsector_variant_generator.analysis.faction_capability import (
-    FactionCapabilityProfile,
-    analyze_faction_capability,
-)
-from starsector_variant_generator.analysis.fleet_advisory_boundaries import (
-    FleetAdvisoryBoundaries,
-    fleet_advisory_boundaries,
-)
-from starsector_variant_generator.analysis.fleet_support import (
-    FleetSelection,
-    FleetSupportConstraints,
-    FleetSupportRecommendation,
-    FleetSupportResult,
-    FleetSupportWhyNotExplanation,
-    explain_fleet_support_candidate,
-    recommend_fleet_support,
-    support_fit_profile,
-)
-from starsector_variant_generator.analysis.gap_recommendation import (
-    BuildWhyNotExplanation,
-    CombinedWhyNotExplanation,
-    GapRecommendationResult,
-    RecommendationConstraints,
-    explain_build_candidate,
-    explain_candidate,
-    gap_recommendation_fingerprint,
-    gap_recommendation_result_from_payload,
-    gap_recommendation_result_to_payload,
-    recommend_gap_solutions,
-)
-from starsector_variant_generator.analysis.recommendation_feedback import (
-    RecommendationFeedback,
-    append_feedback,
-)
-from starsector_variant_generator.analysis.release_verification import (
-    ReleaseVerification,
-    verify_portable_release,
-)
-from starsector_variant_generator.analysis.scenario_advisor import (
-    ScenarioFleetAssessment,
-    ScenarioObjectiveProfile,
-    assess_scenario_fleet,
-)
-from starsector_variant_generator.analysis.variant import (
-    VariantAnalysis,
-    analyze_variant,
-)
-from starsector_variant_generator.analysis.video_review import (
-    load_video_review_transcript,
-    resolve_control_suitability_evidence,
-)
-from starsector_variant_generator.campaign.catalog import CommodityCatalog
-from starsector_variant_generator.campaign.edit_plan import EditPlan, EditRequest
-from starsector_variant_generator.campaign.locators import ResourceSnapshot
-from starsector_variant_generator.campaign.models import SaveInspection
-from starsector_variant_generator.campaign.verify import VerificationReport
-from starsector_variant_generator.campaign.writer import SaveWriteResult
-from starsector_variant_generator.core.cache import (
-    CacheComparison,
-    load_manifest,
-    update_manifest,
-)
-from starsector_variant_generator.core.config import AppConfig
-from starsector_variant_generator.core.heuristics import get_heuristic_set
-from starsector_variant_generator.core.knowledge_packs import (
-    ResolvedKnowledgePack,
-    approved_equipment_ids,
-    load_knowledge_pack,
-    resolve_knowledge_pack,
-)
-from starsector_variant_generator.core.models import (
-    Faction,
-    ModInfo,
-    ScanProgress,
-    ScanResult,
-    Variant,
-    Weapon,
-)
-from starsector_variant_generator.core.mount_compatibility import (
-    MOUNT_TYPE_COMPATIBILITY,
-)
-from starsector_variant_generator.core.overrides import (
-    apply_role_tag_override,
-    load_overrides,
-)
-from starsector_variant_generator.core.registry import Registry
-from starsector_variant_generator.core.result_cache import (
-    AnalysisResultCache,
-    CacheReadiness,
-    resolve_cache_status,
-)
-from starsector_variant_generator.core.scanner import Scanner
-from starsector_variant_generator.core.spw_inventory import review_spw_inventory
-from starsector_variant_generator.generation.candidate import (
-    BuildCandidateResult,
-    CandidateResult,
-    build_archetype_candidates_fingerprint,
-    build_archetype_candidates_result_from_payload,
-    build_archetype_candidates_result_to_payload,
-    candidate_alternatives_fingerprint,
-    candidate_alternatives_result_from_payload,
-    candidate_alternatives_result_to_payload,
-    generate_build_archetype_candidates,
-    generate_candidate_alternatives,
-    generate_conservative_candidate,
-)
-from starsector_variant_generator.generation.refit import (
-    QualityRefitResult,
-    RefitResult,
-    fix_legality,
-    improve_quality,
-)
-from starsector_variant_generator.output.retrofit_library import (
-    copy_existing_retrofit,
-    inspect_editable_retrofit,
-    load_editable_retrofit,
-    populate_variations_if_missing,
-    publish_editable_retrofit,
-    restore_editable_retrofit_history,
-    save_editable_variant,
-)
-from starsector_variant_generator.output.staleness import (
-    StalenessReport,
-    check_generation_manifest,
-)
-from starsector_variant_generator.output.writer import write_compatibility_mod
-from starsector_variant_generator.profiles.advanced import (
-    AdvancedGenerationRequest,
-    load_advanced_request,
-)
-from starsector_variant_generator.profiles.catalog import get_profile
-from starsector_variant_generator.profiles.modes import (
-    ModeDefaults,
-    UserMode,
-    resolve_mode,
-)
-from starsector_variant_generator.scoring.candidate_score import score_candidate
-from starsector_variant_generator.validation.legality import (
-    LegalityAssessment,
-    validate_variant,
-)
+from starsector_variant_generator.analysis.stale_enabled_mods import find_stale_enabled_mods as find_stale_enabled_mods, format_stale_line as format_stale_line
+from starsector_variant_generator.analysis.validate_all import validate_all as validate_all
+from starsector_variant_generator.analysis.parse_diagnostics import ParseFailure as ParseFailure, format_failure_line as format_failure_line, locate_parse_failures as locate_parse_failures
+from starsector_variant_generator.analysis.campaign_save_discovery import CampaignSaveDiscovery as CampaignSaveDiscovery, discover_campaign_directory as discover_campaign_directory
+from starsector_variant_generator.analysis.change_impact import ChangeImpactReport as ChangeImpactReport, analyze_change_impact as analyze_change_impact
+from starsector_variant_generator.analysis.classification import classify_civilian_role as classify_civilian_role, classify_fighter as classify_fighter, classify_hullmod as classify_hullmod, classify_weapon as classify_weapon
+from starsector_variant_generator.analysis.combat_doctrine import infer_combat_doctrine as infer_combat_doctrine
+from starsector_variant_generator.analysis.combat_entity import classify_fighter_wing_entity as classify_fighter_wing_entity, recommendation_eligibility as recommendation_eligibility
+from starsector_variant_generator.analysis.doctrine import DoctrineEvidence as DoctrineEvidence, analyze_faction_doctrine as analyze_faction_doctrine
+from starsector_variant_generator.analysis.equipment_affinity import classify_equipment_affinity as classify_equipment_affinity, classify_equipment_availability as classify_equipment_availability
+from starsector_variant_generator.analysis.faction_capability import FactionCapabilityProfile as FactionCapabilityProfile, analyze_faction_capability as analyze_faction_capability
+from starsector_variant_generator.analysis.fleet_advisory_boundaries import FleetAdvisoryBoundaries as FleetAdvisoryBoundaries, fleet_advisory_boundaries as fleet_advisory_boundaries
+from starsector_variant_generator.analysis.fleet_support import FleetSelection as FleetSelection, FleetSupportConstraints as FleetSupportConstraints, FleetSupportRecommendation as FleetSupportRecommendation, FleetSupportResult as FleetSupportResult, FleetSupportWhyNotExplanation as FleetSupportWhyNotExplanation, explain_fleet_support_candidate as explain_fleet_support_candidate, recommend_fleet_support as recommend_fleet_support, support_fit_profile as support_fit_profile
+from starsector_variant_generator.analysis.gap_recommendation import BuildWhyNotExplanation as BuildWhyNotExplanation, CombinedWhyNotExplanation as CombinedWhyNotExplanation, GapRecommendationResult as GapRecommendationResult, RecommendationConstraints as RecommendationConstraints, explain_build_candidate as explain_build_candidate, explain_candidate as explain_candidate, gap_recommendation_fingerprint as gap_recommendation_fingerprint, gap_recommendation_result_from_payload as gap_recommendation_result_from_payload, gap_recommendation_result_to_payload as gap_recommendation_result_to_payload, recommend_gap_solutions as recommend_gap_solutions
+from starsector_variant_generator.analysis.recommendation_feedback import RecommendationFeedback as RecommendationFeedback, append_feedback as append_feedback
+from starsector_variant_generator.analysis.release_verification import ReleaseVerification as ReleaseVerification, verify_portable_release as verify_portable_release
+from starsector_variant_generator.analysis.scenario_advisor import ScenarioFleetAssessment as ScenarioFleetAssessment, ScenarioObjectiveProfile as ScenarioObjectiveProfile, assess_scenario_fleet as assess_scenario_fleet
+from starsector_variant_generator.analysis.variant import VariantAnalysis as VariantAnalysis, analyze_variant as analyze_variant
+from starsector_variant_generator.analysis.video_review import load_video_review_transcript as load_video_review_transcript, resolve_control_suitability_evidence as resolve_control_suitability_evidence
+from starsector_variant_generator.campaign.catalog import CommodityCatalog as CommodityCatalog
+from starsector_variant_generator.campaign.edit_plan import EditPlan as EditPlan, EditRequest as EditRequest
+from starsector_variant_generator.campaign.locators import ResourceSnapshot as ResourceSnapshot
+from starsector_variant_generator.campaign.models import SaveInspection as SaveInspection
+from starsector_variant_generator.campaign.verify import VerificationReport as VerificationReport
+from starsector_variant_generator.campaign.writer import SaveWriteResult as SaveWriteResult
+from starsector_variant_generator.core.cache import CacheComparison as CacheComparison, load_manifest as load_manifest, update_manifest as update_manifest
+from starsector_variant_generator.core.config import AppConfig as AppConfig
+from starsector_variant_generator.core.heuristics import get_heuristic_set as get_heuristic_set
+from starsector_variant_generator.core.knowledge_packs import ResolvedKnowledgePack as ResolvedKnowledgePack, approved_equipment_ids as approved_equipment_ids, load_knowledge_pack as load_knowledge_pack, resolve_knowledge_pack as resolve_knowledge_pack
+from starsector_variant_generator.core.models import Faction as Faction, ModInfo as ModInfo, ScanProgress as ScanProgress, ScanResult as ScanResult, Variant as Variant, Weapon as Weapon
+from starsector_variant_generator.core.mount_compatibility import MOUNT_TYPE_COMPATIBILITY as MOUNT_TYPE_COMPATIBILITY
+from starsector_variant_generator.core.overrides import apply_role_tag_override as apply_role_tag_override, load_overrides as load_overrides
+from starsector_variant_generator.core.registry import Registry as Registry
+from starsector_variant_generator.core.result_cache import AnalysisResultCache as AnalysisResultCache, CacheReadiness as CacheReadiness, resolve_cache_status as resolve_cache_status
+from starsector_variant_generator.core.scanner import Scanner as Scanner
+from starsector_variant_generator.core.spw_inventory import review_spw_inventory as review_spw_inventory
+from starsector_variant_generator.generation.candidate import BuildCandidateResult as BuildCandidateResult, CandidateResult as CandidateResult, build_archetype_candidates_fingerprint as build_archetype_candidates_fingerprint, build_archetype_candidates_result_from_payload as build_archetype_candidates_result_from_payload, build_archetype_candidates_result_to_payload as build_archetype_candidates_result_to_payload, candidate_alternatives_fingerprint as candidate_alternatives_fingerprint, candidate_alternatives_result_from_payload as candidate_alternatives_result_from_payload, candidate_alternatives_result_to_payload as candidate_alternatives_result_to_payload, generate_build_archetype_candidates as generate_build_archetype_candidates, generate_candidate_alternatives as generate_candidate_alternatives, generate_conservative_candidate as generate_conservative_candidate
+from starsector_variant_generator.generation.refit import QualityRefitResult as QualityRefitResult, RefitResult as RefitResult, fix_legality as fix_legality, improve_quality as improve_quality
+from starsector_variant_generator.output.retrofit_library import copy_existing_retrofit as copy_existing_retrofit, inspect_editable_retrofit as inspect_editable_retrofit, load_editable_retrofit as load_editable_retrofit, populate_variations_if_missing as populate_variations_if_missing, publish_editable_retrofit as publish_editable_retrofit, restore_editable_retrofit_history as restore_editable_retrofit_history, save_editable_variant as save_editable_variant
+from starsector_variant_generator.output.staleness import StalenessReport as StalenessReport, check_generation_manifest as check_generation_manifest
+from starsector_variant_generator.output.writer import write_compatibility_mod as write_compatibility_mod
+from starsector_variant_generator.profiles.advanced import AdvancedGenerationRequest as AdvancedGenerationRequest, load_advanced_request as load_advanced_request
+from starsector_variant_generator.profiles.catalog import get_profile as get_profile
+from starsector_variant_generator.profiles.modes import ModeDefaults as ModeDefaults, UserMode as UserMode, resolve_mode as resolve_mode
+from starsector_variant_generator.scoring.candidate_score import score_candidate as score_candidate
+from starsector_variant_generator.validation.legality import LegalityAssessment as LegalityAssessment, validate_variant as validate_variant
 
 
 def build_registry(config: AppConfig, logger: Logger) -> Registry:
@@ -388,119 +256,18 @@ def run_incremental_mod_scan(
     return IncrementalScanOutcome(merged, registry, tuple(added_mod_ids), tuple(skipped_mod_roots))
 
 
-def run_query_weapons(registry: Registry, size: str | None, mount_type: str | None, overrides_dir: Path, requesting_faction_id: str | None = None) -> list[dict]:
-    weapon_overrides = load_overrides(overrides_dir, "weapons")
-    records = []
-    for weapon in registry.weapons_matching(size, mount_type):
-        record = asdict(weapon)
-        classification = classify_weapon(weapon)
-        override = weapon_overrides.get(weapon.id)
-        record["role_tags"] = list(apply_role_tag_override(classification.role_tags, override))
-        record["range_band"] = classification.range_band
-        record["role_tags_overridden"] = override is not None
-        affinity = classify_equipment_affinity(weapon.id, "weapons", registry, requesting_faction_id)
-        record["faction_affinity"] = affinity.affinity
-        record["owning_faction_ids"] = list(affinity.owning_faction_ids)
-        record["availability_class"] = classify_equipment_availability(weapon)
-        records.append(record)
-    return records
 
 
-def run_slot_eligible_weapons(
-    registry: Registry,
-    hull_id: str,
-    mount_id: str,
-    *,
-    include_hidden: bool = False,
-    faction_id: str | None = None,
-    faction_mode: str = "UNRESTRICTED",
-) -> list[Weapon]:
-    """Return backend-authoritative mount-compatible weapons for GUI selectors.
-
-    This is intentionally mount compatibility only; full variant OP and other
-    legality are evaluated by `run_validate` after a user changes a fit.
-    """
-    hull = registry.hulls.by_id.get(hull_id)
-    if hull is None:
-        raise ValueError(f"Hull not found or ambiguous: {hull_id}")
-    mount = next((item for item in hull.weapon_mounts if str(item.get("id")) == mount_id), None)
-    if mount is None:
-        raise ValueError(f"Mount {mount_id!r} is not defined by hull {hull_id}")
-    if mount_id in hull.built_in_weapons:
-        return []
-    order = {"SMALL": 1, "MEDIUM": 2, "LARGE": 3}
-    mount_size = order.get(str(mount.get("size", "")).upper())
-    allowed_types = MOUNT_TYPE_COMPATIBILITY.get(str(mount.get("type", "")).upper(), frozenset())
-    if faction_mode not in {"STRICT_FACTION", "FACTION_PLUS", "UNRESTRICTED"}:
-        raise ValueError(f"Unknown faction mode: {faction_mode}")
-    if faction_mode == "STRICT_FACTION" and faction_id is None:
-        raise ValueError("STRICT_FACTION slot filtering requires a resolved faction")
-    return sorted((weapon for weapon in registry.weapons.by_id.values()
-                   if mount_size is not None and order.get((weapon.size or "").upper()) is not None
-                   and order[(weapon.size or "").upper()] <= mount_size
-                   and weapon.mount_type is not None and weapon.mount_type.upper() in allowed_types
-                   and (include_hidden or classify_equipment_availability(weapon) not in {"SECRET", "DEV_ONLY", "UNOBTAINABLE"})
-                   and (faction_mode != "STRICT_FACTION" or classify_equipment_affinity(weapon.id, "weapons", registry, faction_id).affinity in {"NATIVE", "APPROVED"})),
-                  key=lambda weapon: (weapon.name.casefold(), weapon.source_mod, weapon.id))
 
 
-def run_query_hulls(registry: Registry, hull_size: str | None, civilian_only: bool, overrides_dir: Path | None = None) -> list[dict]:
-    hull_overrides = load_overrides(overrides_dir, "hulls") if overrides_dir else {}
-    records = []
-    for hull in registry.hulls_matching(hull_size):
-        civilian = classify_civilian_role(hull)
-        override = hull_overrides.get(hull.id)
-        role_tags = apply_role_tag_override(civilian.role_tags, override)
-        is_civilian = "CIVILIAN" in role_tags
-        if civilian_only and not is_civilian:
-            continue
-        record = asdict(hull)
-        record["civilian_role_tags"] = list(role_tags)
-        record["is_civilian"] = is_civilian
-        record["civilian_role_tags_overridden"] = override is not None
-        record["recommendation_eligibility"] = asdict(recommendation_eligibility(hull))
-        record["combat_doctrine"] = asdict(infer_combat_doctrine(hull, registry))
-        records.append(record)
-    return records
 
 
-def run_query_fighters(registry: Registry, role: str | None, requesting_faction_id: str | None = None) -> list[dict]:
-    records = []
-    for fighter in registry.fighters_matching(role):
-        record = asdict(fighter)
-        record["role_tags"] = list(classify_fighter(fighter).role_tags)
-        affinity = classify_equipment_affinity(fighter.id, "fighters", registry, requesting_faction_id)
-        record["faction_affinity"] = affinity.affinity
-        record["owning_faction_ids"] = list(affinity.owning_faction_ids)
-        record["availability_class"] = classify_equipment_availability(fighter)
-        record["combat_entity_profile"] = asdict(classify_fighter_wing_entity(fighter))
-        records.append(record)
-    return records
 
 
-def run_query_hullmods(registry: Registry, hidden: bool | None, requesting_faction_id: str | None = None) -> list[dict]:
-    records = []
-    for hullmod in registry.hullmods_matching(hidden):
-        record = asdict(hullmod)
-        record["property_tags"] = list(classify_hullmod(hullmod).property_tags)
-        affinity = classify_equipment_affinity(hullmod.id, "hullmods", registry, requesting_faction_id)
-        record["faction_affinity"] = affinity.affinity
-        record["owning_faction_ids"] = list(affinity.owning_faction_ids)
-        record["availability_class"] = classify_equipment_availability(hullmod)
-        records.append(record)
-    return records
 
 
-def run_query_variants(registry: Registry, hull_id: str | None) -> list[dict]:
-    if not hull_id:
-        raise ValueError("query variants requires --hull-id")
-    return [asdict(variant) for variant in registry.variants_for_hull(hull_id)]
 
 
-def run_query_faction_equipment(registry: Registry, faction_id: str | None, source_mod: str | None) -> dict[str, tuple[str, ...]]:
-    if not faction_id:
-        raise ValueError("query faction-equipment requires --faction-id")
-    return registry.faction_equipment(faction_id, source_mod)
 
 
 def run_validate(registry: Registry, variant_id: str) -> LegalityAssessment:
@@ -1194,3 +961,6 @@ def run_improve_quality(
     get_profile(profile)
     faction = resolve_faction(registry, faction_id, source_mod) if faction_id else None
     return improve_quality(variant, registry, mode, profile, heuristic_set, locked_mount_ids, locked_hullmod_ids, locked_wing_ids, flux_mode, faction)
+
+# Keep existing callers on the established public API path.
+from .api_queries import run_query_weapons as run_query_weapons, run_slot_eligible_weapons as run_slot_eligible_weapons, run_query_hulls as run_query_hulls, run_query_fighters as run_query_fighters, run_query_hullmods as run_query_hullmods, run_query_variants as run_query_variants, run_query_faction_equipment as run_query_faction_equipment  # noqa: E402

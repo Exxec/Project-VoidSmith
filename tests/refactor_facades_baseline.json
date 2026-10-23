@@ -1,0 +1,792 @@
+{
+  "gap": {
+    "_require_selection_order": "(audit: 'RecommendationAudit') -> 'int'",
+    "_evidence_confidence": "(profile: 'FactionCapabilityProfile') -> 'float'",
+    "_recommendation_confidence_from_values": "(evidence_confidence: 'float', vector_confidence: 'float | None', build: 'BuildArchetypeProfile | None' = None, extra: 'float' = 1.0) -> 'float'",
+    "_recommendation_confidence": "(gap: 'CapabilityGap', build: 'BuildArchetypeProfile | None' = None, extra: 'float' = 1.0) -> 'float'",
+    "_capability_gap_confidence_inputs": "(profile: 'FactionCapabilityProfile', role: 'str', heuristic_set: 'str' = 'baseline_0.2') -> 'tuple[float, float | None]'",
+    "detect_capability_gaps": "(profile: 'FactionCapabilityProfile', heuristic_set: 'str' = 'baseline_0.2', knowledge_pack: 'ResolvedKnowledgePack | None' = None) -> 'tuple[CapabilityGap, ...]'",
+    "_resolved_known_hulls": "(faction: 'Faction', registry: 'Registry') -> 'list'",
+    "_rank_candidates_for_role": "(role: 'str', resolved_hulls: 'list') -> 'list[tuple[float, str]]'",
+    "_diverse_hull_shortlist": "(ranked: 'list[tuple[float, str]]', registry: 'Registry', count: 'int', heuristic_set: 'str') -> 'list[tuple[float, str, str]]'",
+    "_jaccard": "(left: 'set[str]', right: 'set[str]') -> 'float'",
+    "_native_audit_trail": "(faction: 'Faction', registry: 'Registry', role: 'str', heuristic_set: 'str' = 'baseline_0.2', knowledge_pack: 'ResolvedKnowledgePack | None' = None, constraints: 'RecommendationConstraints | None' = None) -> 'dict[tuple[str, str | None], RecommendationAudit]'",
+    "_native_hull_level_lookup": "(audits: 'dict[tuple[str, str | None], RecommendationAudit]', hull_id: 'str') -> 'tuple[int | None, int, float | None, bool, str | None, float | None]'",
+    "recommend_native_solutions": "(faction: 'Faction', registry: 'Registry', heuristic_set: 'str' = 'baseline_0.2', knowledge_pack: 'ResolvedKnowledgePack | None' = None, constraints: 'RecommendationConstraints | None' = None) -> 'GapRecommendationResult'",
+    "_build_for_gap": "(hull_id: 'str', role: 'str', registry: 'Registry', heuristic_set: 'str') -> 'BuildArchetypeProfile | None'",
+    "_rank_build_candidates_for_role": "(role: 'str', resolved_hulls: 'list', registry: 'Registry', heuristic_set: 'str', knowledge_pack: 'ResolvedKnowledgePack | None' = None, faction_id: 'str | None' = None, include_experimental_builds: 'bool' = True, campaign_stage: 'str | None' = None) -> 'list[tuple[float, str, BuildArchetypeProfile]]'",
+    "_build_similarity": "(candidate: 'tuple[float, str, BuildArchetypeProfile]', selected: 'tuple[float, str, BuildArchetypeProfile]', registry: 'Registry | None') -> 'float'",
+    "_diverse_build_shortlist": "(ranked: 'list[tuple[float, str, BuildArchetypeProfile]]', count: 'int', heuristic_set: 'str', registry: 'Registry | None' = None) -> 'list[tuple[float, str, BuildArchetypeProfile, str]]'",
+    "_variants_for_hull": "(hull_id: 'str', registry: 'Registry') -> 'list[Variant]'",
+    "_best_retrofit_for_hull": "(hull_id: 'str', profile_id: 'str', registry: 'Registry', faction: 'Faction', heuristic_set: 'str', min_gain: 'float') -> '_RetrofitOpportunity | None'",
+    "_retrofit_audit_trail": "(faction: 'Faction', registry: 'Registry', role: 'str', heuristic_set: 'str' = 'baseline_0.2', constraints: 'RecommendationConstraints | None' = None) -> 'tuple[dict[tuple[str, str | None], RecommendationAudit], set[tuple[str, str | None]]]'",
+    "recommend_retrofit_solutions": "(faction: 'Faction', registry: 'Registry', gaps: 'tuple[CapabilityGap, ...]', heuristic_set: 'str' = 'baseline_0.2', constraints: 'RecommendationConstraints | None' = None, knowledge_pack: 'ResolvedKnowledgePack | None' = None) -> 'dict[str, tuple[RetrofitRecommendation, ...]]'",
+    "_acquisition_audit_trail": "(faction: 'Faction', registry: 'Registry', role: 'str', heuristic_set: 'str' = 'baseline_0.2', knowledge_pack: 'ResolvedKnowledgePack | None' = None, constraints: 'RecommendationConstraints | None' = None, candidates: 'list[tuple[float, float, float, str, object]] | None' = None) -> 'dict[tuple[str, str | None], RecommendationAudit]'",
+    "_acquisition_candidates_for_role": "(faction: 'Faction', registry: 'Registry', role: 'str', heuristic_set: 'str', knowledge_pack: 'ResolvedKnowledgePack | None', constraints: 'RecommendationConstraints') -> 'list[tuple[float, float, float, str, object]]'",
+    "recommend_acquisition_solutions": "(faction: 'Faction', registry: 'Registry', gaps: 'tuple[CapabilityGap, ...]', heuristic_set: 'str' = 'baseline_0.2', knowledge_pack: 'ResolvedKnowledgePack | None' = None, constraints: 'RecommendationConstraints | None' = None) -> 'dict[str, tuple[AcquisitionRecommendation, ...]]'",
+    "recommend_gap_solutions": "(faction: 'Faction', registry: 'Registry', heuristic_set: 'str' = 'baseline_0.2', knowledge_pack: 'ResolvedKnowledgePack | None' = None, constraints: 'RecommendationConstraints | None' = None) -> 'GapRecommendationResult'",
+    "_registry_wide_entity_hashes": "(registry: 'Registry') -> 'tuple[str, ...] | None'",
+    "_knowledge_pack_fingerprint": "(knowledge_pack: 'ResolvedKnowledgePack | None') -> 'str'",
+    "gap_recommendation_fingerprint": "(faction: 'Faction', registry: 'Registry', heuristic_set: 'str', knowledge_pack: 'ResolvedKnowledgePack | None' = None, constraints: 'RecommendationConstraints | None' = None) -> 'AnalysisContextFingerprint'",
+    "gap_recommendation_result_to_payload": "(result: 'GapRecommendationResult') -> 'dict[str, Any]'",
+    "_restore_archetype_evidence": "(data: 'dict[str, Any] | None') -> 'dict[str, tuple[str, ...]]'",
+    "_restore_capability_gap": "(data: 'dict[str, Any]') -> 'CapabilityGap'",
+    "_restore_native": "(data: 'dict[str, Any]') -> 'NativeRecommendation'",
+    "_restore_retrofit": "(data: 'dict[str, Any]') -> 'RetrofitRecommendation'",
+    "_restore_acquisition": "(data: 'dict[str, Any]') -> 'AcquisitionRecommendation'",
+    "gap_recommendation_result_from_payload": "(payload: 'dict[str, Any]') -> 'GapRecommendationResult'",
+    "explain_native_candidate": "(faction: 'Faction', registry: 'Registry', role: 'str', hull_id: 'str', heuristic_set: 'str' = 'baseline_0.2') -> 'WhyNotExplanation'",
+    "explain_retrofit_candidate": "(faction: 'Faction', registry: 'Registry', role: 'str', hull_id: 'str', heuristic_set: 'str' = 'baseline_0.2') -> 'RetrofitWhyNotExplanation'",
+    "explain_acquisition_candidate": "(faction: 'Faction', registry: 'Registry', role: 'str', hull_id: 'str', heuristic_set: 'str' = 'baseline_0.2', knowledge_pack: 'ResolvedKnowledgePack | None' = None) -> 'AcquisitionWhyNotExplanation'",
+    "explain_candidate": "(faction: 'Faction', registry: 'Registry', role: 'str', hull_id: 'str', heuristic_set: 'str' = 'baseline_0.2', knowledge_pack: 'ResolvedKnowledgePack | None' = None) -> 'CombinedWhyNotExplanation'",
+    "explain_build_candidate": "(faction: 'Faction', registry: 'Registry', role: 'str', hull_id: 'str', build_archetype_id: 'str', heuristic_set: 'str' = 'baseline_0.2', knowledge_pack: 'ResolvedKnowledgePack | None' = None, campaign_stage: 'str | None' = None) -> 'BuildWhyNotExplanation'",
+    "_bucket": "(value: 'str | None', weights: 'dict[str, float]') -> 'float'",
+    "_capability_dim": "(capability: 'CapabilityVector | None', name: 'str') -> 'tuple[float, str]'",
+    "_op_scale": "(value: 'float | None', reference: 'float' = 200.0) -> 'float'",
+    "_scenario_fit_score": "(scenario: 'ScenarioCategory', build: 'BuildArchetypeProfile', mechanical: 'MechanicalArchetypeProfile', capability: 'CapabilityVector | None' = None) -> 'tuple[float, tuple[str, ...]]'",
+    "recommend_scenario_solutions": "(faction: 'Faction', registry: 'Registry', gap_result: 'GapRecommendationResult', scenario: 'ScenarioCategory', heuristic_set: 'str' = 'baseline_0.2', roles: 'tuple[str, ...] | None' = None) -> 'dict[str, tuple[ScenarioRecommendation, ...]]'",
+    "scenario_fits_for_hull": "(faction: 'Faction', registry: 'Registry', gap_result: 'GapRecommendationResult', hull_id: 'str', heuristic_set: 'str' = 'baseline_0.2', roles: 'tuple[str, ...] | None' = None, categories: 'tuple[ScenarioCategory, ...] | None' = None) -> 'dict[str, tuple[ScenarioRecommendation, ...]]'",
+    "explain_scenario_candidate": "(faction: 'Faction', registry: 'Registry', gap_result: 'GapRecommendationResult', scenario: 'ScenarioCategory', role: 'str', hull_id: 'str', build_archetype_id: 'str', heuristic_set: 'str' = 'baseline_0.2') -> 'ScenarioWhyNotExplanation'"
+  },
+  "api": {
+    "build_registry": "(config: 'AppConfig', logger: 'Logger') -> 'Registry'",
+    "_installed_mods": "(config: 'AppConfig', logger: 'Logger', result: 'ScanResult') -> 'list[ModInfo]'",
+    "run_scan": "(config: 'AppConfig', logger: 'Logger', include_disabled_mods: 'bool' = False, include_entities: 'bool' = True, progress_callback: 'Callable[[ScanProgress], None] | None' = None, cancel_check: 'Callable[[], bool] | None' = None, spw_inventory: 'Path | None' = None) -> 'ScanOutcome'",
+    "scan_diagnostic_lines": "(report: 'Mapping[str, object] | None') -> 'tuple[str, ...]'",
+    "run_incremental_mod_scan": "(config: 'AppConfig', existing_result: 'ScanResult', mod_roots: 'tuple[Path, ...]', logger: 'Logger | None' = None) -> 'IncrementalScanOutcome'",
+    "run_query_weapons": "(registry: 'Registry', size: 'str | None', mount_type: 'str | None', overrides_dir: 'Path', requesting_faction_id: 'str | None' = None) -> 'list[dict]'",
+    "run_slot_eligible_weapons": "(registry: 'Registry', hull_id: 'str', mount_id: 'str', *, include_hidden: 'bool' = False, faction_id: 'str | None' = None, faction_mode: 'str' = 'UNRESTRICTED') -> 'list[Weapon]'",
+    "run_query_hulls": "(registry: 'Registry', hull_size: 'str | None', civilian_only: 'bool', overrides_dir: 'Path | None' = None) -> 'list[dict]'",
+    "run_query_fighters": "(registry: 'Registry', role: 'str | None', requesting_faction_id: 'str | None' = None) -> 'list[dict]'",
+    "run_query_hullmods": "(registry: 'Registry', hidden: 'bool | None', requesting_faction_id: 'str | None' = None) -> 'list[dict]'",
+    "run_query_variants": "(registry: 'Registry', hull_id: 'str | None') -> 'list[dict]'",
+    "run_query_faction_equipment": "(registry: 'Registry', faction_id: 'str | None', source_mod: 'str | None') -> 'dict[str, tuple[str, ...]]'",
+    "run_validate": "(registry: 'Registry', variant_id: 'str') -> 'LegalityAssessment'",
+    "run_validate_all": "(scan: 'ScanResult', *, registry: 'Registry | None' = None, source: 'str' = 'all', on_source_done: 'Callable[[int, int, str, int, float], None] | None' = None) -> 'dict[str, object]'",
+    "run_validate_fit": "(registry: 'Registry', variant: 'Variant') -> 'LegalityAssessment'",
+    "run_fit_summary": "(registry: 'Registry', variant: 'Variant') -> 'dict[str, object]'",
+    "resolve_faction": "(registry: 'Registry', faction_id: 'str', source_mod: 'str | None') -> 'Faction'",
+    "run_generate": "(registry: 'Registry', heuristic_set: 'str', hull_id: 'str', mode: 'str', profile: 'str | None' = None, faction_id: 'str | None' = None, faction_mode: 'str | None' = None, advanced_config: 'Path | None' = None, flux_mode: 'str | None' = None, max_candidates: 'int' = 5, search_depth: 'int' = 1, build_alternatives: 'int' = 2, overrides_dir: 'Path | None' = None, knowledge_pack: 'ResolvedKnowledgePack | None' = None, result_cache: 'AnalysisResultCache | None' = None) -> 'GenerateOutcome'",
+    "run_export": "(registry: 'Registry', heuristic_set: 'str', output_dir: 'Path', hull_id: 'str', profile: 'str', overrides_dir: 'Path | None' = None) -> 'Path'",
+    "run_doctrine": "(registry: 'Registry', faction_id: 'str', source_mod: 'str | None') -> 'DoctrineEvidence'",
+    "run_faction_capability": "(registry: 'Registry', faction_id: 'str', source_mod: 'str | None', heuristic_set: 'str' = 'baseline_0.5') -> 'FactionCapabilityProfile'",
+    "resolve_optional_knowledge_pack": "(path: 'Path | None', registry: 'Registry') -> 'ResolvedKnowledgePack | None'",
+    "run_gap_recommendations": "(registry: 'Registry', faction_id: 'str', source_mod: 'str | None', heuristic_set: 'str' = 'baseline_0.2', knowledge_pack: 'ResolvedKnowledgePack | None' = None, constraints: 'RecommendationConstraints | None' = None, result_cache: 'AnalysisResultCache | None' = None) -> 'GapRecommendationResult'",
+    "run_fleet_support_advisor": "(registry: 'Registry', selections: 'tuple[FleetSelection, ...]', faction_id: 'str | None' = None, source_mod: 'str | None' = None, heuristic_set: 'str' = 'baseline_0.14', constraints: 'FleetSupportConstraints' = FleetSupportConstraints(access_mode='FACTION_PLUS', allow_foreign_hulls=True, include_hidden_hulls=False, focus=<SupportFocus.BALANCED: 'BALANCED'>, recommendation_count=None)) -> 'FleetSupportResult'",
+    "run_scenario_fleet_advisor": "(registry: 'Registry', selections: 'tuple[FleetSelection, ...]', scenario: 'ScenarioObjectiveProfile', faction_id: 'str | None' = None, source_mod: 'str | None' = None, heuristic_set: 'str' = 'baseline_0.14', constraints: 'FleetSupportConstraints' = FleetSupportConstraints(access_mode='FACTION_PLUS', allow_foreign_hulls=True, include_hidden_hulls=False, focus=<SupportFocus.BALANCED: 'BALANCED'>, recommendation_count=None)) -> 'ScenarioFleetAssessment'",
+    "run_save_inspect": "(save_dir: 'Path') -> 'SaveInspection'",
+    "run_save_write_gate": "()",
+    "run_save_resources": "(save_dir: 'Path') -> 'ResourceSnapshot'",
+    "run_save_commodity_catalog": "(starsector_path: 'Path') -> 'CommodityCatalog'",
+    "run_save_edit_plan": "(save_dir: 'Path', requests: 'tuple[EditRequest, ...]', catalog: 'CommodityCatalog | None' = None, *, allow_unknown_capacity: 'bool' = False) -> 'EditPlan'",
+    "run_save_edit_write": "(plan: 'EditPlan', output_dir: 'Path', *, name: 'str | None' = None) -> 'SaveWriteResult'",
+    "run_save_verify_copy": "(plan: 'EditPlan', copy_dir: 'Path') -> 'VerificationReport'",
+    "run_campaign_save_discovery": "(directory: 'Path') -> 'CampaignSaveDiscovery'",
+    "run_fleet_advisory_boundaries": "(registry: 'Registry', selections: 'tuple[FleetSelection, ...]', faction_id: 'str | None' = None, knowledge_pack: 'ResolvedKnowledgePack | None' = None) -> 'FleetAdvisoryBoundaries'",
+    "run_generate_scenario_support_fit": "(registry: 'Registry', selections: 'tuple[FleetSelection, ...]', scenario: 'ScenarioObjectiveProfile', hull_id: 'str', faction_id: 'str | None' = None, source_mod: 'str | None' = None, heuristic_set: 'str' = 'baseline_0.14', constraints: 'FleetSupportConstraints' = FleetSupportConstraints(access_mode='FACTION_PLUS', allow_foreign_hulls=True, include_hidden_hulls=False, focus=<SupportFocus.BALANCED: 'BALANCED'>, recommendation_count=None), mode: 'str' = 'guided', max_candidates: 'int' = 5, search_depth: 'int' = 1) -> 'ScenarioSupportFitOutcome'",
+    "load_or_populate_retrofits": "(registry: 'Registry', hull_id: 'str', output_root: 'Path', heuristic_set: 'str' = 'baseline_0.2') -> 'object'",
+    "save_editable_retrofit_copy": "(registry: 'Registry', variant_id: 'str', output_root: 'Path', *, replace: 'bool' = False) -> 'Path'",
+    "save_editable_retrofit_variant": "(registry: 'Registry', variant: 'Variant', output_root: 'Path', *, replace: 'bool' = False) -> 'Path'",
+    "load_editable_retrofit_variant": "(output_root: 'Path', path: 'Path') -> 'Variant'",
+    "restore_editable_retrofit_variant_history": "(output_root: 'Path', history_path: 'Path') -> 'Path'",
+    "inspect_editable_retrofit_variant": "(registry: 'Registry', output_root: 'Path', path: 'Path') -> 'object'",
+    "publish_editable_retrofit_variant": "(output_root: 'Path', path: 'Path', *, replace: 'bool' = False) -> 'Path'",
+    "run_fleet_support_why_not": "(registry: 'Registry', selections: 'tuple[FleetSelection, ...]', hull_id: 'str', faction_id: 'str | None' = None, source_mod: 'str | None' = None, heuristic_set: 'str' = 'baseline_0.14', constraints: 'FleetSupportConstraints' = FleetSupportConstraints(access_mode='FACTION_PLUS', allow_foreign_hulls=True, include_hidden_hulls=False, focus=<SupportFocus.BALANCED: 'BALANCED'>, recommendation_count=None)) -> 'FleetSupportWhyNotExplanation'",
+    "run_generate_fleet_support_fit": "(registry: 'Registry', selections: 'tuple[FleetSelection, ...]', hull_id: 'str', faction_id: 'str | None' = None, source_mod: 'str | None' = None, heuristic_set: 'str' = 'baseline_0.14', constraints: 'FleetSupportConstraints' = FleetSupportConstraints(access_mode='FACTION_PLUS', allow_foreign_hulls=True, include_hidden_hulls=False, focus=<SupportFocus.BALANCED: 'BALANCED'>, recommendation_count=None), mode: 'str' = 'guided', max_candidates: 'int' = 5, search_depth: 'int' = 1) -> 'FleetSupportFitOutcome'",
+    "run_why_not": "(registry: 'Registry', faction_id: 'str', role: 'str', hull_id: 'str', source_mod: 'str | None' = None, heuristic_set: 'str' = 'baseline_0.2', knowledge_pack: 'ResolvedKnowledgePack | None' = None, build_archetype_id: 'str | None' = None, campaign_stage: 'str | None' = None) -> 'CombinedWhyNotExplanation | BuildWhyNotExplanation'",
+    "run_build_why_not_comparison": "(registry: 'Registry', faction_id: 'str', role: 'str', build_paths: 'tuple[tuple[str, str], ...]', source_mod: 'str | None' = None, heuristic_set: 'str' = 'baseline_0.2', knowledge_pack: 'ResolvedKnowledgePack | None' = None, campaign_stage: 'str | None' = None) -> 'tuple[BuildWhyNotExplanation, ...]'",
+    "run_analyze_variant": "(registry: 'Registry', variant_id: 'str', profile: 'str', flux_mode: 'str', heuristic_set: 'str' = 'baseline_0.2', faction_id: 'str | None' = None, source_mod: 'str | None' = None, overrides_dir: 'Path | None' = None) -> 'VariantAnalysis'",
+    "run_analyze_variant_record": "(registry: 'Registry', variant: 'Variant', profile: 'str', flux_mode: 'str', heuristic_set: 'str' = 'baseline_0.2') -> 'VariantAnalysis'",
+    "run_variant_control_evidence": "(registry: 'Registry', variant_id: 'str', transcript_path: 'Path') -> 'dict[str, object]'",
+    "run_local_calibration_workspace": "(fixture: 'Path', scan: 'ScanResult', registry: 'Registry', heuristic_set: 'str') -> 'Any'",
+    "save_recommendation_feedback": "(output_dir: 'Path', entry: 'RecommendationFeedback') -> 'Path'",
+    "run_verify_portable_release": "(archive: 'Path', checksum: 'Path | None' = None) -> 'ReleaseVerification'",
+    "run_check_export": "(registry: 'Registry', manifest: 'Path') -> 'StalenessReport'",
+    "run_fix_legality": "(registry: 'Registry', variant_id: 'str', heuristic_set: 'str' = 'baseline_0.2', locked_mount_ids: 'frozenset[str]' = frozenset(), locked_hullmod_ids: 'frozenset[str]' = frozenset(), locked_wing_ids: 'frozenset[str]' = frozenset(), substitution_mode: 'str' = 'cheapest', requesting_faction_id: 'str | None' = None) -> 'RefitResult'",
+    "run_improve_quality": "(registry: 'Registry', variant_id: 'str', mode: 'str', profile: 'str', heuristic_set: 'str' = 'baseline_0.2', locked_mount_ids: 'frozenset[str]' = frozenset(), locked_hullmod_ids: 'frozenset[str]' = frozenset(), locked_wing_ids: 'frozenset[str]' = frozenset(), flux_mode: 'str' = 'BALANCED', faction_id: 'str | None' = None, source_mod: 'str | None' = None) -> 'QualityRefitResult'"
+  },
+  "window": {
+    "__init__": "(self) -> 'None'",
+    "_maybe_auto_scan": "(self) -> 'None'",
+    "_make_tabs": "(self) -> 'QTabWidget'",
+    "_ships": "(self) -> 'QWidget'",
+    "_browse": "(self) -> 'QWidget'",
+    "_browser": "(self) -> 'QWidget'",
+    "_center": "(self) -> 'QWidget'",
+    "_inspector_tab": "(self) -> 'QWidget'",
+    "_generate_tab": "(self) -> 'QWidget'",
+    "_inspector": "(self) -> 'QWidget'",
+    "_retrofits": "(self) -> 'QWidget'",
+    "_faction": "(self) -> 'QWidget'",
+    "_data": "(self) -> 'QWidget'",
+    "_settings": "(self) -> 'QWidget'",
+    "_toggle_save_workshop": "(self, enabled: 'bool') -> 'None'",
+    "dragEnterEvent": "(self, event: 'QDragEnterEvent') -> 'None'",
+    "dropEvent": "(self, event: 'QDropEvent') -> 'None'",
+    "_incorporate_dropped_mods": "(self, newly_added: 'list[ModImportResult]') -> 'None'",
+    "_apply_incremental_scan_outcome": "(self, outcome: 'Any') -> 'None'",
+    "_refresh_extra_mods_list": "(self) -> 'None'",
+    "_remove_selected_extra_mod": "(self) -> 'None'",
+    "_choose_installation": "(self) -> 'None'",
+    "_choose_calibration_fixture": "(self) -> 'None'",
+    "_choose_release_archive": "(self) -> 'None'",
+    "_verify_release_archive": "(self) -> 'None'",
+    "_evaluate_local_calibration": "(self) -> 'None'",
+    "_choose_advanced_config": "(self) -> 'None'",
+    "_start_scan": "(self) -> 'None'",
+    "_scan_progressed": "(self, progress: 'Any') -> 'None'",
+    "_scan_complete": "(self, outcome: 'Any') -> 'None'",
+    "_scan_metrics_summary": "(result: 'Any') -> 'str'",
+    "_discard_scan": "(self) -> 'None'",
+    "_scan_finished": "(self) -> 'None'",
+    "_check_scan_stall": "(self) -> 'None'",
+    "_workspace_changed": "(self, index: 'int') -> 'None'",
+    "_populate_secondary": "(self) -> 'None'",
+    "_populate_data_tables": "(self) -> 'None'",
+    "_refresh_hulls": "(self) -> 'None'",
+    "_schedule_hull_refresh": "(self) -> 'None'",
+    "_reset_filters": "(self) -> 'None'",
+    "_show_provenance": "(self, category: 'str') -> 'None'",
+    "_open_variant_hull": "(self, item: 'QListWidgetItem') -> 'None'",
+    "_open_retrofit_variant": "(self, variant: 'Variant') -> 'None'",
+    "_selected_hull": "(self, row: 'int') -> 'None'",
+    "_update_fit_metrics": "(self) -> 'None'",
+    "_editable_canvas_variant": "(self, variant_id: 'str', name: 'str') -> 'Variant'",
+    "_save_current_fit_to_library": "(self) -> 'None'",
+    "_editable_stat_value": "(field: 'QLineEdit', fallback: 'int | None') -> 'int | None'",
+    "_choose_slot": "(self, slot_id: 'str') -> 'None'",
+    "_run": "(self, message: 'str', operation: 'Callable[[], Any]', completed: 'Callable[[Any], None]', control: 'QPushButton', *, cancellable: 'bool' = False) -> 'None'",
+    "_discard_operation_result": "(self, thread: 'QThread', control: 'QPushButton', token: 'int') -> 'None'",
+    "_complete_operation": "(self, control: 'QPushButton', token: 'int', completed: 'Callable[[Any], None]', result: 'Any') -> 'None'",
+    "_fail_operation": "(self, control: 'QPushButton', token: 'int', message: 'str') -> 'None'",
+    "_finish_thread": "(self, thread: 'QThread', control: 'QPushButton') -> 'None'",
+    "_operation_failed": "(self, message: 'str') -> 'None'",
+    "_registry_write_in_progress": "(self) -> 'bool'",
+    "_generate": "(self) -> 'None'",
+    "_generation_complete": "(self, outcome: 'Any') -> 'None'",
+    "_preview_candidate": "(self, row: 'int') -> 'None'",
+    "_open_selected_in_advanced": "(self) -> 'None'",
+    "_variant_id": "(self) -> 'str | None'",
+    "_refit": "(self, operation: 'Callable[[str], Any]', button: 'QPushButton', message: 'str', on_result: 'Callable[[Any], None] | None' = None) -> 'None'",
+    "_show_refit_result": "(self, result: 'Any') -> 'None'",
+    "_apply_last_refit_result": "(self) -> 'None'",
+    "_compare_refit": "(self) -> 'None'",
+    "_editable_change_summary": "(before: 'Variant', after: 'Variant') -> 'tuple[str, ...]'",
+    "_choose_video_review": "(self) -> 'None'",
+    "_refit_lock_ids": "(field: 'QLineEdit') -> 'frozenset[str]'",
+    "_fix_legality": "(self) -> 'None'",
+    "_improve_quality": "(self) -> 'None'",
+    "_retrofit_output_root": "(self) -> 'Path | None'",
+    "_copy_retrofit_to_library": "(self) -> 'None'",
+    "_load_editable_retrofit": "(self) -> 'None'",
+    "_refresh_editable_retrofit_library": "(self) -> 'None'",
+    "_open_editable_retrofit_item": "(self, item: 'QListWidgetItem') -> 'None'",
+    "_show_editable_retrofit_history": "(self) -> 'None'",
+    "_publish_editable_retrofit": "(self) -> 'None'",
+    "_restore_editable_retrofit_history": "(self) -> 'None'",
+    "_populate_missing_retrofits": "(self) -> 'None'",
+    "_apply_populate_missing_retrofits_result": "(self, result: 'Any') -> 'None'",
+    "_faction_selected": "(self, _: 'int') -> 'None'",
+    "_choose_knowledge_pack": "(self) -> 'None'",
+    "_faction_id": "(self) -> 'tuple[str, str | None] | None'",
+    "_faction_run": "(self, operation: 'Callable[[str, str | None], Any]', button: 'QPushButton', message: 'str') -> 'None'",
+    "_analyze_capability": "(self) -> 'None'",
+    "_gap_recommendations": "(self) -> 'None'",
+    "_compare_build_paths": "(self) -> 'None'",
+    "_save_recommendation_feedback": "(self) -> 'None'",
+    "_fleet_support": "(self) -> 'None'",
+    "_show_fleet_support_result": "(self, result: 'Any') -> 'None'",
+    "_scenario_profile_from_controls": "(self) -> 'Any'",
+    "_evaluate_scenario": "(self) -> 'None'",
+    "_generate_scenario_fit": "(self) -> 'None'",
+    "_save_scenario_request": "(self) -> 'None'",
+    "_load_scenario_request": "(self) -> 'None'",
+    "_compare_fleet_support_cards": "(self) -> 'None'",
+    "_fleet_support_card_selected": "(self, _: 'int') -> 'None'",
+    "_generate_support_fit": "(self) -> 'None'",
+    "_add_current_hull_to_fleet_support": "(self) -> 'None'",
+    "_clear_fleet_support": "(self) -> 'None'",
+    "_fleet_support_constraints_from_controls": "(self) -> 'FleetSupportConstraints'",
+    "_save_fleet_support_request": "(self) -> 'None'",
+    "_load_fleet_support_request": "(self) -> 'None'",
+    "_fleet_support_why_not": "(self) -> 'None'",
+    "_export_current": "(self) -> 'None'",
+    "showEvent": "(self, event: 'Any') -> 'None'",
+    "resizeEvent": "(self, event: 'Any') -> 'None'",
+    "closeEvent": "(self, event: 'Any') -> 'None'",
+    "_maybe_close_after_background_work": "(self) -> 'None'"
+  },
+  "gap_classes": [
+    "CapabilityGap",
+    "RecommendationConstraints",
+    "RecommendationAudit",
+    "NativeRecommendation",
+    "GapRecommendationResult",
+    "RetrofitRecommendation",
+    "_RetrofitOpportunity",
+    "AcquisitionRecommendation",
+    "WhyNotExplanation",
+    "RetrofitWhyNotExplanation",
+    "AcquisitionWhyNotExplanation",
+    "CombinedWhyNotExplanation",
+    "BuildWhyNotExplanation",
+    "ScenarioCategory",
+    "ScenarioRecommendation",
+    "ScenarioWhyNotExplanation"
+  ],
+  "window_source_signatures": {
+    "__init__": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_maybe_auto_scan": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_make_tabs": [
+      "arguments(args=[arg(arg='self')])",
+      "Name(id='QTabWidget')",
+      []
+    ],
+    "_ships": [
+      "arguments(args=[arg(arg='self')])",
+      "Name(id='QWidget')",
+      []
+    ],
+    "_browse": [
+      "arguments(args=[arg(arg='self')])",
+      "Name(id='QWidget')",
+      []
+    ],
+    "_browser": [
+      "arguments(args=[arg(arg='self')])",
+      "Name(id='QWidget')",
+      []
+    ],
+    "_center": [
+      "arguments(args=[arg(arg='self')])",
+      "Name(id='QWidget')",
+      []
+    ],
+    "_inspector_tab": [
+      "arguments(args=[arg(arg='self')])",
+      "Name(id='QWidget')",
+      []
+    ],
+    "_generate_tab": [
+      "arguments(args=[arg(arg='self')])",
+      "Name(id='QWidget')",
+      []
+    ],
+    "_inspector": [
+      "arguments(args=[arg(arg='self')])",
+      "Name(id='QWidget')",
+      []
+    ],
+    "_retrofits": [
+      "arguments(args=[arg(arg='self')])",
+      "Name(id='QWidget')",
+      []
+    ],
+    "_faction": [
+      "arguments(args=[arg(arg='self')])",
+      "Name(id='QWidget')",
+      []
+    ],
+    "_data": [
+      "arguments(args=[arg(arg='self')])",
+      "Name(id='QWidget')",
+      []
+    ],
+    "_settings": [
+      "arguments(args=[arg(arg='self')])",
+      "Name(id='QWidget')",
+      []
+    ],
+    "_toggle_save_workshop": [
+      "arguments(args=[arg(arg='self'), arg(arg='enabled', annotation=Name(id='bool'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "dragEnterEvent": [
+      "arguments(args=[arg(arg='self'), arg(arg='event', annotation=Name(id='QDragEnterEvent'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "dropEvent": [
+      "arguments(args=[arg(arg='self'), arg(arg='event', annotation=Name(id='QDropEvent'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_incorporate_dropped_mods": [
+      "arguments(args=[arg(arg='self'), arg(arg='newly_added', annotation=Subscript(value=Name(id='list'), slice=Name(id='ModImportResult')))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_apply_incremental_scan_outcome": [
+      "arguments(args=[arg(arg='self'), arg(arg='outcome', annotation=Name(id='Any'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_refresh_extra_mods_list": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_remove_selected_extra_mod": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_choose_installation": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_choose_calibration_fixture": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_choose_release_archive": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_verify_release_archive": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_evaluate_local_calibration": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_choose_advanced_config": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_start_scan": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_scan_progressed": [
+      "arguments(args=[arg(arg='self'), arg(arg='progress', annotation=Name(id='Any'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_scan_complete": [
+      "arguments(args=[arg(arg='self'), arg(arg='outcome', annotation=Name(id='Any'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_scan_metrics_summary": [
+      "arguments(args=[arg(arg='result', annotation=Name(id='Any'))])",
+      "Name(id='str')",
+      [
+        "Name(id='staticmethod')"
+      ]
+    ],
+    "_discard_scan": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_scan_finished": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_check_scan_stall": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_workspace_changed": [
+      "arguments(args=[arg(arg='self'), arg(arg='index', annotation=Name(id='int'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_populate_secondary": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_populate_data_tables": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_refresh_hulls": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_schedule_hull_refresh": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_reset_filters": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_show_provenance": [
+      "arguments(args=[arg(arg='self'), arg(arg='category', annotation=Name(id='str'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_open_variant_hull": [
+      "arguments(args=[arg(arg='self'), arg(arg='item', annotation=Name(id='QListWidgetItem'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_open_retrofit_variant": [
+      "arguments(args=[arg(arg='self'), arg(arg='variant', annotation=Name(id='Variant'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_selected_hull": [
+      "arguments(args=[arg(arg='self'), arg(arg='row', annotation=Name(id='int'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_update_fit_metrics": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_editable_canvas_variant": [
+      "arguments(args=[arg(arg='self'), arg(arg='variant_id', annotation=Name(id='str')), arg(arg='name', annotation=Name(id='str'))])",
+      "Name(id='Variant')",
+      []
+    ],
+    "_save_current_fit_to_library": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_editable_stat_value": [
+      "arguments(args=[arg(arg='field', annotation=Name(id='QLineEdit')), arg(arg='fallback', annotation=BinOp(left=Name(id='int'), op=BitOr(), right=Constant(value=None)))])",
+      "BinOp(left=Name(id='int'), op=BitOr(), right=Constant(value=None))",
+      [
+        "Name(id='staticmethod')"
+      ]
+    ],
+    "_choose_slot": [
+      "arguments(args=[arg(arg='self'), arg(arg='slot_id', annotation=Name(id='str'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_run": [
+      "arguments(args=[arg(arg='self'), arg(arg='message', annotation=Name(id='str')), arg(arg='operation', annotation=Subscript(value=Name(id='Callable'), slice=Tuple(elts=[List(), Name(id='Any')]))), arg(arg='completed', annotation=Subscript(value=Name(id='Callable'), slice=Tuple(elts=[List(elts=[Name(id='Any')]), Constant(value=None)]))), arg(arg='control', annotation=Name(id='QPushButton'))], kwonlyargs=[arg(arg='cancellable', annotation=Name(id='bool'))], kw_defaults=[Constant(value=False)])",
+      "Constant(value=None)",
+      []
+    ],
+    "_discard_operation_result": [
+      "arguments(args=[arg(arg='self'), arg(arg='thread', annotation=Name(id='QThread')), arg(arg='control', annotation=Name(id='QPushButton')), arg(arg='token', annotation=Name(id='int'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_complete_operation": [
+      "arguments(args=[arg(arg='self'), arg(arg='control', annotation=Name(id='QPushButton')), arg(arg='token', annotation=Name(id='int')), arg(arg='completed', annotation=Subscript(value=Name(id='Callable'), slice=Tuple(elts=[List(elts=[Name(id='Any')]), Constant(value=None)]))), arg(arg='result', annotation=Name(id='Any'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_fail_operation": [
+      "arguments(args=[arg(arg='self'), arg(arg='control', annotation=Name(id='QPushButton')), arg(arg='token', annotation=Name(id='int')), arg(arg='message', annotation=Name(id='str'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_finish_thread": [
+      "arguments(args=[arg(arg='self'), arg(arg='thread', annotation=Name(id='QThread')), arg(arg='control', annotation=Name(id='QPushButton'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_operation_failed": [
+      "arguments(args=[arg(arg='self'), arg(arg='message', annotation=Name(id='str'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_registry_write_in_progress": [
+      "arguments(args=[arg(arg='self')])",
+      "Name(id='bool')",
+      []
+    ],
+    "_generate": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_generation_complete": [
+      "arguments(args=[arg(arg='self'), arg(arg='outcome', annotation=Name(id='Any'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_preview_candidate": [
+      "arguments(args=[arg(arg='self'), arg(arg='row', annotation=Name(id='int'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_open_selected_in_advanced": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_variant_id": [
+      "arguments(args=[arg(arg='self')])",
+      "BinOp(left=Name(id='str'), op=BitOr(), right=Constant(value=None))",
+      []
+    ],
+    "_refit": [
+      "arguments(args=[arg(arg='self'), arg(arg='operation', annotation=Subscript(value=Name(id='Callable'), slice=Tuple(elts=[List(elts=[Name(id='str')]), Name(id='Any')]))), arg(arg='button', annotation=Name(id='QPushButton')), arg(arg='message', annotation=Name(id='str')), arg(arg='on_result', annotation=BinOp(left=Subscript(value=Name(id='Callable'), slice=Tuple(elts=[List(elts=[Name(id='Any')]), Constant(value=None)])), op=BitOr(), right=Constant(value=None)))], defaults=[Constant(value=None)])",
+      "Constant(value=None)",
+      []
+    ],
+    "_show_refit_result": [
+      "arguments(args=[arg(arg='self'), arg(arg='result', annotation=Name(id='Any'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_apply_last_refit_result": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_compare_refit": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_editable_change_summary": [
+      "arguments(args=[arg(arg='before', annotation=Name(id='Variant')), arg(arg='after', annotation=Name(id='Variant'))])",
+      "Subscript(value=Name(id='tuple'), slice=Tuple(elts=[Name(id='str'), Constant(value=Ellipsis)]))",
+      [
+        "Name(id='staticmethod')"
+      ]
+    ],
+    "_choose_video_review": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_refit_lock_ids": [
+      "arguments(args=[arg(arg='field', annotation=Name(id='QLineEdit'))])",
+      "Subscript(value=Name(id='frozenset'), slice=Name(id='str'))",
+      [
+        "Name(id='staticmethod')"
+      ]
+    ],
+    "_fix_legality": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_improve_quality": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_retrofit_output_root": [
+      "arguments(args=[arg(arg='self')])",
+      "BinOp(left=Name(id='Path'), op=BitOr(), right=Constant(value=None))",
+      []
+    ],
+    "_copy_retrofit_to_library": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_load_editable_retrofit": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_refresh_editable_retrofit_library": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_open_editable_retrofit_item": [
+      "arguments(args=[arg(arg='self'), arg(arg='item', annotation=Name(id='QListWidgetItem'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_show_editable_retrofit_history": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_publish_editable_retrofit": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_restore_editable_retrofit_history": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_populate_missing_retrofits": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_apply_populate_missing_retrofits_result": [
+      "arguments(args=[arg(arg='self'), arg(arg='result', annotation=Name(id='Any'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_faction_selected": [
+      "arguments(args=[arg(arg='self'), arg(arg='_', annotation=Name(id='int'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_choose_knowledge_pack": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_faction_id": [
+      "arguments(args=[arg(arg='self')])",
+      "BinOp(left=Subscript(value=Name(id='tuple'), slice=Tuple(elts=[Name(id='str'), BinOp(left=Name(id='str'), op=BitOr(), right=Constant(value=None))])), op=BitOr(), right=Constant(value=None))",
+      []
+    ],
+    "_faction_run": [
+      "arguments(args=[arg(arg='self'), arg(arg='operation', annotation=Subscript(value=Name(id='Callable'), slice=Tuple(elts=[List(elts=[Name(id='str'), BinOp(left=Name(id='str'), op=BitOr(), right=Constant(value=None))]), Name(id='Any')]))), arg(arg='button', annotation=Name(id='QPushButton')), arg(arg='message', annotation=Name(id='str'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_analyze_capability": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_gap_recommendations": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_compare_build_paths": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_save_recommendation_feedback": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_fleet_support": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_show_fleet_support_result": [
+      "arguments(args=[arg(arg='self'), arg(arg='result', annotation=Name(id='Any'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_scenario_profile_from_controls": [
+      "arguments(args=[arg(arg='self')])",
+      "Name(id='Any')",
+      []
+    ],
+    "_evaluate_scenario": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_generate_scenario_fit": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_save_scenario_request": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_load_scenario_request": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_compare_fleet_support_cards": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_fleet_support_card_selected": [
+      "arguments(args=[arg(arg='self'), arg(arg='_', annotation=Name(id='int'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_generate_support_fit": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_add_current_hull_to_fleet_support": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_clear_fleet_support": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_fleet_support_constraints_from_controls": [
+      "arguments(args=[arg(arg='self')])",
+      "Name(id='FleetSupportConstraints')",
+      []
+    ],
+    "_save_fleet_support_request": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_load_fleet_support_request": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_fleet_support_why_not": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "_export_current": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ],
+    "showEvent": [
+      "arguments(args=[arg(arg='self'), arg(arg='event', annotation=Name(id='Any'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "resizeEvent": [
+      "arguments(args=[arg(arg='self'), arg(arg='event', annotation=Name(id='Any'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "closeEvent": [
+      "arguments(args=[arg(arg='self'), arg(arg='event', annotation=Name(id='Any'))])",
+      "Constant(value=None)",
+      []
+    ],
+    "_maybe_close_after_background_work": [
+      "arguments(args=[arg(arg='self')])",
+      "Constant(value=None)",
+      []
+    ]
+  }
+}

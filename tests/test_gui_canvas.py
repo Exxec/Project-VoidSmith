@@ -534,7 +534,7 @@ class GuiCanvasTests(unittest.TestCase):
         window = MainWindow()
         window._registry = registry; window._visible = (hull,); window._selected_hull(0)
         window._generated_candidates = [{"variant": {"weapons_by_mount": {"A": "gun"}}}]
-        with patch("starsector_variant_generator.gui.main_window.format_generation_results", return_value=""), patch.object(window.canvas, "show_hull") as show_hull:
+        with patch("starsector_variant_generator.gui.window_fitting.format_generation_results", return_value=""), patch.object(window.canvas, "show_hull") as show_hull:
             window._preview_candidate(0)
         show_hull.assert_called_once_with(hull, {"A": "gun"}, registry.weapons.by_id)
         window.close()
