@@ -51,6 +51,7 @@ files, or make campaign-inventory or market-availability decisions.
 | 55 — Linux compatibility matrix | Complete with limitations | `docs/LINUX_COMPATIBILITY_MATRIX.md` records the local qualification protocol and unverified Ubuntu/Mint/Fedora boundaries. Native archive smoke evidence is distinct from broader desktop/distribution runtime qualification. |
 | 56 — Campaign-save parser preparation | Complete with limitations | S0/S1: explicit read-only XML inspection for game 0.98a-RC8 / save 0.6, a separate fact schema, SHA-256 evidence and bounded refusal tests. `docs/CAMPAIGN_SAVE_FORMAT.md` closes the six inputs for this inspection scope only; explicit resource interpretation is separately qualified by S2. |
 | 57 — Save Workshop (minor edits to a save copy) | S0–S4 implemented (the GUI "Write edited copy" sits behind a default-off setting); over-capacity writes refused; release readiness (S6) and one live capacity check pending | Owner-approved design 2026-10-06 in `docs/SAVE_WORKSHOP_DESIGN.md`: tier 1 edits credits, cargo commodities (supplies, fuel, crew, marines, machinery) and story points on a copy written below the configured output directory. Read-only resource inspection and tier-1 edit planning are implemented from qualified static storage evidence. Owner decision 2026-10-06: S3 writes verified copies for changes within the saved capacity only; over-capacity changes are refused and consequences remain `UNKNOWN`. The original save is never modified. Implementation plan, module layout, GUI design and slices S0-S6: `docs/SAVE_WORKSHOP_IMPLEMENTATION_PLAN.md`. |
+| 58 — Genome track (BridgeForge 94.G5, 94.G7) | Approved by the owner 2026-11-17; not yet implemented | VoidSmith's portion of BridgeForge's genome track (ROADMAP-3 item 94): legal variants and a knowledge-pack proposal for an inserted gene (94.G5), and a fleet-role and coverage check of a composed carrier (94.G7). Nothing starts before BridgeForge 94.G1 publishes `gene.json`. Work items, contract, licence, acceptance and estimate: [Genome track](#genome-track-phase-58-bridgeforge-94g5-94g7-approved-2026-11-17) below. |
 
 ## Save Workshop checkpoint — 2026-10-06
 
@@ -240,3 +241,36 @@ capacitor limits (10/20/30/50 per hull size) are engine-hardcoded and in no pars
 unverifiable rather than same. A match is a whole-token id match; review each row. The full real report quotes game values and is
 kept local, not committed. `campaign/format.py` `SUPPORTED_VERSION` is untouched (a separate approved design step); no other
 RC8 default label needed changing (`campaign/overage.py` `BUILD` is evidence provenance, correctly RC8).
+
+
+## Genome track (phase 58; BridgeForge 94.G5, 94.G7; approved 2026-11-17)
+
+Source: BridgeForge ROADMAP-3 item 94 and
+[docs/FEATURE_GENOME_ROADMAP.md](https://github.com/Exxec/Project-BridgeForge/blob/main/docs/FEATURE_GENOME_ROADMAP.md), which
+defines the phase ids 94.G1 to 94.G7, the decisions GD-1 to GD-5 and the refinements GR-1 to GR-6. This phase is VoidSmith's
+portion of BridgeForge's genome track.
+
+- **Status:** approved by the owner 2026-11-17 ("all approved"); not yet implemented.
+- **Contract:** BridgeForge's `gene.json` (schema 1), which 94.G1 defines. Nothing here starts before 94.G1 publishes it. GR-1
+  (approved by the owner 2026-11-17, with GR-2 to GR-6) exports it pinned by hash with shared fixtures and a conformance test in
+  every consuming repository, as BridgeForge's `target export` does for builds; VoidSmith adds that conformance test when this
+  phase starts.
+- **Trace check:** GR-4 (approved 2026-11-17): a cross-repository check will verify that this entry cites an existing BridgeForge
+  94.Gn id and that section 12 of BridgeForge's `docs/FEATURE_GENOME_ROADMAP.md` links back here.
+- **Licence:** GD-2 applies: third-party genes are for local, personal use; distribution only with the author's recorded
+  permission or for the owner's own content; author credit travels with every gene.
+- **Boundary:** VoidSmith keeps its own scope (BridgeForge `VISION.md`, "Product and repository boundaries"); it consumes a gene
+  manifest and returns versioned evidence through files, as it already does with BridgeForge.
+- **Traceability:** commits and pull requests implementing this phase name the BridgeForge phase id in the subject (for example
+  "... (BridgeForge 94.G5)"). BridgeForge's `docs/FEATURE_GENOME_ROADMAP.md` section 12 links back to this entry.
+
+1. [ ] **94.G5 legal variants.** Read a gene manifest for an inserted hull, weapon, fighter wing or hull mod; generate legal
+   variants for the target build and the host's factions; validate them independently (existing variant validation).
+2. [ ] **94.G5 faction knowledge.** Propose faction knowledge for the host (known and priority lists, fleet roles) through
+   knowledge packs, exported as a proposal for the owner to approve, never applied silently.
+3. [ ] **94.G7 composed carrier.** For a composed carrier (a hull with its weapons and a faction that fields them), check fleet
+   roles and coverage.
+
+**Acceptance:** legal variants and a knowledge-pack proposal for pilot P2's amalgam hulls; one composed carrier checked.
+
+**Estimate:** 3-5 sessions.
