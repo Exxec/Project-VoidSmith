@@ -286,6 +286,15 @@ from the sister reviver project. `--context core` (default) judges it against th
 enabled mod. The verdict is `FAIL` for a located parse failure, an unreadable `mod_info.json` or a variant naming a missing weapon,
 `REVIEW` for other `ILLEGAL` or `NOT_DETERMINABLE` variants or a missing hull mod, otherwise `PASS`. Exit code: PASS 0, REVIEW 1, FAIL 2. `PASS` is not proof the mod works in game. `--output` may not point inside the mod folder.
 
+**`vanilla-diff --old OLD_INSTALL --new NEW_INSTALL`** compares the core data of two game builds (nothing in `mods/`) and prints Markdown, or
+JSON with `--json`, or writes either to `--output FILE` (not inside an install). For hulls, weapons, hull mods, ship systems and fighter
+wings it lists what was added, removed and changed, field by field (old -> new), the largest numeric changes, the settings VoidSmith
+hard-codes (`dissipationPerVent`, `fluxPerCapacitor`, `maxLogisticsHullmods`) with a flag where the new build differs, and an "Affects
+VoidSmith" section: files under `--affects-path` (repeatable; default `knowledge_packs`, `generated`, `cache`, `tests/fixtures` in the
+current folder) that name an id which was removed or changed, so stale cached results can be regenerated. A match is a whole-token id
+match, so review each row. The report quotes game values: keep it local, never commit it. Java hull-mod and ship-system code is not
+read, and the engine-hardcoded vent and capacitor limits are in no parseable file, so they are listed as unverifiable.
+
 **`calibration`** helps a person finish a review sheet kept under the `generated/` folder (calibration data names real ships and
 never belongs in the repository):
 

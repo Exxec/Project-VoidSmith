@@ -214,3 +214,29 @@ Implemented for review: recommendation family modules, window presentation/actio
 query seam. Existing entry points and behavior are preserved. Full suite: 1,001 tests, 3 existing skips; ruff and full-source
 mypy clean. CLI help/version are unchanged; GUI and portable/archive smoke and CLI parity checks pass.
 See [the V1 audit](docs/REFACTOR_V1_AUDIT.md). Pending PR review/merge; no owner, live, rights or publication gate is closed.
+
+
+## Game-build diff — 2026-11-15
+
+The target moved from 0.98a-RC8 to 0.98.5a-RC3. `voidsmith vanilla-diff --old A --new B [--json] [--output FILE]`
+(`analysis/vanilla_diff.py`, `tests/test_vanilla_diff.py`, 9 synthetic tests) is a read-only side-by-side of two builds' core data:
+added, removed and changed hulls, weapons, hull mods, fighter wings and ship systems (field by field, old -> new), the settings
+VoidSmith reads or hard-codes (`dissipationPerVent`, `fluxPerCapacitor`, `maxLogisticsHullmods`) flagged where they differ, and an
+"Affects VoidSmith" list of files under `--affects-path` that name a removed or changed id. It reuses the scanner and
+`csv_rows`/`json_file`; it writes only where `--output` says and refuses a path inside an install.
+
+**Real run, RC8 -> 0.98.5a-RC3 (2026-11-15):** hulls 265 -> 266 (+1 added, 0 removed, 39 changed, 18 of them only a new salvage
+column), weapons 163 -> 163 (21 changed), hull mods 129 -> 131 (+2, 9 changed), ship systems 63 (2 changed), fighter wings 31
+(0 changed). The settings VoidSmith hard-codes are unchanged (`dissipationPerVent` 10, `fluxPerCapacitor` 200,
+`maxLogisticsHullmods` 2). Balance changes include cobra max flux 400 -> 1500, afflictor hitpoints 1500 -> 2500, shade 1750 ->
+2750, gremlin 2500 -> 3500, champion OP 165 -> 185, onslaught 360 -> 340, paragon 370 -> 345, conquest max speed 45 -> 55,
+hurricane OP 25 -> 20, amblaster damage 1400 -> 1200 and ammo 20 -> 14, lrpdlaser range 800 -> 1000, advanced optics base value
+1000 -> 8000, phase cloak cooldown 2 -> 3. The local `generated/` tree holds 977 files naming a changed id (mostly `advancedoptics`,
+`lightag`, `irpulse`, `lrpdlaser`, `heavymg`, `taclaser`); `knowledge_packs/` and `tests/fixtures/` name none (they are neutral).
+Stale `generated/` output should be regenerated against 0.98.5a-RC3.
+
+**Limits.** Java hull-mod and ship-system code is not read, so a change that lives only in code does not appear. The vent and
+capacitor limits (10/20/30/50 per hull size) are engine-hardcoded and in no parseable file, so the report lists them as
+unverifiable rather than same. A match is a whole-token id match; review each row. The full real report quotes game values and is
+kept local, not committed. `campaign/format.py` `SUPPORTED_VERSION` is untouched (a separate approved design step); no other
+RC8 default label needed changing (`campaign/overage.py` `BUILD` is evidence provenance, correctly RC8).
