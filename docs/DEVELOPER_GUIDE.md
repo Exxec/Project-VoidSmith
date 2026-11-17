@@ -159,6 +159,10 @@ Built from `docs/AUTOMATION_PLAN.md` (V0 to V4); `ROADMAP.md` records limits and
   `core` by default, or `enabled`), runs the `validate-all` logic and the parse-failure locator, and returns a
   `check-mod-0.1` JSON verdict: `FAIL` (exit 2), `REVIEW` (exit 1), `PASS` (exit 0). It identifies the mod by folder, refuses an
   `--output` inside the mod folder, and never writes to the mod.
+- **`vanilla-diff --old A --new B`** (`analysis/vanilla_diff.py`): scans each build's `starsector-core` alone (no `mods/`) with the existing
+  `Scanner`, diffs the raw CSV row plus parsed built-ins and mounts per entity id, reads ship systems from `ship_systems.csv` and `.system`
+  files, compares `settings.json` against `adapters/vanilla` constants, and searches `--affects-path` folders for whole-token ids
+  of removed or changed entities. Read-only; `--output` inside an install is refused.
 - **Scan diagnostics**: `scan` adds `parse_failures` (`analysis/parse_diagnostics.py`: the parser's own line and column, the last
   good token, and a string- and comment-aware pass over the raw file for the first bracket-depth error) and `stale_enabled_mods`
   (`analysis/stale_enabled_mods.py`: deterministic closest-folder hint, never edits `enabled_mods.json`) to the scan report. Both

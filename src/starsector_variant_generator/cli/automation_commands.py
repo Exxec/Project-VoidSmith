@@ -19,6 +19,8 @@ from starsector_variant_generator.analysis.acceptance_baseline import (
 )
 from starsector_variant_generator.analysis.check_mod import check_mod
 from starsector_variant_generator.analysis.validate_all import to_markdown
+from starsector_variant_generator.analysis.vanilla_diff import build_report as build_vanilla_diff
+from starsector_variant_generator.analysis.vanilla_diff import to_markdown as vanilla_diff_markdown
 from starsector_variant_generator.core.config import AppConfig
 from starsector_variant_generator.core.logging import configure_logging
 from starsector_variant_generator.core.mod_import import resolve_dropped_mod
@@ -28,7 +30,7 @@ from starsector_variant_generator.core.safeio import atomic_write_json, atomic_w
 from starsector_variant_generator.analysis.stale_enabled_mods import format_stale_entry
 from starsector_variant_generator.core.scanner import Scanner, enabled_mods_file
 
-COMMANDS = ("validate-all", "acceptance", "check-mod")
+COMMANDS = ("validate-all", "acceptance", "check-mod", "vanilla-diff")
 VERDICT_EXIT_CODES = {"PASS": 0, "REVIEW": 1, "FAIL": 2}
 DEFAULT_BASELINE = Path("generated/reports/acceptance_baseline.json")
 
@@ -46,6 +48,15 @@ def add_parsers(subparsers: argparse._SubParsersAction) -> None:  # type: ignore
     check_mod.add_argument("--output", type=Path, help="Write the JSON verdict here (not inside the mod folder); default prints it")
     check_mod.add_argument("--starsector-path", type=Path, required=True)
     check_mod.add_argument("--output-dir", type=Path, default=Path("generated"), help="Scan cache and logs")
+    vanilla_diff = subparsers.add_parser("vanilla-diff", help="Read-only side-by-side of two game builds: added, removed and changed hulls, weapons, hull mods, ship systems and fighter wings, settings VoidSmith hard-codes, and local files naming a changed entity")
+    vanilla_diff.add_argument("--old", type=Path, required=True, help="Older install (or its starsector-core folder); read-only")
+    vanilla_diff.add_argument("--new", type=Path, required=True, help="Newer install (or its starsector-core folder); read-only")
+    vanilla_diff.add_argument("--old-label", help="Name for the old build in the report (default: folder name)")
+    vanilla_diff.add_argument("--new-label", help="Name for the new build in the report (default: folder name)")
+    vanilla_diff.add_argument("--json", action="store_true", help="Print or write JSON instead of Markdown")
+    vanilla_diff.add_argument("--output", type=Path, help="Write the report here (not inside either install); default prints it")
+    vanilla_diff.add_argument("--affects-path", type=Path, action="append", default=None, help="Local folder or file to check for stale references to changed or removed ids; repeatable (default: knowledge_packs, generated, cache, tests/fixtures under the current folder)")
+    vanilla_diff.add_argument("--top", type=int, default=25, help="How many of the largest numeric changes to list")
     acceptance = subparsers.add_parser("acceptance", help="Per-mod acceptance verdicts compared with a baseline file; prints only changes")
     acceptance.add_argument("--baseline", type=Path, default=DEFAULT_BASELINE, help="Baseline verdict file to compare with (read-only unless --write-baseline)")
     acceptance.add_argument("--write-baseline", action="store_true", help="Replace the baseline with this run's verdicts (an explicit, person-run step)")
@@ -147,7 +158,34 @@ def _run_check_mod(args: argparse.Namespace, parser: argparse.ArgumentParser) ->
     return VERDICT_EXIT_CODES[verdict["verdict"]]
 
 
+DEFAULT_AFFECTS_PATHS = (Path("knowledge_packs"), Path("generated"), Path("cache"), Path("tests/fixtures"))
+
+
+def _run_vanilla_diff(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
+    for install in (args.old, args.new):
+        if not install.is_dir():
+            parser.error(f"{install} is not a folder")
+    if args.output is not None:
+        resolved = args.output.resolve()
+        if any(install.resolve() in resolved.parents for install in (args.old, args.new)):
+            parser.error("--output must not be inside a game install; vanilla-diff never writes there")
+    roots = [path for path in (args.affects_path or DEFAULT_AFFECTS_PATHS) if path.exists()]
+    try:
+        report = build_vanilla_diff(args.old, args.new, old_label=args.old_label, new_label=args.new_label, reference_roots=roots, top=args.top)
+    except ValueError as exc:
+        parser.error(str(exc))
+    text = json.dumps(report, indent=2, sort_keys=True) if args.json else vanilla_diff_markdown(report)
+    if args.output is not None:
+        atomic_write_text(args.output, text + "\n")
+        print(f"vanilla-diff: {args.output}")
+    else:
+        print(text)
+    return 0
+
+
 def run(args: argparse.Namespace, parser: argparse.ArgumentParser) -> int:
+    if args.command == "vanilla-diff":
+        return _run_vanilla_diff(args, parser)
     if args.command == "validate-all":
         return _run_validate_all(args, parser)
     if args.command == "check-mod":
