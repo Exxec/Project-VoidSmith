@@ -251,10 +251,13 @@ defines the phase ids 94.G1 to 94.G7, the decisions GD-1 to GD-5 and the refinem
 portion of BridgeForge's genome track.
 
 - **Status:** approved by the owner 2026-11-17 ("all approved"); not yet implemented.
-- **Contract:** BridgeForge's `gene.json` (schema 1), which 94.G1 defines. Nothing here starts before 94.G1 publishes it. GR-1
-  (approved by the owner 2026-11-17, with GR-2 to GR-6) exports it pinned by hash with shared fixtures and a conformance test in
-  every consuming repository, as BridgeForge's `target export` does for builds; VoidSmith adds that conformance test when this
-  phase starts.
+- **Contract:** BridgeForge's `gene.json`, which 94.G1 defines; schema 4 since 94.G2 (schemas 1-3 are withdrawn). 94.G1
+  published it on 2026-11-19 as BridgeForge's `docs/contracts/gene/`. A consumer pins `CONTRACT.json`'s SHA-256 (`1345f51a…` at
+  schema 4; `bridgeforge gene contract` prints the current pin). GR-1 (approved by the owner 2026-11-17, with GR-2 to GR-6)
+  exports it with shared fixtures and a conformance test in every consuming repository, as BridgeForge's `target export` does for
+  builds. Under D3, VoidSmith adds that conformance test and the pin (`bridgeforge-pins/gene-contract.sha256`) when this phase's
+  first part, BridgeForge 94.G5, starts. Project Go's P9 is the worked example: `fixtures/gene-contract/` and
+  `BridgeForgeGeneContractTest`.
 - **Trace check:** GR-4 (approved 2026-11-17): a cross-repository check will verify that this entry cites an existing BridgeForge
   94.Gn id and that section 12 of BridgeForge's `docs/FEATURE_GENOME_ROADMAP.md` links back here.
 - **Licence:** GD-2 applies: third-party genes are for local, personal use; distribution only with the author's recorded
