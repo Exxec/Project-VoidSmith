@@ -55,7 +55,7 @@
     },
     {
       "id": "voidsmith-local-checks",
-      "title": "Person-run: acceptance --write-baseline, scan SVG-004/014/017, validate-all against the 441-variant total, calibration resolve then approve",
+      "title": "Person-run: re-baseline acceptance after the version normalization (first baseline done 2026-10-20), scan SVG-004/014/017, validate-all against the 441-variant total; calibration resolve done, approve deprioritised 2026-11-22",
       "state": "NOT_TESTED",
       "evidence": [],
       "needs": {
@@ -68,20 +68,22 @@
         "scenario": null
       },
       "commands": [
-        "voidsmith acceptance --write-baseline",
-        "voidsmith calibration resolve ..."
+        "voidsmith acceptance --write-baseline  # re-baseline only",
+        "voidsmith calibration resolve ...  # deprioritised"
       ],
       "source_doc": {
         "path": "ROADMAP.md",
         "anchor": "Local steps that need the real install or the game"
       },
-      "updated": "2026-10-21"
+      "updated": "2026-11-22"
     },
     {
       "id": "voidsmith-check-mod-bf",
       "title": "check-mod on a BridgeForge working/ copy",
-      "state": "NOT_TESTED",
-      "evidence": [],
+      "state": "PASS",
+      "evidence": [
+        "ROADMAP.md Proposed ideas item 3: OBSERVED 2026-11-22, read-only check-mod on the BridgeForge working copy of United Aurora Federation (323 variants, verdict REVIEW, 0 parse failures, mod folder unchanged); output stays local, findings not triaged"
+      ],
       "needs": {
         "rig": false,
         "mods": [],
@@ -98,7 +100,7 @@
         "path": "ROADMAP.md",
         "anchor": "`check-mod` on a BridgeForge `working/` copy"
       },
-      "updated": "2026-10-21"
+      "updated": "2026-11-22"
     },
     {
       "id": "voidsmith-s6-release",

@@ -1,5 +1,9 @@
 # Work log
 
+## 2026-11-22 - Roadmap currency (documentation only)
+
+- Recorded the calibration review as deprioritised (owner approval 2026-11-22; commands and data kept); marked the first acceptance baseline done (2026-10-20, PR #3) and named the remaining person-run step, a re-baseline after the version normalization; fixed drift (phase 58 now waits on BridgeForge 94.G5, refactor PR #14 recorded as merged); left "Proposed ideas" item 1 unticked with what remains (S5, S6, the S4 GUI save list); set `gates.json` `voidsmith-check-mod-bf` to PASS on the 2026-11-22 read-only `check-mod` run; recorded the S4 GUI save list as the next offline step and that the Workshop accepts 0.98a-RC8 saves only while BridgeForge's live rig is 0.98.5a-RC7 (`SUPPORTED_VERSION` unchanged). No code, tests or behaviour changed.
+
 ## 2026-10-22 — Structural refactor V1
 
 - Split recommendation search/ranking/cache/explanation/scenario responsibilities and GUI window helpers; retain compatible import paths and callback signatures. Extract the independent API catalog queries. Validation: 998 -> 1,001 tests, 3 skips unchanged; ruff clean; mypy clean across 139 files; CLI help/version byte-identical; GUI and portable/archive smoke pass; portable version/help and all 31 golden command paths pass. Pending PR review/merge; see [the V1 audit](REFACTOR_V1_AUDIT.md). No release or live-evidence gate changed.
